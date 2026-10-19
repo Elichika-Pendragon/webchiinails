@@ -7,7 +7,7 @@ export const salon = {
   mapsSource: 'https://share.google/jFSExFb9oiM3cob89',
   maps: 'https://www.google.com/maps?cid=13060782932404739183',
   directions: 'https://www.google.com/maps/dir/?api=1&destination=-2.9707861%2C104.7923294',
-  mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.4563633447087!2d104.7923294!3d-2.9707861!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b771aec94583f%3A0xb54138e0c6781c6f!2sDewi%20Salon%20%26%20Chii.Nails%20(Salon%20Palembang)!5e0!3m2!1sen!2sid!4v1792399345679!5m2!1sen!2sid',
+  mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.4563633447087!2d104.7923294!3d-2.9707861!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b771aec94583f%3A0xb54138e0c6781c6f!2sChii.Nails%20Art%20%26%20Dewi%20Salon!5e0!3m2!1sen!2sid!4v1792434072193!5m2!1sen!2sid',
   hours: 'Senin–Jumat 08.00–17.00 · Sabtu–Minggu 08.00–12.00 WIB',
   lastBooking: 'Last booking: Senin–Jumat 15.00 · Sabtu–Minggu 10.00 WIB',
   address: 'SMA N 5 · Jl. Serda KKO Usman Ali, Sei Buah, Ilir Timur II, Palembang, Sumatera Selatan 30116',

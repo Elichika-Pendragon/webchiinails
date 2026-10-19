@@ -238,15 +238,18 @@ document.querySelectorAll('.map-area').forEach(area => {
     button.disabled = true; button.textContent = 'Memuat peta interaktif…';
     const iframe = element('iframe'); iframe.title = 'Google Maps — Dewi Salon & Chii.Nails, Palembang';
     iframe.src = salon.mapEmbed; iframe.loading = 'eager'; iframe.referrerPolicy = 'strict-origin-when-cross-origin'; iframe.allowFullscreen = true;
+    const status = element('p', 'small muted map-status', 'Memuat peta Google Maps…');
+    status.setAttribute('role', 'status');
+    area.setAttribute('aria-busy', 'true');
     const timeout = setTimeout(() => {
-      const place = area.querySelector('.map-place');
-      if (!place) return;
-      button.remove();
-      place.append(element('small', '', 'Peta belum bisa dimuat di browser ini.'));
-      const link = external(element('a', 'text-link', 'Buka lokasi di Google Maps ↗')); link.href = salon.maps; place.append(link);
+      status.textContent = 'Peta membutuhkan waktu lebih lama. Jika belum tampil, buka lewat tombol Google Maps di bawah.';
     }, 12000);
-    iframe.addEventListener('load', () => { clearTimeout(timeout); area.querySelector('.map-loading-cover')?.remove(); }, { once: true });
+    iframe.addEventListener('load', () => { clearTimeout(timeout); area.setAttribute('aria-busy', 'false'); status.remove(); }, { once: true });
     area.prepend(iframe);
+    // Google's map can paint before its full iframe load event. Never mask an
+    // already usable map while unrelated third-party resources finish loading.
+    area.querySelector('.map-loading-cover')?.remove();
+    area.parentNode.insertBefore(status, area.nextSibling);
   };
   const checkNear = () => {
     const bounds = area.getBoundingClientRect();

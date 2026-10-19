@@ -18,6 +18,7 @@ class Node {
   get textContent() { return this._text + this.children.map(child => child.textContent).join(''); }
   get firstChild() { return this.children[0]; }
   get lastChild() { return this.children.at(-1); }
+  get nextSibling() { return this.parentNode?.children[this.parentNode.children.indexOf(this) + 1] || null; }
   set src(value) { this.setAttribute('src', value); }
   get src() { return this.getAttribute('src'); }
   setAttribute(key, value) { this.attributes[key] = String(value); }
@@ -65,8 +66,10 @@ function harness({ hero = true, gallery = true, controls = false, response, maps
     const widget = make('div', 'chat-widget'); panel = make('section', '', widget); panel.setAttribute('id', 'chat-panel'); panel.hidden = true; close = make('button', 'icon-button', panel); trigger = make('button', 'chat-trigger', widget); trigger.append(make('svg', '', null), document.createTextNode('Chat with us'));
   }
   const mapAreas = maps.map(options => {
-    const area = make('div', 'map-area'); area.hidden = Boolean(options.hidden); area.top = options.top || 0;
+    const column = make('div', 'map-column'); const area = make('div', 'map-area', column); area.hidden = Boolean(options.hidden); area.top = options.top || 0;
     const cover = make('div', 'map-loading-cover', area); const place = make('div', 'map-place', cover); make('button', '', place).textContent = 'Muat peta interaktif ↗';
+    make('p', 'muted', column).textContent = 'Temukan lokasi tepatnya lewat Google Maps.';
+    const direct = make('a', 'button', column); direct.href = salon.maps; direct.rel = 'noopener noreferrer'; direct.target = '_blank'; direct.textContent = 'Open Google Maps';
     return area;
   });
   const events = {}, timers = new Map(), intervals = [], fetches = [], observers = [], idleCallbacks = [];
@@ -177,21 +180,27 @@ test('automatic maps wait for window load and idle, then initialize only a nearb
   assert.equal(app.mapAreas[0].querySelectorAll('iframe').length, 1); assert.equal(app.mapAreas[1].querySelectorAll('iframe').length, 0); assert.equal(app.observers[0].disconnected, true);
 });
 
-test('manual/automatic map races create one frame, and successful load clears its fallback work', () => {
+test('manual/automatic map races create one exposed frame, and load clears outside status/busy work', () => {
   const app = harness({ hero: false, gallery: false, maps: [{}] }); const area = app.mapAreas[0]; const button = area.querySelector('button');
   app.fire('load', {}); app.idleCallbacks[0].callback(); const observer = app.observers[0];
   button.emit('click'); observer.callback([{ isIntersecting: true }]); button.emit('click');
   assert.equal(area.querySelectorAll('iframe').length, 1); assert.equal(observer.disconnected, true); assert.equal(button.disabled, true);
   const frame = area.querySelector('iframe'); assert.equal(frame.src, salon.mapEmbed); assert.equal(frame.title, 'Google Maps — Dewi Salon & Chii.Nails, Palembang');
-  assert.equal(app.timers.size, 1); frame.emit('load'); assert.equal(app.timers.size, 0); assert.equal(area.querySelector('.map-loading-cover'), null);
+  assert.equal(area.querySelector('.map-loading-cover'), null, 'Google can paint before its full load event');
+  const status = area.parentNode.querySelector('.map-status'); assert.equal(status.parentNode, area.parentNode); assert.equal(area.contains(status), false); assert.equal(status.getAttribute('role'), 'status');
+  assert.equal(area.getAttribute('aria-busy'), 'true'); assert.equal(area.parentNode.querySelector('a').href, salon.maps);
+  assert.equal(app.timers.size, 1); frame.emit('load'); assert.equal(app.timers.size, 0); assert.equal(area.getAttribute('aria-busy'), 'false'); assert.equal(status.parentNode, null); assert.equal(area.parentNode.querySelector('a').href, salon.maps);
 });
 
-test('early manual map requests do not create a late observer; failed loading retains a direct Maps link', () => {
+test('slow maps remain exposed with a neutral notice/direct link, and a late load clears that notice', () => {
   const app = harness({ hero: false, gallery: false, maps: [{}] }); const area = app.mapAreas[0];
+  const direct = area.parentNode.querySelector('a');
   area.querySelector('button').emit('click'); app.fire('load', {}); app.idleCallbacks[0].callback();
   assert.equal(app.observers.length, 0); assert.equal(area.querySelectorAll('iframe').length, 1);
   const fallback = [...app.timers.values()].find(timer => timer.delay === 12000); fallback.fn();
-  assert.equal(area.querySelector('button'), null); assert.equal(area.querySelector('a').href, salon.maps); assert.equal(area.querySelector('a').rel, 'noopener noreferrer');
+  const status = area.parentNode.querySelector('.map-status'); assert.ok(status.textContent.includes('membutuhkan waktu lebih lama')); assert.ok(!status.textContent.includes('belum bisa dimuat'));
+  assert.equal(area.querySelector('.map-loading-cover'), null); assert.equal(area.getAttribute('aria-busy'), 'true'); assert.equal(area.parentNode.querySelector('a'), direct); assert.equal(direct.href, salon.maps);
+  area.querySelector('iframe').emit('load'); assert.equal(status.parentNode, null); assert.equal(area.getAttribute('aria-busy'), 'false'); assert.equal(area.parentNode.querySelector('a'), direct);
 });
 
 test('map observer/idle fallbacks still delay loading and remove scroll watchers after a visible request', () => {
