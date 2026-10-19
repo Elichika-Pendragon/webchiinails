@@ -1,10 +1,24 @@
 {
-  "name": "chii-nails-website",
+  "name": "chii-nails-astro",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "packageManager": "pnpm@11.25.0",
-  "scripts": { "dev": "vite --host 127.0.0.1", "build": "vite build && vite build --ssr src/entry-server.jsx --outDir .prerender && node scripts/prerender.mjs", "build:worker": "vite build --ssr workers/instagram-refresh.js --outDir .worker-build", "seed:instagram": "node scripts/seed-instagram-token.mjs", "preview": "vite preview --host 127.0.0.1", "test": "node --test server/*.test.js" },
-  "dependencies": { "react": "^19.2.0", "react-dom": "^19.2.0" },
-  "devDependencies": { "vite": "^8.0.0" }
+  "engines": { "node": ">=22.22.0" },
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1",
+    "build": "astro build && node scripts/postbuild.mjs && node scripts/check-assets.mjs",
+    "build:worker": "vite build --config vite.worker.config.js --ssr workers/instagram-refresh.js --outDir .worker-build",
+    "seed:instagram": "node scripts/seed-instagram-token.mjs",
+    "preview": "astro preview --host 127.0.0.1",
+    "test": "node --test server/*.test.js",
+    "check:assets": "node scripts/check-assets.mjs"
+  },
+  "dependencies": {
+    "astro": "7.4.1",
+    "@astrojs/react": "7.1.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": { "vite": "8.3.4" }
 }

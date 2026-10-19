@@ -1,0 +1,27 @@
+---
+import App from '../App.jsx';
+import { salon } from '../content.js';
+import { seoHead, siteSettings } from '../../scripts/seo.mjs';
+import { loadEnv } from 'vite';
+const { page } = Astro.props;
+const env = { ...loadEnv(import.meta.env.MODE, process.cwd(), ''), ...process.env };
+const settings = siteSettings(env);
+---
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={page.description} />
+    <meta name="theme-color" content="#ffd2e6" />
+    <title>{page.title}</title>
+    <link rel="icon" href="/images/logo.jpg" />
+    <link rel="preload" href="/fonts/cormorant-garamond-latin-500.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/dm-sans-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
+    <Fragment set:html={seoHead(page, settings, salon, env.GOOGLE_SITE_VERIFICATION || '')} />
+  </head>
+  <body>
+    <div id="root" data-page={page.path}><App pathname={page.path} /></div>
+    <script src="../scripts/client.js"></script>
+  </body>
+</html>

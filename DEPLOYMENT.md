@@ -18,11 +18,15 @@ Cloudflare mencantumkan static asset requests gratis tanpa batas dan Pages Funct
 
 Saya tidak merekomendasikan Vercel Hobby untuk website salon komersial karena paket tersebut dibatasi untuk penggunaan personal/nonkomersial. Adapter Vercel tetap tersedia jika nanti memilih paket yang sesuai. Netlify Free alternatifnya memiliki 300 kredit/bulan yang dibagi untuk beberapa jenis penggunaan; Cloudflare lebih sederhana untuk kebutuhan ini. [Vercel Hobby](https://vercel.com/docs/plans/hobby), [harga Netlify](https://www.netlify.com/pricing/).
 
+## Migrasi Astro — 20 Oktober 2026
+
+Folder ini adalah prototipe lokal Astro, belum mengganti produksi. Astro membuat lima halaman statis: Home, Services, Custom Sets & Prices, Visit, About. React hanya dipakai saat build; interaksi browser memakai controller native. Panduan hosting dan API tetap berlaku dengan koreksi Astro di bawah. Simpan semua bindings Pages Functions/KV dan Worker terpisah; output tetap dist. Lihat [MIGRATION-ASTRO.md](./MIGRATION-ASTRO.md).
+
 ## 1. Siapkan folder proyek
 
 Ekstrak ZIP source. Folder proyek yang benar berisi `package.json`, `src/`, `public/`, `functions/` dan `server/` pada tingkat yang sama. Jangan hanya mengambil `dist`, karena integrasi Instagram memerlukan kode server di `functions/`.
 
-Untuk mencoba di komputer sendiri, instal Node.js LTS yang kompatibel (22.12+ atau LTS lebih baru yang didukung) dari [nodejs.org](https://nodejs.org/en/download). Buka ulang PowerShell setelah instalasi. Siapkan package manager sekali dengan `npm install --global pnpm@11.25.0`. Lalu buka terminal pada folder proyek:
+Untuk mencoba di komputer sendiri, instal Node.js LTS yang kompatibel (22.22.0+ pada versi genap yang didukung; prototipe ini memakai Node 24.19.0) dari [nodejs.org](https://nodejs.org/en/download). Buka ulang PowerShell setelah instalasi. Siapkan package manager sekali dengan `npm install --global pnpm@11.25.0`. Lalu buka terminal pada folder proyek:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -35,7 +39,7 @@ Buka alamat lokal yang dicetak terminal. Untuk membuat hasil produksi: `pnpm bui
 ## 2. Simpan di GitHub
 
 1. Buat repository **private**, misalnya `chii-nails-website`, di akun GitHub milikmu.
-2. Gunakan GitHub Desktop: tambahkan folder source, buat commit pertama, lalu Publish repository dengan opsi private tetap aktif. Jangan publikasikan seluruh folder ChatGPT project; hanya folder `chii-nails-react` yang diekstrak.
+2. Gunakan GitHub Desktop: tambahkan folder source, buat commit pertama, lalu Publish repository dengan opsi private tetap aktif. Jangan publikasikan seluruh folder ChatGPT project; hanya isi folder `chii-nails-astro` yang sudah diperiksa.
 3. File `.gitignore` mengecualikan `node_modules`, `dist`, dan file rahasia. Pastikan token Instagram, `.env.local`, dan `.dev.vars` tidak masuk daftar file yang akan di-commit.
 
 ## 3. Hubungkan Cloudflare Pages
@@ -47,17 +51,18 @@ Buka alamat lokal yang dicetak terminal. Untuk membuat hasil produksi: `pnpm bui
 | Setting | Nilai |
 | --- | --- |
 | Production branch | `main` |
-| Framework preset | React / Vite, jika tersedia |
+| Framework preset | Astro (static), atau None dengan build command di bawah; tanpa Astro Cloudflare adapter |
 | Root directory | Kosong jika `package.json` ada di root repo |
 | Build command | `pnpm build` |
 | Build output directory | `dist` |
 | Build environment variable `PNPM_VERSION` | `11.25.0` |
+| Build environment variable `NODE_VERSION` | `24.19.0` (atau versi genap didukung >=22.22.0 yang tersedia di build image) |
 
 4. Pilih Node LTS yang didukung pada pengaturan build jika versi default tidak cocok. Simpan dan deploy.
 5. Buka subdomain `*.pages.dev` yang benar-benar diberikan dashboard. Nama proyek yang diinginkan bisa sudah digunakan orang lain.
 6. Set build variable Production `SITE_URL` ke alamat HTTPS produksi yang sebenarnya, `SEO_PRODUCTION_BRANCH=main`, dan `SEO_INDEXABLE=true`, lalu deploy ulang. Tanpa `SITE_URL`, build sengaja noindex dan tidak membuat sitemap. Ikuti [SEO.md](./SEO.md) untuk Search Console, domain utama dan validasi.
 
-Struktur `functions/api/instagram.js` membuat route API; `public/_routes.json` disalin ke `dist` untuk membatasi pemanggilan Function. Ikuti alur **Git integration**, bukan sekadar drag-and-drop `dist` pada dashboard, karena dashboard Direct Upload tidak mendukung Functions. [React deployment](https://developers.cloudflare.com/pages/framework-guides/deploy-a-react-site/), [Functions](https://developers.cloudflare.com/pages/functions/get-started/).
+Struktur `functions/api/instagram.js` membuat route API; `public/_routes.json` disalin ke `dist` untuk membatasi pemanggilan Function. Ikuti alur **Git integration**, bukan sekadar drag-and-drop `dist` pada dashboard, karena dashboard Direct Upload tidak mendukung Functions. [Static Astro deployment](https://developers.cloudflare.com/pages/framework-guides/deploy-an-astro-site/), [Functions](https://developers.cloudflare.com/pages/functions/get-started/).
 
 ## 4. Aktifkan newest Instagram posts
 
@@ -66,7 +71,7 @@ Website dapat dibuka sebelum API siap menggunakan foto/post lokal. Untuk feed ot
 1. Pemilik mengotorisasi akun profesional melalui Meta Instagram Login; dapatkan numeric account ID, long-lived token, expiry sebenarnya dan versi API.
 2. Simpan konfigurasi secara privat dalam `.env.local`, buat key enkripsi dan jalankan `pnpm seed:instagram`.
 3. Buat namespace Cloudflare KV produksi, upload encrypted seed, dan hubungkan binding `INSTAGRAM_TOKENS` ke Pages.
-4. Pada Pages produksi, tambahkan secret `TOKEN_ENCRYPTION_KEY` dan variables `INSTAGRAM_USER_ID`/`INSTAGRAM_API_VERSION`; redeploy. Token produksi dibaca dari KV, bukan ditanam pada React.
+4. Pada Pages produksi, tambahkan secret `TOKEN_ENCRYPTION_KEY` dan variables `INSTAGRAM_USER_ID`/`INSTAGRAM_API_VERSION`; redeploy. Token produksi dibaca dari KV, bukan ditanam pada JavaScript browser.
 5. Jalankan `pnpm build:worker`, deploy file module hasil build sebagai Worker terpisah, hubungkan KV/key/account ID yang sama, dan aktifkan cron harian sesuai panduan.
 6. Periksa `/api/instagram` berisi JSON `posts` tanpa token, post terbaru berada di awal, dan status cron diperbarui setiap hari.
 

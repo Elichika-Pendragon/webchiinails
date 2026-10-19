@@ -4,7 +4,7 @@ Keputusan pemilik 19 Oktober 2026: integrasi Instagram sendiri, tanpa layanan fe
 
 | Bagian | Sistem | Tugas pemilik |
 | --- | --- | --- |
-| Website | React statis di Cloudflare Pages | Tidak perlu menjalankan server sendiri atau mengurus plugin WordPress. |
+| Website | Astro statis di Cloudflare Pages; React hanya saat build | Tidak perlu menjalankan server sendiri atau mengurus plugin WordPress. |
 | Booking dan DP | WhatsApp | Jessica mengonfirmasi desain, jadwal dan DP; website tidak mengecek slot otomatis. |
 | Galeri | API resmi, cache lima menit, slider embed | Posting Instagram seperti biasa setelah koneksi aktif. |
 | Renewal | Worker harian dan token KV terenkripsi | Berjalan tanpa kunjungan, renewal sekitar 30 hari untuk token 60 hari. |
@@ -13,7 +13,7 @@ Keputusan pemilik 19 Oktober 2026: integrasi Instagram sendiri, tanpa layanan fe
 | Domain | pages.dev atau domain sendiri | Auto-renew bila membeli domain, cek pembayaran dan email. |
 | SEO | HTML/metadata/sitemap saat build | Search Console disiapkan sekali; posting IG tidak perlu build ulang. |
 
-Setup pertama memerlukan operator teknis: otorisasi profesional Meta, encrypted seed, KV bindings, secrets dan Worker. Ikuti [INSTAGRAM-SETUP.md](./INSTAGRAM-SETUP.md). Tidak ada endpoint renewal publik atau token di React.
+Setup pertama memerlukan operator teknis: otorisasi profesional Meta, encrypted seed, KV bindings, secrets dan Worker. Ikuti [INSTAGRAM-SETUP.md](./INSTAGRAM-SETUP.md). Tidak ada endpoint renewal publik atau token di JavaScript browser.
 
 Workers/KV memiliki kuota Free. Job membaca satu record dan menulis status harian, ditambah penulisan saat renewal. Cache feed mengurangi panggilan KV/Meta. Free KV saat diperiksa mencakup 100.000 read dan 1.000 write/hari; kuota akun tetap berlaku. Tidak ada jaminan gratis tanpa batas. [KV pricing](https://developers.cloudflare.com/kv/platform/pricing/), [Pages Functions pricing](https://developers.cloudflare.com/pages/functions/pricing/).
 

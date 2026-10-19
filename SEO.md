@@ -6,9 +6,9 @@ File verifikasi yang diunduh langsung dari Google: `public/googlefe4df279dce4c32
 
 ## Yang sudah disiapkan di source
 
-- Halaman utama dan About dibuat menjadi HTML lengkap saat build. Google dan pengunjung dapat membaca layanan, lokasi dan aturan tanpa menunggu React. React mengaktifkan interaksi setelah halaman dimuat.
+- Kelima halaman (Home, Services, Custom Sets & Prices, Visit, About) dibuat menjadi HTML lengkap saat build oleh Astro. Google dan pengunjung dapat membaca layanan, harga, lokasi dan aturan tanpa JavaScript. React hanya merender saat build; controller native mengaktifkan interaksi browser.
 - Judul dan deskripsi unik berbahasa Indonesia, satu H1 per halaman, alt gambar, tautan internal, serta bahasa dokumen `id`. Headline Inggris tetap dipertahankan untuk gaya brand.
-- Canonical URL, Open Graph/Twitter preview, robots.txt dan sitemap dua halaman dibuat dari alamat produksi yang sama.
+- Canonical URL, Open Graph/Twitter preview, robots.txt dan sitemap lima halaman dibuat dari alamat produksi yang sama.
 - JSON-LD `NailSalon` mencantumkan alamat, WhatsApp, Instagram, Google Maps dan jam operasional. Batas booking terakhir dipisahkan dari jam tutup. Tidak ada rating atau harga yang dibuat-buat.
 - Halaman 404 dan build preview diberi noindex. Konten utama tidak bergantung pada iframe Instagram untuk SEO.
 
@@ -27,7 +27,7 @@ Preview branch selain `SEO_PRODUCTION_BRANCH` tetap noindex. Cloudflare juga mem
 1. Masuk [Google Search Console](https://search.google.com/search-console/). Akun Google tidak harus sama dengan pembuat lokasi Google Maps.
 2. Untuk pages.dev gunakan properti **URL prefix** dengan alamat HTTPS lengkap. Untuk domain sendiri dapat memakai properti Domain dengan verifikasi DNS.
 3. Jika memilih verifikasi HTML tag, salin hanya nilai `content` ke build variable `GOOGLE_SITE_VERIFICATION`, lalu deploy ulang dan klik Verify. String verifikasi ini bersifat publik; bukan password.
-4. Kirim `sitemap.xml`, lalu gunakan URL Inspection untuk halaman utama dan `/about`. Periksa status indexing setelah Google memprosesnya; hasil tidak selalu langsung.
+4. Kirim `sitemap.xml`, lalu gunakan URL Inspection untuk halaman utama, `/services`, `/custom-sets`, `/visit`, dan `/about`. Periksa status indexing setelah Google memprosesnya; hasil tidak selalu langsung.
 5. Periksa structured data melalui [Rich Results Test](https://search.google.com/test/rich-results) dan performa melalui [PageSpeed Insights](https://pagespeed.web.dev/). Skor produksi belum diukur dalam proyek ini.
 
 ## SEO lokal yang perlu pemilik lakukan

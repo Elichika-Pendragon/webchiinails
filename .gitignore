@@ -10,3 +10,5 @@ dist/
 .prerender/
 .private/
 .worker-build/
+
+.astro/

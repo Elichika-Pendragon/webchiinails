@@ -1,0 +1,9 @@
+---
+import Page from '../layouts/Page.astro';
+import { seoPages } from '../../scripts/seo.mjs';
+export function getStaticPaths() {
+  return seoPages.filter(page => page.path !== '/').map(page => ({ params: { page: page.path.slice(1) }, props: { page } }));
+}
+const { page } = Astro.props;
+---
+<Page page={page} />
