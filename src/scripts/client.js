@@ -237,7 +237,7 @@ document.querySelectorAll('.map-area').forEach(area => {
     removeEventListener('scroll', checkNear); removeEventListener('resize', checkNear);
     button.disabled = true; button.textContent = 'Memuat peta interaktif…';
     const iframe = element('iframe'); iframe.title = 'Google Maps — Dewi Salon & Chii.Nails, Palembang';
-    iframe.src = salon.mapEmbed; iframe.loading = 'lazy'; iframe.referrerPolicy = 'strict-origin-when-cross-origin'; iframe.allowFullscreen = true;
+    iframe.src = salon.mapEmbed; iframe.loading = 'eager'; iframe.referrerPolicy = 'strict-origin-when-cross-origin'; iframe.allowFullscreen = true;
     const timeout = setTimeout(() => {
       const place = area.querySelector('.map-place');
       if (!place) return;
