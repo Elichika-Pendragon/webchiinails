@@ -1,0 +1,12 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "chii-instagram-refresh",
+  "main": "instagram-refresh.js",
+  "compatibility_date": "2026-10-19",
+  "workers_dev": false,
+  "triggers": { "crons": ["0 2 * * *"] },
+  "kv_namespaces": [
+    { "binding": "INSTAGRAM_TOKENS", "id": "REPLACE_WITH_REAL_KV_NAMESPACE_ID" }
+  ],
+  "observability": { "enabled": true }
+}

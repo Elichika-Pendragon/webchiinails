@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.local
+.vercel/
+.env.*.local
+.dev.vars*
+.wrangler/
+.cloudflare-check/
+.prerender/
+.private/
+.worker-build/
