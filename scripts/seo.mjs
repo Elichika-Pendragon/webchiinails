@@ -1,8 +1,8 @@
 export const seoPages = [
   {
     file: 'index.html', path: '/',
-    title: 'Chii Nails Palembang | Nail Art, Extensions & Press-On',
-    description: 'Custom nail art dan nail extensions di Chii Nails Palembang, dekat SMA N 5. Press-on dikirim se-Indonesia. Booking via WhatsApp, wajib DP, tanpa walk-in.',
+    title: 'Nail Art Palembang & Nail Treatment | Chii Nails',
+    description: 'Chii Nails, salon nail art Palembang dekat SMA N 5. Custom nail art, extensions, basic manicure & vitamin oil. Press-on se-Indonesia. Booking wajib DP.',
   },
   {
     file: 'about.html', path: '/about',

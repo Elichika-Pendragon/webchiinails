@@ -60,7 +60,7 @@ function Hero() {
 }
 
 function Services() {
-  return <section id="services" className="section container"><p className="eyebrow">THE SERVICE MENU</p><h2>Nail art &amp; extensions, made for you.</h2><p className="muted">Dari simple sampai statement. Kirim referensi untuk konsultasi desain dan harga.</p><div className="service-grid">{services.map(service => <article className="service-card" key={service.title}><p className="eyebrow">{service.kicker}</p><h3>{service.title}</h3><p>{service.description}</p><a href={salon.custom} {...external}>Konsultasi {service.title.toLowerCase()} →</a></article>)}</div><p className="small muted">Lihat <a className="text-link" href="/#price-list">daftar harga nail art, extensions &amp; press-on</a>. Konfirmasi desain dan total saat booking.</p></section>;
+  return <section id="services" className="section container"><p className="eyebrow">THE SERVICE MENU</p><h2>Nail art &amp; nail treatment in Palembang.</h2><p className="muted">Custom nail art, nail extensions, dan press-on dari studio kami di Palembang. Untuk nail treatment, tersedia basic manicure &amp; vitamin oil. Kirim referensi untuk konsultasi desain dan harga.</p><div className="service-grid">{services.map(service => <article className="service-card" key={service.title}><p className="eyebrow">{service.kicker}</p><h3>{service.title}</h3><p>{service.description}</p><a href={salon.custom} {...external}>Konsultasi {service.title.toLowerCase()} →</a></article>)}</div><p className="small muted">Lihat <a className="text-link" href="/#price-list">daftar harga nail art, extensions &amp; press-on</a>. Konfirmasi desain dan total saat booking.</p></section>;
 }
 
 let instagramScript;
@@ -160,7 +160,7 @@ function InstagramSlider() {
 }
 
 function AboutIntro({ full = false }) {
-  return <section className="section container about-grid"><Photo name="naykilla" alt="Nail art custom warna-warni dengan detail karakter dan bintang" /><div><p className="eyebrow">MEET CHII</p><h2>Small studio.<br />So much imagination.</h2><p>Chii Nails adalah nail art studio di Palembang untuk kamu yang suka detail personal. Kami bangga bisa mengkreasikan desain sesuai permintaanmu—bawa warna, karakter, atau referensi yang kamu suka, lalu ceritakan ide set berikutnya.</p><p className="small accent">Nail art · Extensions · Custom press-on</p><LinkButton secondary>Kirim desain inspirasimu</LinkButton>{!full && <a className="text-link" href="/about">Tentang Chii & aturan booking →</a>}</div></section>;
+  return <section className="section container about-grid"><Photo name="naykilla" alt="Nail art custom warna-warni dengan detail karakter dan bintang" /><div><p className="eyebrow">MEET CHII</p><h2>Small studio.<br />So much imagination.</h2><p>Chii Nails adalah studio dan salon nail art di Palembang untuk kamu yang suka detail personal. Kami bangga bisa mengkreasikan desain sesuai permintaanmu—bawa warna, karakter, atau referensi yang kamu suka, lalu ceritakan ide set berikutnya.</p><p className="small accent">Nail art · Extensions · Custom press-on</p><LinkButton secondary>Kirim desain inspirasimu</LinkButton>{!full && <a className="text-link" href="/about">Tentang Chii & aturan booking →</a>}</div></section>;
 }
 
 function WhyChii() {
