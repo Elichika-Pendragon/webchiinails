@@ -1,6 +1,8 @@
 # Chii Nails — React website
 
-Responsive React + Vite website with a home page and About & Booking Rules page. English headlines and Indonesian practical copy are intentional.
+Preserved React + Vite baseline before the Astro migration. It contains five prerendered routes: Home, Services, Custom Sets & Prices, Visit, and About & Booking Rules. Desktop Home retains the scrolling sections; mobile Home links to separate pages. English headlines and Indonesian practical copy are intentional.
+
+This folder is the rollback source. The current Astro implementation is maintained separately in `../chii-nails-astro`; its migration guide records deployment and restoration steps.
 
 ## Run locally
 

@@ -24,6 +24,9 @@ export default defineConfig(({ isSsrBuild }) => ({
       input: {
         home: fileURLToPath(new URL('./index.html', import.meta.url)),
         about: fileURLToPath(new URL('./about.html', import.meta.url)),
+        services: fileURLToPath(new URL('./services.html', import.meta.url)),
+        customSets: fileURLToPath(new URL('./custom-sets.html', import.meta.url)),
+        visit: fileURLToPath(new URL('./visit.html', import.meta.url)),
       },
     },
   },

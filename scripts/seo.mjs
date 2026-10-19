@@ -9,6 +9,21 @@ export const seoPages = [
     title: 'Tentang Chii Nails & Aturan Booking | Palembang',
     description: 'Kenali Chii Nails Palembang dan aturan booking: wajib DP, jam layanan, batas booking terakhir, denda keterlambatan, dan tanpa walk-in.',
   },
+  {
+    file: 'services.html', path: '/services',
+    title: 'Nail Art & Nail Treatment Palembang | Chii Nails Services',
+    description: 'Layanan Chii Nails Palembang: custom nail art, nail extensions, basic manicure dan vitamin oil. Lihat pilihan layanan lalu konsultasi desain dan booking wajib DP.',
+  },
+  {
+    file: 'custom-sets.html', path: '/custom-sets',
+    title: 'Custom Sets & Daftar Harga Nail Art Palembang | Chii Nails',
+    description: 'Lihat karya dan harga Chii Nails: nail art, Cat Eye, extensions, removal dan press-on custom. Harga total press-on Rp25.000–Rp155.000 sesuai desain.',
+  },
+  {
+    file: 'visit.html', path: '/visit',
+    title: 'Lokasi & Jam Buka Chii Nails Palembang | Booking Only',
+    description: 'Dewi Salon & Chii.Nails dekat SMA N 5 Palembang. Senin–Jumat 08.00–17.00, Sabtu–Minggu 08.00–12.00 WIB. Cek batas booking terakhir; wajib DP, tanpa walk-in.',
+  },
 ];
 
 export const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -34,7 +49,7 @@ export function structuredData(page, origin, salon) {
   const graph = [
     { '@type': 'WebSite', '@id': `${origin}/#website`, name: salon.name, url: `${origin}/`, inLanguage: 'id-ID' },
     {
-      '@type': page.path === '/' ? 'WebPage' : 'AboutPage', '@id': `${origin}${page.path}#webpage`,
+      '@type': page.path === '/about' ? 'AboutPage' : 'WebPage', '@id': `${origin}${page.path}#webpage`,
       url: `${origin}${page.path}`, name: page.title, description: page.description, inLanguage: 'id-ID',
       isPartOf: { '@id': `${origin}/#website` }, about: { '@id': businessId },
     },
