@@ -225,10 +225,16 @@ if (track) {
   updatePosition();
 }
 
-// Maps stays completely unloaded until the visitor requests it.
+// Maps starts after the first-party page has loaded and the section is near.
+// Hidden desktop/mobile duplicates never initialize; a manual request can race
+// the observer safely without creating two frames.
 document.querySelectorAll('.map-area').forEach(area => {
   const button = area.querySelector('button');
-  button?.addEventListener('click', () => {
+  let started = false, observer;
+  const loadMap = () => {
+    if (started || !shown(area)) return;
+    started = true; observer?.disconnect();
+    removeEventListener('scroll', checkNear); removeEventListener('resize', checkNear);
     button.disabled = true; button.textContent = 'Memuat peta interaktif…';
     const iframe = element('iframe'); iframe.title = 'Google Maps — Dewi Salon & Chii.Nails, Palembang';
     iframe.src = salon.mapEmbed; iframe.loading = 'lazy'; iframe.referrerPolicy = 'strict-origin-when-cross-origin'; iframe.allowFullscreen = true;
@@ -241,7 +247,30 @@ document.querySelectorAll('.map-area').forEach(area => {
     }, 12000);
     iframe.addEventListener('load', () => { clearTimeout(timeout); area.querySelector('.map-loading-cover')?.remove(); }, { once: true });
     area.prepend(iframe);
-  }, { once: true });
+  };
+  const checkNear = () => {
+    const bounds = area.getBoundingClientRect();
+    if (shown(area) && bounds.top < innerHeight + 200 && bounds.bottom > -200) loadMap();
+  };
+  const watch = () => {
+    if (started) return;
+    if ('IntersectionObserver' in window) {
+      observer = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting) && shown(area)) loadMap();
+      }, { rootMargin: '200px' });
+      observer.observe(area);
+    } else {
+      addEventListener('scroll', checkNear, { passive: true });
+      addEventListener('resize', checkNear, { passive: true }); checkNear();
+    }
+  };
+  const afterLoad = () => {
+    if ('requestIdleCallback' in window) window.requestIdleCallback(watch, { timeout: 1200 });
+    else setTimeout(watch, 200);
+  };
+  button?.addEventListener('click', loadMap, { once: true });
+  if (document.readyState === 'complete') afterLoad();
+  else addEventListener('load', afterLoad, { once: true });
 });
 
 // Shared public API poll; no account credentials or Meta code enter this bundle.

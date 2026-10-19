@@ -44,12 +44,12 @@ class Node {
   addEventListener(type, handler) { (this.events[type] ||= []).push(handler); }
   emit(type, values = {}) { const event = { target: this, preventDefault() { this.prevented = true; }, ...values }; for (const handler of this.events[type] || []) handler(event); return event; }
   getClientRects() { return this.hidden ? [] : [{}]; }
-  getBoundingClientRect() { return { width: this.width, height: this.height, top: 0 }; }
+  getBoundingClientRect() { return { width: this.width, height: this.height, top: this.top || 0, bottom: (this.top || 0) + this.height }; }
   focus() { this.owner.activeElement = this; }
   scrollBy(options) { this.lastScroll = options; this.scrollLeft += options.left; }
 }
-function harness({ hero = true, gallery = true, controls = false, response } = {}) {
-  const document = new Node('document'); document.body = new Node('body'); document.append(document.body); document.createElement = tag => { const node = new Node(tag); node.owner = document; return node; }; document.createTextNode = text => { const node = document.createElement(''); node.textContent = text; return node; };
+function harness({ hero = true, gallery = true, controls = false, response, maps = [], idle = true, intersection = true } = {}) {
+  const document = new Node('document'); document.readyState = 'loading'; document.body = new Node('body'); document.append(document.body); document.createElement = tag => { const node = new Node(tag); node.owner = document; return node; }; document.createTextNode = text => { const node = document.createElement(''); node.textContent = text; return node; };
   const make = (tag, className, parent = document.body) => { const node = document.createElement(tag); node.className = className; parent?.append(node); return node; };
   const heroes = [];
   if (hero) for (const fallback of selectHeroMedia(posts)) { const link = make('a', 'mosaic-photo-link'); const picture = make('picture', '', link); if (fallback.image === 'french') make('source', '', picture); const img = make('img', '', picture); img.src = `/images/${fallback.image}.webp`; heroes.push(link); }
@@ -64,17 +64,24 @@ function harness({ hero = true, gallery = true, controls = false, response } = {
     menu = make('button', 'menu-toggle'); menu.setAttribute('aria-expanded', 'false'); make('nav', '').setAttribute('id', 'main-navigation');
     const widget = make('div', 'chat-widget'); panel = make('section', '', widget); panel.setAttribute('id', 'chat-panel'); panel.hidden = true; close = make('button', 'icon-button', panel); trigger = make('button', 'chat-trigger', widget); trigger.append(make('svg', '', null), document.createTextNode('Chat with us'));
   }
-  const events = {}, timers = new Map(), intervals = [], fetches = [], observers = [];
+  const mapAreas = maps.map(options => {
+    const area = make('div', 'map-area'); area.hidden = Boolean(options.hidden); area.top = options.top || 0;
+    const cover = make('div', 'map-loading-cover', area); const place = make('div', 'map-place', cover); make('button', '', place).textContent = 'Muat peta interaktif ↗';
+    return area;
+  });
+  const events = {}, timers = new Map(), intervals = [], fetches = [], observers = [], idleCallbacks = [];
   let timerId = 0;
-  class Observer { constructor(callback) { this.callback = callback; observers.push(this); } observe(node) { this.node = node; } disconnect() { this.disconnected = true; } }
+  class Observer { constructor(callback, options) { this.callback = callback; this.options = options; observers.push(this); } observe(node) { this.node = node; } disconnect() { this.disconnected = true; } }
   const context = { document, posts, salon, normalizeFeed, selectHeroMedia, URL, AbortController, Promise, getComputedStyle: () => ({ visibility: 'visible' }), matchMedia: () => ({ matches: true }), innerHeight: 800,
     setTimeout: (fn, delay) => { const id = ++timerId; timers.set(id, { fn, delay }); return id; }, clearTimeout: id => timers.delete(id), setInterval: (fn, delay) => { intervals.push({ fn, delay }); return intervals.length; },
-    addEventListener: (type, handler) => { (events[type] ||= []).push(handler); }, IntersectionObserver: Observer, ResizeObserver: Observer, MutationObserver: Observer,
+    addEventListener: (type, handler) => { (events[type] ||= []).push(handler); }, removeEventListener: (type, handler) => { events[type] = (events[type] || []).filter(item => item !== handler); }, IntersectionObserver: Observer, ResizeObserver: Observer, MutationObserver: Observer,
     fetch: (...args) => { fetches.push(args); return response ? response(...args) : Promise.resolve({ ok: false }); },
   };
+  if (idle) context.requestIdleCallback = (callback, options) => idleCallbacks.push({ callback, options });
+  if (!intersection) delete context.IntersectionObserver;
   context.window = context;
   vm.runInNewContext(`${controller}\nglobalThis.qa={updateHero,updateGallery,states,setMenu,setChat};`, context, { timeout: 1000 });
-  return { ...context.qa, window: context, document, heroes, track, menu, trigger, panel, close, events, timers, intervals, fetches, observers, fire: (type, event) => { for (const fn of events[type] || []) fn(event); } };
+  return { ...context.qa, window: context, document, heroes, track, menu, trigger, panel, close, mapAreas, events, timers, intervals, fetches, observers, idleCallbacks, fire: (type, event) => { for (const fn of events[type] || []) fn(event); } };
 }
 // make(..., null) is used for detached nodes just like document.createElement.
 const settle = () => new Promise(resolve => setImmediate(resolve));
@@ -156,4 +163,43 @@ test('polling pauses while hidden, avoids overlap, aborts on pagehide and resume
   resolve({ ok: false }); await settle(); app.document.hidden = true; app.intervals[0].fn(); assert.equal(app.fetches.length, 1);
   app.document.hidden = false; app.document.emit('visibilitychange'); assert.equal(app.fetches.length, 2);
   resolve({ ok: false }); await settle(); assert.equal(app.timers.size, 0);
+});
+
+test('automatic maps wait for window load and idle, then initialize only a nearby shown area', () => {
+  const app = harness({ hero: false, gallery: false, maps: [{}, { hidden: true }] });
+  assert.equal(app.document.querySelectorAll('iframe').length, 0); assert.equal(app.idleCallbacks.length, 0); assert.equal(app.observers.length, 0);
+  app.fire('load', {}); assert.equal(app.idleCallbacks.length, 2); assert.equal(app.document.querySelectorAll('iframe').length, 0);
+  app.idleCallbacks.forEach(item => item.callback()); assert.equal(app.observers.length, 2);
+  assert.equal(app.observers[0].options.rootMargin, '200px');
+  app.observers[0].callback([{ isIntersecting: false }]); app.observers[1].callback([{ isIntersecting: true }]);
+  assert.equal(app.document.querySelectorAll('iframe').length, 0);
+  app.observers[0].callback([{ isIntersecting: true }]);
+  assert.equal(app.mapAreas[0].querySelectorAll('iframe').length, 1); assert.equal(app.mapAreas[1].querySelectorAll('iframe').length, 0); assert.equal(app.observers[0].disconnected, true);
+});
+
+test('manual/automatic map races create one frame, and successful load clears its fallback work', () => {
+  const app = harness({ hero: false, gallery: false, maps: [{}] }); const area = app.mapAreas[0]; const button = area.querySelector('button');
+  app.fire('load', {}); app.idleCallbacks[0].callback(); const observer = app.observers[0];
+  button.emit('click'); observer.callback([{ isIntersecting: true }]); button.emit('click');
+  assert.equal(area.querySelectorAll('iframe').length, 1); assert.equal(observer.disconnected, true); assert.equal(button.disabled, true);
+  const frame = area.querySelector('iframe'); assert.equal(frame.src, salon.mapEmbed); assert.equal(frame.title, 'Google Maps — Dewi Salon & Chii.Nails, Palembang');
+  assert.equal(app.timers.size, 1); frame.emit('load'); assert.equal(app.timers.size, 0); assert.equal(area.querySelector('.map-loading-cover'), null);
+});
+
+test('early manual map requests do not create a late observer; failed loading retains a direct Maps link', () => {
+  const app = harness({ hero: false, gallery: false, maps: [{}] }); const area = app.mapAreas[0];
+  area.querySelector('button').emit('click'); app.fire('load', {}); app.idleCallbacks[0].callback();
+  assert.equal(app.observers.length, 0); assert.equal(area.querySelectorAll('iframe').length, 1);
+  const fallback = [...app.timers.values()].find(timer => timer.delay === 12000); fallback.fn();
+  assert.equal(area.querySelector('button'), null); assert.equal(area.querySelector('a').href, salon.maps); assert.equal(area.querySelector('a').rel, 'noopener noreferrer');
+});
+
+test('map observer/idle fallbacks still delay loading and remove scroll watchers after a visible request', () => {
+  const app = harness({ hero: false, gallery: false, maps: [{ top: 1500 }, { hidden: true }], idle: false, intersection: false });
+  app.fire('load', {}); assert.equal(app.document.querySelectorAll('iframe').length, 0);
+  for (const timer of [...app.timers.values()].filter(item => item.delay === 200)) timer.fn();
+  assert.equal(app.document.querySelectorAll('iframe').length, 0); assert.equal(app.events.scroll.length, 2);
+  app.mapAreas[0].top = 900; app.fire('scroll', {});
+  assert.equal(app.mapAreas[0].querySelectorAll('iframe').length, 1); assert.equal(app.mapAreas[1].querySelectorAll('iframe').length, 0);
+  assert.equal(app.events.scroll.length, 1); assert.equal(app.events.resize.length, 1);
 });

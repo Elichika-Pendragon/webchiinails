@@ -77,14 +77,14 @@ function loadInstagram() {
   return instagramScript;
 }
 
-function InstagramPost({ post, active }) {
+function InstagramPost({ post, active, priority = false }) {
   const host = useRef(null);
   const card = useRef(null);
   const [near, setNear] = useState(false);
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const shouldEmbed = active && near;
-  const preview = <img className="photo" src={post.imageUrl || image(post.image || 'maroon')} alt={post.alt} loading="lazy" decoding="async" onError={event => { if (!event.currentTarget.dataset.fallback) { event.currentTarget.dataset.fallback = 'true'; event.currentTarget.src = image(post.image || 'maroon'); } }} />;
+  const preview = <img className="photo" src={post.imageUrl || image(post.image || 'maroon')} alt={post.alt} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : undefined} decoding="async" onError={event => { if (!event.currentTarget.dataset.fallback) { event.currentTarget.dataset.fallback = 'true'; event.currentTarget.src = image(post.image || 'maroon'); } }} />;
   useEffect(() => {
     if (!active) return;
     if (!('IntersectionObserver' in window)) { setNear(true); return; }
@@ -128,7 +128,7 @@ function InstagramPost({ post, active }) {
   </article>;
 }
 
-function InstagramSlider() {
+function InstagramSlider({ eagerPreview = false }) {
   const section = useRef(null), track = useRef(null);
   const [active, setActive] = useState(false);
   const feed = useInstagramFeed();
@@ -161,7 +161,7 @@ function InstagramSlider() {
     const width = element.querySelector('.instagram-slide').getBoundingClientRect().width + 16;
     element.scrollBy({ left: direction * width, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   };
-  return <section id="gallery" ref={section} className="section gallery"><div className="container"><p className="eyebrow">FROM THE STUDIO</p><h2>Custom sets, made for you.</h2><a className="instagram-profile" href={salon.instagram} {...external}><img src={image('logo')} width="44" height="44" alt="" /><span><strong>@chii.nails_</strong><small>Real sets. Real little details.</small></span></a><div ref={track} id="instagram-posts" className="instagram-track" tabIndex="0" role="region" aria-label="Slider postingan Instagram Chii" onKeyDown={event => { if (event.target !== event.currentTarget) return; if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { event.preventDefault(); advance(event.key === 'ArrowRight' ? 1 : -1); } }}>{feed.map(post => <InstagramPost post={post} active={active} key={post.id} />)}</div><div className="slider-controls"><p className="small muted">Custom nail art · French · Character · Press-on</p><div className="slider-arrows"><span className="sr-only" aria-live="polite">Postingan {position} dari {feed.length}</span><button className="circle-button" aria-label="Postingan sebelumnya" aria-controls="instagram-posts" disabled={edges.start} onClick={() => advance(-1)}><img src="/images/prev.svg" width="20" height="20" alt="" /></button><button className="circle-button" aria-label="Postingan berikutnya" aria-controls="instagram-posts" disabled={edges.end} onClick={() => advance(1)}><img src="/images/next.svg" width="20" height="20" alt="" /></button></div></div><div className="gallery-actions"><LinkButton secondary>Request a custom set</LinkButton><a className="text-link" href="#price-list">View price list ↓</a></div><PriceList /></div></section>;
+  return <section id="gallery" ref={section} className="section gallery"><div className="container"><p className="eyebrow">FROM THE STUDIO</p><h2>Custom sets, made for you.</h2><a className="instagram-profile" href={salon.instagram} {...external}><img src={image('logo')} width="44" height="44" alt="" /><span><strong>@chii.nails_</strong><small>Real sets. Real little details.</small></span></a><div ref={track} id="instagram-posts" className="instagram-track" tabIndex="0" role="region" aria-label="Slider postingan Instagram Chii" onKeyDown={event => { if (event.target !== event.currentTarget) return; if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { event.preventDefault(); advance(event.key === 'ArrowRight' ? 1 : -1); } }}>{feed.map((post, index) => <InstagramPost post={post} active={active} priority={eagerPreview && index === 0} key={post.id} />)}</div><div className="slider-controls"><p className="small muted">Custom nail art · French · Character · Press-on</p><div className="slider-arrows"><span className="sr-only" aria-live="polite">Postingan {position} dari {feed.length}</span><button className="circle-button" aria-label="Postingan sebelumnya" aria-controls="instagram-posts" disabled={edges.start} onClick={() => advance(-1)}><img src="/images/prev.svg" width="20" height="20" alt="" /></button><button className="circle-button" aria-label="Postingan berikutnya" aria-controls="instagram-posts" disabled={edges.end} onClick={() => advance(1)}><img src="/images/next.svg" width="20" height="20" alt="" /></button></div></div><div className="gallery-actions"><LinkButton secondary>Request a custom set</LinkButton><a className="text-link" href="#price-list">View price list ↓</a></div><PriceList /></div></section>;
 }
 
 function AboutIntro({ full = false }) {
@@ -250,6 +250,10 @@ function MobileHomeSummary() {
   return <section className="mobile-home-summary section container"><p className="eyebrow">MAKE IT YOURS</p><h2>Your next nail date, made simple.</h2><p className="muted">Salon nail art di Palembang untuk custom nail art, extensions, basic manicure &amp; vitamin oil. Press-on custom bisa dikirim ke seluruh Indonesia.</p><div className="mobile-destination-cards"><a href="/services"><strong>Services <span>↗</span></strong><span>Nail art, extensions &amp; nail treatment.</span></a><a href="/custom-sets"><strong>Custom sets &amp; prices <span>↗</span></strong><span>Lihat karya, daftar harga &amp; paket press-on.</span></a><a href="/visit"><strong>Visit the studio <span>↗</span></strong><span>Lokasi di dekat SMA N 5 Palembang, jam layanan &amp; batas booking.</span></a></div><p className="mobile-booking-note"><strong>Booking only · Wajib DP</strong><span>Tidak menerima walk-in. <a className="text-link" href="/about#booking-rules">Baca aturan booking →</a></span></p></section>;
 }
 
+function MobileHomeVisit() {
+  return <section className="mobile-home-visit section container" aria-labelledby="home-visit-title"><p className="eyebrow">FIND US IN PALEMBANG</p><h2 id="home-visit-title">Your next nail date, right here.</h2><h3>Dewi Salon &amp; Chii.Nails</h3><address>{salon.address}</address><StudioHours /><MapArea /><a className="text-link" href="/visit">Lihat studio &amp; petunjuk lengkap →</a></section>;
+}
+
 function Footer({ year }) {
   return <footer className="container footer"><div><a className="footer-brand" href="/">Chii Nails_ · Nail Art Studio</a><a href="/about">About & booking rules</a><a href={salon.instagram} {...external}>Instagram ↗</a><a href={salon.whatsapp} {...external}>WhatsApp ↗</a></div><p>© {year} Chii Nails · Palembang. Made for your little moments.</p></footer>;
 }
@@ -259,8 +263,8 @@ export default function App({ pathname = '/', year = new Date().getFullYear() })
   let content;
   if (path === '/about') content = <RulesPage />;
   else if (path === '/services') content = <><PageIntro eyebrow="THE SERVICE MENU · PALEMBANG" title="A little care. A lot of you.">Nail art, extensions dan nail treatment di Chii Nails Palembang. Pilih layanan dan kirim referensimu sebelum booking.</PageIntro><Services /><WhyChii /><ServiceQuestions /><Booking /></>;
-  else if (path === '/custom-sets') content = <InstagramFeedProvider><PageIntro eyebrow="CUSTOM SETS & PRICE LIST" title="Find your next little obsession.">Inspirasi nail art dan press-on custom Chii Nails. Lihat karya dan daftar harga, lalu konfirmasikan desain pilihanmu melalui WhatsApp.</PageIntro><InstagramSlider /><Booking /></InstagramFeedProvider>;
+  else if (path === '/custom-sets') content = <InstagramFeedProvider><PageIntro eyebrow="CUSTOM SETS & PRICE LIST" title="Find your next little obsession.">Inspirasi nail art dan press-on custom Chii Nails. Lihat karya dan daftar harga, lalu konfirmasikan desain pilihanmu melalui WhatsApp.</PageIntro><InstagramSlider eagerPreview /><Booking /></InstagramFeedProvider>;
   else if (path === '/visit') content = <><PageIntro eyebrow="VISIT CHII · PALEMBANG" title="Your next nail date awaits.">Temukan Dewi Salon &amp; Chii.Nails, dekat SMA N 5 Palembang. Cek jam layanan dan booking melalui WhatsApp sebelum datang.</PageIntro><Visit /><Booking /></>;
-  else content = <InstagramFeedProvider><Hero /><MobileHomeSummary /><div className="desktop-home-details"><Services /><InstagramSlider /><WhyChii /><AboutIntro /><Visit /><ServiceQuestions /><Booking /></div></InstagramFeedProvider>;
+  else content = <InstagramFeedProvider><Hero /><MobileHomeSummary /><MobileHomeVisit /><div className="desktop-home-details"><Services /><InstagramSlider /><WhyChii /><AboutIntro /><Visit /><ServiceQuestions /><Booking /></div></InstagramFeedProvider>;
   return <><a href="#main" className="skip-link">Lewati ke konten</a><Header /><MobilePageTabs path={path} /><main id="main" className={path === '/' ? 'home-page' : ''}>{content}</main><Footer year={year} /><FloatingChat /></>;
 }

@@ -1,0 +1,22 @@
+Chii Nails webfont optimization — 20 October 2026
+
+Original font designs and copyright remain with their respective authors:
+Copyright 2015 the Cormorant Project Authors (github.com/CatharsisFonts/Cormorant)
+Copyright 2014 The DM Sans Project Authors (https://github.com/googlefonts/dm-fonts)
+
+These webfont copies remain licensed under the SIL Open Font License 1.1.
+The complete licenses are Cormorant-Garamond-OFL.txt and DM-Sans-OFL.txt.
+
+Changes performed using FontTools 4.67.0 and Brotli 1.2.0:
+- Retained source-supported Latin-1, current site copy and needed punctuation,
+  currency, arrows and symbols; removed unused glyph coverage.
+- Retained OpenType layout features, hinting, copyright and name metadata.
+- Restricted DM Sans's variable weight axis from 100–1000 to 400–700, matching
+  the range already declared in the site's CSS.
+- Kept Cormorant Garamond's existing static 500 weight.
+
+The designs were not redrawn. Partial axis instancing introduces small numeric
+rounding; measured outline displacement is below 0.013px at a 16px font size for
+weights 400, 500, 600 and 700. See docs/FONT-OPTIMIZATION.md for verification,
+source checksums, reproduction and rollback. Neither supplied license declares
+a Reserved Font Name. Original copyright and OFL license text are preserved.

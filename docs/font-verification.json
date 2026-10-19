@@ -1,0 +1,89 @@
+{
+  "verifiedOn": "2026-10-20",
+  "fontTools": "4.67.0",
+  "brotli": "1.2.0",
+  "sourceDirectory": "../backups/fonts-before-subset",
+  "deterministicReproductionChecked": true,
+  "files": [
+    {
+      "font": "cormorant-garamond-latin-500.woff2",
+      "sourceBytes": 23312,
+      "optimizedBytes": 20180,
+      "sourceSha256": "8197bf53615ddc8c423f444c7f0eec63b7fa0ba093fcfbec60dfdd28429b0fc8",
+      "optimizedSha256": "c9a2d5f01eed8f6a6ef00ed800288296adf872b1c937c7576e2016f8d34f6cd2",
+      "sourceCodepoints": 229,
+      "retainedCodepoints": 211,
+      "missingRequiredCodepoints": [],
+      "copyrightAndLicenseNameRecordsPreserved": true,
+      "axes": [],
+      "geometryChecks": [
+        {
+          "weight": null,
+          "comparedCodepoints": 211,
+          "changedOutlinesOrAdvances": 0,
+          "maxCoordinateDeltaUnits": 0,
+          "maxAdvanceDeltaUnits": 0,
+          "unitsPerEm": 1000,
+          "pathStructureChanges": 0
+        }
+      ]
+    },
+    {
+      "font": "dm-sans-latin-variable.woff2",
+      "sourceBytes": 36932,
+      "optimizedBytes": 21908,
+      "sourceSha256": "9fea608a947e67020c33cad9a6fe3d60c54119dfb8cff87768a8117a15ed7543",
+      "optimizedSha256": "a0eb7b5ba908fec6401c84758f7f33fd9f9269c0c6519bc472e650895d8cd6bf",
+      "sourceCodepoints": 222,
+      "retainedCodepoints": 206,
+      "missingRequiredCodepoints": [],
+      "copyrightAndLicenseNameRecordsPreserved": true,
+      "axes": [
+        {
+          "tag": "wght",
+          "min": 400.0,
+          "default": 400.0,
+          "max": 700.0
+        }
+      ],
+      "geometryChecks": [
+        {
+          "weight": 400,
+          "comparedCodepoints": 206,
+          "changedOutlinesOrAdvances": 0,
+          "maxCoordinateDeltaUnits": 0,
+          "maxAdvanceDeltaUnits": 0,
+          "unitsPerEm": 1000,
+          "pathStructureChanges": 0
+        },
+        {
+          "weight": 500,
+          "comparedCodepoints": 206,
+          "changedOutlinesOrAdvances": 205,
+          "maxCoordinateDeltaUnits": 0.2530168805803612,
+          "maxAdvanceDeltaUnits": 1,
+          "unitsPerEm": 1000,
+          "pathStructureChanges": 0
+        },
+        {
+          "weight": 600,
+          "comparedCodepoints": 206,
+          "changedOutlinesOrAdvances": 206,
+          "maxCoordinateDeltaUnits": 0.5708792550223336,
+          "maxAdvanceDeltaUnits": 1,
+          "unitsPerEm": 1000,
+          "pathStructureChanges": 0
+        },
+        {
+          "weight": 700,
+          "comparedCodepoints": 206,
+          "changedOutlinesOrAdvances": 203,
+          "maxCoordinateDeltaUnits": 0.8082101004464164,
+          "maxAdvanceDeltaUnits": 0,
+          "unitsPerEm": 1000,
+          "pathStructureChanges": 0
+        }
+      ]
+    }
+  ]
+}
