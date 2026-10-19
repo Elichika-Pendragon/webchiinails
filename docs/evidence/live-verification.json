@@ -1,0 +1,65 @@
+{
+  "routes": [
+    {
+      "route": "/",
+      "status": 200,
+      "title": "Nail Art Palembang &amp; Nail Treatment | Chii Nails",
+      "robots": "index,follow,max-image-preview:large",
+      "h1": 1
+    },
+    {
+      "route": "/services",
+      "status": 200,
+      "title": "Nail Art &amp; Nail Treatment Palembang | Chii Nails Services",
+      "robots": "index,follow,max-image-preview:large",
+      "h1": 1
+    },
+    {
+      "route": "/custom-sets",
+      "status": 200,
+      "title": "Custom Sets &amp; Daftar Harga Nail Art Palembang | Chii Nails",
+      "robots": "index,follow,max-image-preview:large",
+      "h1": 1
+    },
+    {
+      "route": "/visit",
+      "status": 200,
+      "title": "Lokasi &amp; Jam Buka Chii Nails Palembang | Booking Only",
+      "robots": "index,follow,max-image-preview:large",
+      "h1": 1
+    },
+    {
+      "route": "/about",
+      "status": 200,
+      "title": "Tentang Chii Nails &amp; Aturan Booking | Palembang",
+      "robots": "index,follow,max-image-preview:large",
+      "h1": 1
+    }
+  ],
+  "browserEntry": {
+    "path": "/_astro/Page.astro_astro_type_script_index_0_lang.BWXv9FTS.js",
+    "bytes": 11829,
+    "sha256": "7cfa696640e2dda8d23023b73722c27e9042d2df3c0167c163e49951a6dc2b7f"
+  },
+  "robots.txt": {
+    "status": 200,
+    "type": "text/plain; charset=utf-8"
+  },
+  "sitemap.xml": {
+    "status": 200,
+    "type": "application/xml"
+  },
+  "googlefe4df279dce4c32d.html": {
+    "status": 200,
+    "type": "text/html; charset=utf-8"
+  },
+  "instagram": {
+    "status": 503,
+    "body": {
+      "error": "Instagram feed temporarily unavailable"
+    }
+  },
+  "notFound": {
+    "status": 404
+  }
+}

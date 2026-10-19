@@ -1,0 +1,10 @@
+{
+  "type": "local static HTTP concurrency check, not browser load time",
+  "requests": 500,
+  "concurrency": 20,
+  "passed": 500,
+  "failures": [],
+  "elapsedMs": 268,
+  "medianMs": 8.7,
+  "p95Ms": 22
+}

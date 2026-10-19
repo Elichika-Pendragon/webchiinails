@@ -1,7 +1,7 @@
 {
   "measuredRelease": "0fca81d60401a31166e5239874a596150103cd82",
   "date": "2026-10-20",
-  "notes": "Reports precede the one-byte map loading hint correction and About eyebrow contrast correction. Maps are absent from initial Home viewport in both versions; do not attribute unmeasured scores to a later release.",
+  "notes": "Four reports precede the one-byte map loading hint correction; Maps are absent from initial Home viewport in both versions. About was remeasured after its contrast correction at release 664fb6e. Earlier About result retained separately. All five reports predate the final 164954e map-cover/official-source fix; functional and owner browser checks are separate, not new Lighthouse scores.",
   "results": [
     {
       "path": "/",
@@ -109,29 +109,61 @@
     },
     {
       "path": "/about",
+      "release": "664fb6eb6e639e6ed3867fdff633da9c6d9e3252",
       "mobile": {
         "performance": 100,
-        "accessibility": 95,
+        "accessibility": 100,
         "bestPractices": 100,
         "seo": 100,
-        "fcp": "0.9 s",
-        "lcp": "1.2 s",
+        "fcp": "0.8 s",
+        "lcp": "1.4 s",
         "tbt": "0 ms",
-        "cls": "0",
-        "speedIndex": "0.9 s"
+        "cls": "0.003",
+        "speedIndex": "0.8 s"
       },
       "desktop": {
         "performance": 100,
-        "accessibility": 95,
+        "accessibility": 100,
         "bestPractices": 100,
         "seo": 100,
-        "fcp": "0.2 s",
+        "fcp": "0.3 s",
         "lcp": "0.3 s",
         "tbt": "0 ms",
         "cls": "0",
-        "speedIndex": "0.2 s"
+        "speedIndex": "0.3 s"
       },
-      "report": "https://pagespeed.web.dev/analysis/https-chiinails-pages-dev-about/rysb5a83le?form_factor=desktop"
+      "report": "https://pagespeed.web.dev/analysis/https-chiinails-pages-dev-about/des3wmxtpx?form_factor=desktop"
     }
-  ]
+  ],
+  "earlierAbout": {
+    "path": "/about",
+    "mobile": {
+      "performance": 100,
+      "accessibility": 95,
+      "bestPractices": 100,
+      "seo": 100,
+      "fcp": "0.9 s",
+      "lcp": "1.2 s",
+      "tbt": "0 ms",
+      "cls": "0",
+      "speedIndex": "0.9 s"
+    },
+    "desktop": {
+      "performance": 100,
+      "accessibility": 95,
+      "bestPractices": 100,
+      "seo": 100,
+      "fcp": "0.2 s",
+      "lcp": "0.3 s",
+      "tbt": "0 ms",
+      "cls": "0",
+      "speedIndex": "0.2 s"
+    },
+    "report": "https://pagespeed.web.dev/analysis/https-chiinails-pages-dev-about/rysb5a83le?form_factor=desktop"
+  },
+  "finalCodeRelease": "164954e1c5b40cb5d6777049bfc2039ec3663b61",
+  "finalBrowserJavaScript": {
+    "rawBytes": 11829,
+    "gzipBytes": 4806
+  }
 }

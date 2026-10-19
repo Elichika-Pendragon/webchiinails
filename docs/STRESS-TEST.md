@@ -26,8 +26,8 @@ No browser process, real timer, external request, Meta account or CMS is involve
 - Automatic maps wait until the first-party window load and an idle callback (or
   timeout fallback), then load near the viewport. Hidden mobile/desktop map
   duplicates stay unloaded. Manual/automatic races create one iframe, successful
-  loading clears fallback work, early manual loading prevents a late observer,
-  and the no-observer/no-idle path removes scroll watchers after initialization.
+  loading clears the outside status/busy state, early manual loading prevents a late observer,
+  and the no-observer/no-idle path removes scroll watchers after initialization. The iframe is unmasked immediately, remains unmasked after the 12-second slow notice, and its direct Maps link survives; a late load clears that notice.
 
 The audit exposed an AVIF transport-failure fallback edge, which was repaired
 before this test run. No further confirmed release blocker was found in these
