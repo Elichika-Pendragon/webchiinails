@@ -34,6 +34,46 @@ export const services = [
   { kicker: '03 · PRESS-ON', title: 'Press-on nails', description: 'Kuku palsu custom sesuai request, praktis untuk momen spesialmu. Bisa dikirim ke seluruh Indonesia; konfirmasikan ukuran, ongkir, dan estimasi lewat WhatsApp.' },
 ];
 
+// Owner-supplied price list. Numbers are rupiah; price ranges are inclusive.
+export const priceGroups = [
+  { id: 'nail-art', title: 'Nail art', note: 'Harga untuk 10 jari', items: [
+    { name: 'Nail polos', price: 25000 },
+    { name: 'Nail mood temperatur', price: 30000 },
+    { name: 'French nails', price: 50000 },
+    { name: 'Marble', price: 45000 },
+    { name: 'Ombré nails', price: 50000, max: 55000 },
+    { name: 'Request design', detail: 'Mengikuti tingkat kesulitan', price: 65000, max: 155000 },
+  ] },
+  { id: 'cat-eye', title: 'Cat eye', note: 'Harga untuk 10 jari', items: [
+    { name: 'Cat eye / silky cat eye', price: 40000 },
+    { name: 'Cat eye universal', price: 40000 },
+    { name: 'Crystal cat eye', price: 40000 },
+    { name: 'Cat eye rainbow / mix colors', price: 40000, max: 45000 },
+    { name: 'Cat eye love / bunny', price: 40000 },
+  ] },
+  { id: 'extras', title: 'Extensions & extras', note: 'Tambahan untuk set pilihanmu', items: [
+    { name: 'Extension', detail: '1 kuku', price: 4000 },
+    { name: 'Extension', detail: '10 kuku', price: 30000 },
+    { name: 'Glitter', detail: '10 jari', price: 5000 },
+    { name: 'Stiker', price: 1000 },
+    { name: 'Aksesori 3D', price: 1000, max: 8000 },
+  ] },
+  { id: 'removal', title: 'Nail removal', note: 'Pilih sesuai jenis dan jumlah kuku', items: [
+    { name: 'Remove fake nails', detail: '1 kuku', price: 3500 },
+    { name: 'Remove fake nails', detail: '10 kuku', price: 25000 },
+    { name: 'Remove nail gel', detail: '1 kuku', price: 3000 },
+    { name: 'Remove nail gel', detail: '10 kuku', price: 23000 },
+    { name: 'Remove nail biasa', detail: '10 kuku', price: 6000 },
+  ] },
+];
+
+// Owner clarified that this is the finished set total, not a design-only fee.
+export const pressOnPricing = {
+  min: 25000, max: 155000, base: 22000, glue: 13000,
+  exampleDesign: 40000,
+  kit: ['Fake nails 10 pcs', 'Kikir kuku 1 pcs', 'Lem stiker 3 pcs', 'Wipe kering pink', 'Alcohol wipe', 'Wooden cuticle pusher'],
+};
+
 export const bookingRules = [
   { title: 'Isi data booking terlebih dahulu', body: 'Wajib booking sebelum datang. Kirim nama, nomor telepon, tanggal, jam, dan DP booking melalui WhatsApp agar jadwal tidak bertabrakan dengan pelanggan lain.' },
   { title: 'Booking wajib DP; pembatalan membuat DP hangus', body: 'Booking sekarang memerlukan DP. Konfirmasikan nominal dan cara pembayaran langsung melalui WhatsApp. Setelah booking, pembatalan tidak diperbolehkan; jika tetap dibatalkan, DP hangus.' },

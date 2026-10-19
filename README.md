@@ -68,3 +68,5 @@ The studio photograph has been retouched to remove the captured cursor and encod
 Figma contains editable desktop/mobile layouts and visual previews of the post slider. The DP policy, weekday/weekend hours, last-booking cutoffs and no-walk-in wording have also been updated directly in the Figma editor through Chrome after the connector reached its limit. No Figma Code Layer was created because the connector's code upload tools were unavailable; the runnable React source is separate.
 
 
+
+Price list: edit `priceGroups` and `pressOnPricing` in `src/content.js`. Owner confirmed press-on range is finished-set total. `src/PriceList.jsx` formats rupiah and computes the example. Local photos use WebP for delivery; JPG originals remain for social metadata. Motion is CSS-only and respects reduced motion.
