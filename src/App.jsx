@@ -41,9 +41,9 @@ function HeroPhoto({ post, priority = false }) {
   const [failed, setFailed] = useState(false);
   const media = failed ? post.backup : post;
   return <a className="mosaic-photo-link" href={media.url} {...external}>
-    <img className="photo" src={media.imageUrl || image(media.image)} alt={media.alt}
+    <picture>{!media.imageUrl && media.image === 'french' && <source type="image/avif" srcSet="/images/french.avif" />}<img className="photo" src={media.imageUrl || image(media.image)} alt={media.alt}
       width="720" height="960" loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding="async"
-      onError={() => setFailed(true)} />
+      onError={() => setFailed(true)} /></picture>
   </a>;
 }
 

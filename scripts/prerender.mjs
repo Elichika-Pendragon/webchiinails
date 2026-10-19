@@ -11,6 +11,15 @@ const year = new Date().getFullYear();
 for (const page of seoPages) {
   const file = new URL(`../dist/${page.file}`, import.meta.url);
   let html = await readFile(file, 'utf8');
+  // The entire stylesheet is about 5 KB gzipped. Inline it in the static HTML
+  // so the first render does not wait for another stylesheet round trip.
+  for (const match of html.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*>/g)) {
+    const href = match[0].match(/href="(\/assets\/[^"?]+\.css)"/)?.[1];
+    assert.ok(href && !href.includes('..'), 'Expected a local built stylesheet');
+    const css = await readFile(new URL(`../dist${href}`, import.meta.url), 'utf8');
+    assert.ok(!/<\/style/i.test(css), 'Stylesheet must be safe to inline');
+    html = html.replace(match[0], `<style>${css}</style>`);
+  }
   const body = render(page.path, year);
   assert.equal((body.match(/<h1\b/g) || []).length, 1, 'Each page must contain one visible main heading');
   assert.ok(body.includes('Palembang'), 'Location must be present without JavaScript');
