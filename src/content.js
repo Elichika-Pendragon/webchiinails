@@ -1,5 +1,6 @@
 export const salon = {
   name: 'Chii Nails',
+  geo: { latitude: -2.9707861, longitude: 104.7923294 },
   instagram: 'https://www.instagram.com/chii.nails_/',
   whatsapp: 'https://wa.me/6285111028211',
   custom: 'https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.',
@@ -29,8 +30,8 @@ export const posts = [
 
 export const services = [
   { kicker: '01 · NAIL ART', title: 'Custom nail art', description: 'Bawa desain apa pun yang kamu suka. Dari French yang clean sampai karakter dan detail yang playful.' },
-  { kicker: '02 · EXTENSIONS', title: 'Nail extensions', description: 'Panjang dan bentuk sesuai gaya, dengan pilihan desain personal.' },
-  { kicker: '03 · PRESS-ON', title: 'Press-on nails', description: 'Set custom sesuai request, praktis untuk momen spesialmu.' },
+  { kicker: '02 · EXTENSIONS', title: 'Nail extensions', description: 'Tambah panjang kuku dengan bentuk dan desain personal. Konsultasikan referensimu sebelum booking di studio Palembang.' },
+  { kicker: '03 · PRESS-ON', title: 'Press-on nails', description: 'Kuku palsu custom sesuai request, praktis untuk momen spesialmu. Bisa dikirim ke seluruh Indonesia; konfirmasikan ukuran, ongkir, dan estimasi lewat WhatsApp.' },
 ];
 
 export const bookingRules = [

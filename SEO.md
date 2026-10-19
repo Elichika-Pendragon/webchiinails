@@ -2,7 +2,7 @@
 
 Domain utama: **https://chiinails.pages.dev**. Alamat sebelumnya `webchiinails.pages.dev` memakai redirect 301 ke alamat baru, termasuk path dan query. Canonical, sitemap, robots dan structured data harus merujuk domain baru. Search Console memakai akun Google pemilik salon dan properti **Awalan URL** `https://chiinails.pages.dev/`; jangan menganggap situs sudah terindeks sampai laporan Google mengonfirmasinya.
 
-File verifikasi yang diunduh langsung dari Google: `public/googlefe4df279dce4c32d.html`. Build menyalinnya tanpa perubahan ke root hasil deploy. Pertahankan nama dan isinya setelah verifikasi berhasil; jangan hapus pada pembaruan berikutnya. Ini token verifikasi publik, bukan password atau token API Instagram. Untuk alamat pages.dev ini, gunakan file HTML tersebut melalui properti Awalan URL, bukan mencoba mengatur TXT DNS milik Cloudflare. Setelah file tersedia secara publik, pilih Verifikasi pada Search Console, kirim `/sitemap.xml`, dan minta pengindeksan halaman utama serta About.
+File verifikasi yang diunduh langsung dari Google: `public/googlefe4df279dce4c32d.html`. Build menyalinnya tanpa perubahan ke root hasil deploy. Pertahankan nama dan isinya setelah verifikasi berhasil; jangan hapus pada pembaruan berikutnya. Ini token verifikasi publik, bukan password atau token API Instagram. Untuk alamat pages.dev ini, gunakan file HTML tersebut melalui properti Awalan URL, bukan mencoba mengatur TXT DNS milik Cloudflare. Kepemilikan properti Awalan URL berhasil diverifikasi pada 19 Oktober 2026. Sitemap sudah dikirim, tetapi Search Console masih melaporkan tidak dapat membaca sitemap. File publik mengembalikan HTTP 200 dan XML valid; status pemrosesan Google belum berhasil. Permintaan pengindeksan homepage ditolak karena kuota harian terlampaui; Google meminta mencoba lagi besok. Jangan menganggap situs sudah terindeks atau mengulang permintaan saat kuota habis.
 
 ## Yang sudah disiapkan di source
 
@@ -39,3 +39,16 @@ Post Instagram terbaru membantu showcase, tetapi tidak otomatis menjadi artikel/
 Tidak ada jaminan peringkat atau rich result. Relevansi usaha, jarak pencari, reputasi, kualitas konten dan pengalaman website ikut menentukan hasil. Domain custom membantu identitas brand; suffix domain sendiri tidak menjamin peningkatan ranking.
 
 Referensi: [Google JavaScript SEO](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics), [Local Business](https://developers.google.com/search/docs/appearance/structured-data/local-business), [Sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap), [Google local ranking](https://support.google.com/business/answer/7091), [Cloudflare preview deployments](https://developers.cloudflare.com/pages/configuration/preview-deployments/).
+
+## Optimasi 19 Oktober 2026
+
+- Judul homepage mencakup Chii Nails, Palembang, nail art, extensions, dan press-on; deskripsi menjelaskan lokasi dekat SMA N 5, pengiriman press-on, dan booking wajib DP.
+- Hero tetap memakai headline Inggris, dengan penjelasan layanan dan kota dalam bahasa Indonesia. Deskripsi layanan memberi konteks nyata tanpa mengulang kata kunci secara berlebihan.
+- Tiga pertanyaan pelanggan di homepage menjelaskan booking, harga sesuai desain, dan pesanan press-on dari luar kota. Jawaban tersedia dalam HTML hasil build, termasuk saat accordion ditutup; tidak bergantung pada Instagram.
+- Link internal langsung memakai URL canonical /about dan teks link menyebut tujuan/layanan. Tidak menambah halaman tipis atau blog otomatis.
+- Koordinat studio yang sama dengan Google Maps ditambahkan ke data NailSalon. WebSite dengan nama Chii Nails, jam buka, canonical, sitemap, dan HTML prerender sudah ada sebelumnya dan dipertahankan. Tidak menambah rating atau FAQ rich-result markup yang tidak sesuai.
+- Tidak ada dependency tambahan. Uji build mencakup konten HTML, link internal, metadata, sitemap, file verifikasi, dan schema; tampilan mobile dan desktop ditinjau sebelum deploy.
+
+Pantau setelah Google memproses: status sitemap, halaman yang terindeks, impressions, klik, dan kueri seperti Chii Nails / Chii Nails Palembang. Kueri layanan adalah sasaran konten, bukan hasil riset volume pencarian. Jangan mengubah judul tiap hari atau membeli backlink. Pemilik melaporkan link website Google Maps sudah diperbarui; isi listing publik belum diverifikasi ulang.
+
+Panduan utama: [Google SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide?hl=id). Fokus pada informasi yang membantu pelanggan, judul deskriptif, teks link jelas, gambar relevan, dan akses crawling. Dampak dapat memerlukan beberapa minggu atau lebih; verifikasi ownership tidak menjamin indexing atau ranking.

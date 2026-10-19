@@ -69,3 +69,11 @@ Chrome checked the corrected hero at desktop (660px total height) and mobile (76
 - Home canonical, robots metadata and the cleaned studio asset were checked on the new live domain. Existing rendered page content and NailSalon structured data are retained.
 - Cloudflare account-level Bulk Redirect list `chii_legacy_address` and rule `Chii Nails new website address` forward the old address with HTTP 301, preserving paths and query strings. A browser visit to the old `/about?source=old-link` resolved to the same path and query on chiinails.pages.dev. No project was deleted.
 - Google Search Console setup has started but ownership is not yet verified; the intended Google account must be confirmed first. No sitemap submission or indexing request has been confirmed yet. Instagram remains awaiting the intended Meta developer account; no developer terms accepted or app created in the personal Facebook session.
+
+## SEO optimization — 19 October 2026
+
+Search Console URL-prefix ownership is confirmed in Settings as verified owner. The public HTML verification file remains unchanged. Current sitemap report still says cannot fetch; submission alone is not indexing success. The previous homepage indexing request hit Google's daily quota; retry only after reset. Owner reports Maps website link updated.
+
+First on-page optimization: clearer bilingual service/location copy, extensions and press-on explanations, customer FAQ with descriptive internal links to canonical /about, and coordinates matching the Maps location in NailSalon JSON-LD. Existing WebSite identity, unique page metadata, prerendered HTML, hours, booking rules, sitemap and robots preserved. No added dependencies.
+
+Validation: 16 tests pass; production build passes; rendered HTML checks pass for both canonical URLs, index directives, schema JSON, correct hours/DP, FAQ text and unchanged verification file. Chrome checked FAQ expansion at mobile 390px without horizontal document overflow and About at desktop 1280px with all six booking rules. These are functional checks, not a measured Core Web Vitals or Lighthouse score. Instagram API remains unactivated pending Meta authorization.

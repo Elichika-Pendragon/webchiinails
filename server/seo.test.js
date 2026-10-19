@@ -21,6 +21,8 @@ test('structured data uses actual weekday/weekend opening times, separate from b
   assert.match(business.description, /10.00/);
   assert.equal(business.address.addressLocality, 'Palembang');
   assert.equal(business.hasMap, salon.maps);
+  assert.equal(business.geo.latitude, -2.9707861);
+  assert.equal(business.geo.longitude, 104.7923294);
   assert.equal('aggregateRating' in business, false);
 });
 test('canonical and sitemap URLs agree and metadata is safely escaped', () => {

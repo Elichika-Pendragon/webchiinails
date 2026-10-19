@@ -1,8 +1,8 @@
 export const seoPages = [
   {
     file: 'index.html', path: '/',
-    title: 'Chii Nails Palembang | Custom Nail Art & Press-On',
-    description: 'Nail art custom, extensions, dan press-on di Palembang sesuai desain inspirasimu. Booking wajib DP melalui WhatsApp. Tidak menerima walk-in.',
+    title: 'Chii Nails Palembang | Nail Art, Extensions & Press-On',
+    description: 'Custom nail art dan nail extensions di Chii Nails Palembang, dekat SMA N 5. Press-on dikirim se-Indonesia. Booking via WhatsApp, wajib DP, tanpa walk-in.',
   },
   {
     file: 'about.html', path: '/about',
@@ -46,6 +46,7 @@ export function structuredData(page, origin, salon) {
     telephone: `+${new URL(salon.whatsapp).pathname.slice(1)}`,
     address: { '@type': 'PostalAddress', ...salon.postalAddress },
     hasMap: salon.maps, sameAs: [salon.instagram],
+    geo: { '@type': 'GeoCoordinates', ...salon.geo },
     openingHoursSpecification: salon.openingHours.map(item => ({
       '@type': 'OpeningHoursSpecification', dayOfWeek: item.days.map(day => `https://schema.org/${day}`), opens: item.opens, closes: item.closes,
     })),

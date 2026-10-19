@@ -24,7 +24,7 @@ function Header() {
       <a href="/" className="brand" aria-label="Chii Nails — Beranda"><img src={image('logo')} width="88" height="88" alt="Chii Nails Nail Art Studio" /></a>
       <button ref={toggle} className="menu-toggle" aria-expanded={open} aria-controls="main-navigation" onClick={() => setOpen(!open)}>{open ? 'Tutup ×' : 'Menu ☰'}</button>
       <nav id="main-navigation" className={open ? 'navigation is-open' : 'navigation'} aria-label="Menu utama">
-        <a href="/#services" onClick={() => setOpen(false)}>Services</a><a href="/#gallery" onClick={() => setOpen(false)}>Custom sets</a><a href="/about.html" onClick={() => setOpen(false)}>About & rules</a><a href="/#visit" onClick={() => setOpen(false)}>Visit us</a>
+        <a href="/#services" onClick={() => setOpen(false)}>Services</a><a href="/#gallery" onClick={() => setOpen(false)}>Custom sets</a><a href="/about" onClick={() => setOpen(false)}>About & rules</a><a href="/#visit" onClick={() => setOpen(false)}>Visit us</a>
         <a className="mobile-booking" href={salon.custom} {...external}>Kirim desain inspirasimu ↗</a>
       </nav>
       <LinkButton className="button header-booking">Kirim desain inspirasimu</LinkButton>
@@ -49,7 +49,7 @@ function HeroPhoto({ post, priority = false }) {
 function Hero() {
   const media = selectHeroMedia(useInstagramFeed());
   return <>
-    <section className="hero-intro container"><p className="eyebrow">NAIL ART STUDIO · PALEMBANG</p><h1>Your inspiration. Your nails.</h1><p>Bawa desain apa pun yang kamu suka. Kami kreasikan jadi nail art untukmu.</p></section>
+    <section className="hero-intro container"><p className="eyebrow">NAIL ART STUDIO · PALEMBANG</p><h1>Your inspiration. Your nails.</h1><p>Custom nail art, nail extensions, dan press-on di Chii Nails Palembang.<br />Bawa desain yang kamu suka. Kami kreasikan jadi milikmu.</p></section>
     <section className="mosaic container" aria-label="Karya nail art Chii">
       <div className="mosaic-feature"><HeroPhoto post={media[0]} key={media[0].id + (media[0].imageUrl || '')} priority /><div className="mosaic-caption"><h2>Your nails. Your little joy.</h2><p>Bawa inspirasimu. Kita wujudkan.</p><LinkButton>Kirim desain inspirasimu</LinkButton></div></div>
       <div className="mosaic-support"><HeroPhoto post={media[1]} key={media[1].id + (media[1].imageUrl || '')} /><div className="mosaic-pair"><HeroPhoto post={media[2]} key={media[2].id + (media[2].imageUrl || '')} /><HeroPhoto post={media[3]} key={media[3].id + (media[3].imageUrl || '')} /></div></div>
@@ -59,7 +59,7 @@ function Hero() {
 }
 
 function Services() {
-  return <section id="services" className="section container"><p className="eyebrow">THE SERVICE MENU</p><h2>Pilih perawatan, temukan gayamu.</h2><p className="muted">Dari simple sampai statement. Kirim referensi untuk konsultasi desain dan harga.</p><div className="service-grid">{services.map(service => <article className="service-card" key={service.title}><p className="eyebrow">{service.kicker}</p><h3>{service.title}</h3><p>{service.description}</p><a href={salon.custom} {...external}>Konsultasi via WhatsApp →</a></article>)}</div><p className="small muted">Harga mengikuti desain dan tingkat kesulitan. Konfirmasi harga saat booking.</p></section>;
+  return <section id="services" className="section container"><p className="eyebrow">THE SERVICE MENU</p><h2>Nail art &amp; extensions, made for you.</h2><p className="muted">Dari simple sampai statement. Kirim referensi untuk konsultasi desain dan harga.</p><div className="service-grid">{services.map(service => <article className="service-card" key={service.title}><p className="eyebrow">{service.kicker}</p><h3>{service.title}</h3><p>{service.description}</p><a href={salon.custom} {...external}>Konsultasi {service.title.toLowerCase()} →</a></article>)}</div><p className="small muted">Harga mengikuti desain dan tingkat kesulitan. Konfirmasi harga saat booking.</p></section>;
 }
 
 let instagramScript;
@@ -159,7 +159,7 @@ function InstagramSlider() {
 }
 
 function AboutIntro({ full = false }) {
-  return <section className="section container about-grid"><Photo name="naykilla" alt="Nail art custom warna-warni dengan detail karakter dan bintang" /><div><p className="eyebrow">MEET CHII</p><h2>Small studio.<br />So much imagination.</h2><p>Chii Nails adalah nail art studio di Palembang untuk kamu yang suka detail personal. Kami bangga bisa mengkreasikan desain sesuai permintaanmu—bawa warna, karakter, atau referensi yang kamu suka, lalu ceritakan ide set berikutnya.</p><p className="small accent">Nail art · Extensions · Custom press-on</p><LinkButton secondary>Kirim desain inspirasimu</LinkButton>{!full && <a className="text-link" href="/about.html">Tentang Chii & aturan booking →</a>}</div></section>;
+  return <section className="section container about-grid"><Photo name="naykilla" alt="Nail art custom warna-warni dengan detail karakter dan bintang" /><div><p className="eyebrow">MEET CHII</p><h2>Small studio.<br />So much imagination.</h2><p>Chii Nails adalah nail art studio di Palembang untuk kamu yang suka detail personal. Kami bangga bisa mengkreasikan desain sesuai permintaanmu—bawa warna, karakter, atau referensi yang kamu suka, lalu ceritakan ide set berikutnya.</p><p className="small accent">Nail art · Extensions · Custom press-on</p><LinkButton secondary>Kirim desain inspirasimu</LinkButton>{!full && <a className="text-link" href="/about">Tentang Chii & aturan booking →</a>}</div></section>;
 }
 
 function WhyChii() {
@@ -173,7 +173,7 @@ function WhyChii() {
 }
 
 function StudioPhoto() {
-  return <div className="studio-photo"><img src={image('studio')} alt="Ruang studio Chii yang sebenarnya, dengan dekorasi pink dan meja manicure" loading="lazy" decoding="async" /></div>;
+  return <div className="studio-photo"><img src={image('studio')} alt="Studio Chii Nails di Palembang dengan meja manicure dan dekorasi pink" loading="lazy" decoding="async" /></div>;
 }
 
 function StudioHours() {
@@ -198,11 +198,22 @@ function Visit() {
 }
 
 function Booking() {
-  return <section className="section booking"><div className="container"><p className="eyebrow">LET’S MAKE IT YOURS</p><h2>Got a design in mind?</h2><p>Kirim inspirasimu, pilih jadwal, dan wujudkan set yang kamu inginkan bersama Chii.</p><LinkButton>Kirim desain inspirasimu</LinkButton><a className="text-link" href="/about.html#booking-rules">Baca aturan booking terlebih dahulu →</a></div></section>;
+  return <section className="section booking"><div className="container"><p className="eyebrow">LET’S MAKE IT YOURS</p><h2>Got a design in mind?</h2><p>Kirim inspirasimu, pilih jadwal, dan wujudkan set yang kamu inginkan bersama Chii.</p><LinkButton>Kirim desain inspirasimu</LinkButton><a className="text-link" href="/about#booking-rules">Baca aturan booking terlebih dahulu →</a></div></section>;
 }
 
 function RulesPage() {
-  return <><section className="hero-intro container"><p className="eyebrow">ABOUT CHII & BOOKING RULES</p><h1>A little studio.<br />A lot of imagination.</h1><p>Desainmu personal. Waktu nail date-mu juga kami jaga.</p></section><AboutIntro full /><section id="booking-rules" className="section rules-section"><div className="container"><p className="eyebrow">BEFORE YOUR NAIL DATE</p><h2>Sebelum booking, baca dulu ya.</h2><p className="muted">Aturan ini membantu kami menyiapkan waktu khusus untuk setiap pelanggan.</p><div className="rules-layout"><div className="rules-list">{bookingRules.map((rule, index) => <details key={rule.title} open={index === 0}><summary><span className="rule-number">0{index + 1}</span>{rule.title}<span className="rule-plus" aria-hidden="true">+</span></summary><p>{rule.body}</p></details>)}</div><aside className="booking-note"><p className="eyebrow">A LITTLE REMINDER</p><h3>Your slot.<br />Reserved with a deposit.</h3><p>Booking wajib DP. Konfirmasikan nominal melalui WhatsApp. Pembatalan membuat DP hangus, dan keterlambatan dikenakan denda Rp10.000 per 10 menit.</p><StudioHours /><LinkButton href={salon.whatsapp}>Booking via WhatsApp</LinkButton></aside></div></div></section><Booking /></>;
+  return <><section className="hero-intro container"><p className="eyebrow">ABOUT CHII & BOOKING RULES</p><h1>A little studio.<br />A lot of imagination.</h1><p>Kenali Chii Nails, nail art studio di Palembang, dan aturan booking sebelum datang.</p></section><AboutIntro full /><section id="booking-rules" className="section rules-section"><div className="container"><p className="eyebrow">BEFORE YOUR NAIL DATE</p><h2>Sebelum booking, baca dulu ya.</h2><p className="muted">Aturan ini membantu kami menyiapkan waktu khusus untuk setiap pelanggan.</p><div className="rules-layout"><div className="rules-list">{bookingRules.map((rule, index) => <details key={rule.title} open={index === 0}><summary><span className="rule-number">0{index + 1}</span>{rule.title}<span className="rule-plus" aria-hidden="true">+</span></summary><p>{rule.body}</p></details>)}</div><aside className="booking-note"><p className="eyebrow">A LITTLE REMINDER</p><h3>Your slot.<br />Reserved with a deposit.</h3><p>Booking wajib DP. Konfirmasikan nominal melalui WhatsApp. Pembatalan membuat DP hangus, dan keterlambatan dikenakan denda Rp10.000 per 10 menit.</p><StudioHours /><LinkButton href={salon.whatsapp}>Booking via WhatsApp</LinkButton></aside></div></div></section><Booking /></>;
+}
+
+function ServiceQuestions() {
+  return <section id="questions" className="section container service-questions" aria-labelledby="questions-title">
+    <p className="eyebrow">A FEW THINGS TO KNOW</p><h2 id="questions-title">Before your next set.</h2>
+    <div className="rules-list">
+      <details><summary>Bagaimana cara booking nail art di Chii Nails?<span className="rule-plus" aria-hidden="true">+</span></summary><p>Kirim referensi desain, nama, nomor telepon, tanggal, dan jam melalui <a className="text-link" href={salon.whatsapp} {...external}>WhatsApp Chii Nails</a>. Konfirmasikan ketersediaan jadwal serta nominal DP. Studio hanya melayani dengan booking dan tidak menerima walk-in. Baca <a className="text-link" href="/about#booking-rules">aturan booking lengkap</a> sebelum menentukan jadwal.</p></details>
+      <details><summary>Berapa harga custom nail art dan extensions?<span className="rule-plus" aria-hidden="true">+</span></summary><p>Harga mengikuti desain dan tingkat kesulitan. Kirim foto inspirasi dan sampaikan budget-mu saat konsultasi agar harga bisa dikonfirmasi sebelum booking.</p></details>
+      <details><summary>Bisa pesan press-on dari luar Palembang?<span className="rule-plus" aria-hidden="true">+</span></summary><p>Bisa. Press-on nails custom dapat dikirim ke seluruh Indonesia. Hubungi Chii untuk membahas desain dan ukuran, lalu konfirmasikan ongkir serta estimasi pesanan. Untuk nail art dan extensions langsung, kunjungi <a className="text-link" href="/#visit">studio Chii Nails di Palembang</a> sesuai jadwal booking.</p></details>
+    </div>
+  </section>;
 }
 
 function FloatingChat() {
@@ -222,12 +233,12 @@ function FloatingChat() {
 }
 
 function Footer({ year }) {
-  return <footer className="container footer"><div><a className="footer-brand" href="/">Chii Nails_ · Nail Art Studio</a><a href="/about.html">About & booking rules</a><a href={salon.instagram} {...external}>Instagram ↗</a><a href={salon.whatsapp} {...external}>WhatsApp ↗</a></div><p>© {year} Chii Nails · Palembang. Made for your little moments.</p></footer>;
+  return <footer className="container footer"><div><a className="footer-brand" href="/">Chii Nails_ · Nail Art Studio</a><a href="/about">About & booking rules</a><a href={salon.instagram} {...external}>Instagram ↗</a><a href={salon.whatsapp} {...external}>WhatsApp ↗</a></div><p>© {year} Chii Nails · Palembang. Made for your little moments.</p></footer>;
 }
 
 export default function App({ pathname = '/', year = new Date().getFullYear() }) {
   const about = /^\/about(?:\.html)?\/?$/.test(pathname);
-  return <><a href="#main" className="skip-link">Lewati ke konten</a><Header /><main id="main">{about ? <RulesPage /> : <InstagramFeedProvider><Hero /><Services /><InstagramSlider /><WhyChii /><AboutIntro /><Visit /><Booking /></InstagramFeedProvider>}</main><Footer year={year} /><FloatingChat /></>;
+  return <><a href="#main" className="skip-link">Lewati ke konten</a><Header /><main id="main">{about ? <RulesPage /> : <InstagramFeedProvider><Hero /><Services /><InstagramSlider /><WhyChii /><AboutIntro /><Visit /><ServiceQuestions /><Booking /></InstagramFeedProvider>}</main><Footer year={year} /><FloatingChat /></>;
 }
 
 
