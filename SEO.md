@@ -1,6 +1,8 @@
 # Persiapan SEO Chii Nails
 
-Domain utama: **https://chiinails.pages.dev**. Alamat sebelumnya `webchiinails.pages.dev` memakai redirect 301 ke alamat baru, termasuk path dan query. Canonical, sitemap, robots dan structured data harus merujuk domain baru. Setup Search Console menunggu konfirmasi akun Google pemilik; jangan menganggap situs sudah terindeks sampai laporan Google mengonfirmasinya.
+Domain utama: **https://chiinails.pages.dev**. Alamat sebelumnya `webchiinails.pages.dev` memakai redirect 301 ke alamat baru, termasuk path dan query. Canonical, sitemap, robots dan structured data harus merujuk domain baru. Search Console memakai akun Google pemilik salon dan properti **Awalan URL** `https://chiinails.pages.dev/`; jangan menganggap situs sudah terindeks sampai laporan Google mengonfirmasinya.
+
+File verifikasi yang diunduh langsung dari Google: `public/googlefe4df279dce4c32d.html`. Build menyalinnya tanpa perubahan ke root hasil deploy. Pertahankan nama dan isinya setelah verifikasi berhasil; jangan hapus pada pembaruan berikutnya. Ini token verifikasi publik, bukan password atau token API Instagram. Untuk alamat pages.dev ini, gunakan file HTML tersebut melalui properti Awalan URL, bukan mencoba mengatur TXT DNS milik Cloudflare. Setelah file tersedia secara publik, pilih Verifikasi pada Search Console, kirim `/sitemap.xml`, dan minta pengindeksan halaman utama serta About.
 
 ## Yang sudah disiapkan di source
 
