@@ -41,7 +41,7 @@ export function structuredData(page, origin, salon) {
   ];
   if (page.path === '/') graph.push({
     '@type': 'NailSalon', '@id': businessId, name: salon.name, url: `${origin}/`,
-    image: [`${origin}/images/french.jpg`, `${origin}/images/studio.png`], logo: `${origin}/images/logo.jpg`,
+    image: [`${origin}/images/french.jpg`, `${origin}/images/studio-clean.jpg`], logo: `${origin}/images/logo.jpg`,
     description: `Nail art custom, extensions, dan press-on di Palembang. Booking wajib DP; tidak menerima walk-in. ${salon.lastBooking}.`,
     telephone: `+${new URL(salon.whatsapp).pathname.slice(1)}`,
     address: { '@type': 'PostalAddress', ...salon.postalAddress },

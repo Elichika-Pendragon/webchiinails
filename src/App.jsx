@@ -4,7 +4,7 @@ import { InstagramFeedProvider, useInstagramFeed } from './instagram-feed.jsx';
 import { selectHeroMedia } from './feed-data.js';
 import './styles.css';
 
-const image = (name) => `/images/${name}.${name === 'map' || name === 'studio' ? 'png' : 'jpg'}`;
+const image = (name) => name === 'studio' ? '/images/studio-clean.jpg' : `/images/${name}.${name === 'map' ? 'png' : 'jpg'}`;
 const external = { target: '_blank', rel: 'noopener noreferrer' };
 
 function LinkButton({ href = salon.custom, children, secondary = false, ...props }) {
@@ -176,6 +176,11 @@ function StudioPhoto() {
   return <div className="studio-photo"><img src={image('studio')} alt="Ruang studio Chii yang sebenarnya, dengan dekorasi pink dan meja manicure" loading="lazy" decoding="async" /></div>;
 }
 
+function StudioHours() {
+  const time = value => value.replace(':', '.');
+  return <div className="studio-hours"><table><caption>Jam layanan · WIB</caption><thead className="sr-only"><tr><th scope="col">Hari</th><th scope="col">Jam layanan dan batas booking</th></tr></thead><tbody>{salon.openingHours.map(day => <tr key={day.label}><th scope="row">{day.label}</th><td><strong>{time(day.opens)}–{time(day.closes)}</strong><small>Last booking {time(day.lastBooking)}</small></td></tr>)}</tbody></table><p className="booking-status"><strong>Booking only · Wajib DP</strong><span>Tidak menerima walk-in.</span></p></div>;
+}
+
 function MapArea() {
   const [live, setLive] = useState(false);
   const [mapReady, setMapReady] = useState(false);
@@ -189,7 +194,7 @@ function MapArea() {
 }
 
 function Visit() {
-  return <section id="visit" className="section container"><p className="eyebrow">VISIT US IN PERSON</p><h2>Your next nail date, right here.</h2><div className="visit-grid"><div><StudioPhoto /><h3 className="studio-title">Dewi Salon & Chii.Nails</h3><address>{salon.address}</address><p className="small accent">{salon.hours}<br />{salon.lastBooking}<br />Booking only · Tidak menerima walk-in</p><LinkButton href={salon.directions} secondary>Get directions ↗</LinkButton></div><MapArea /></div></section>;
+  return <section id="visit" className="section container"><p className="eyebrow">VISIT US IN PERSON</p><h2>Your next nail date, right here.</h2><div className="visit-grid"><div><StudioPhoto /><h3 className="studio-title">Dewi Salon & Chii.Nails</h3><address>{salon.address}</address><StudioHours /><LinkButton href={salon.directions} secondary>Get directions ↗</LinkButton></div><MapArea /></div></section>;
 }
 
 function Booking() {
@@ -197,7 +202,7 @@ function Booking() {
 }
 
 function RulesPage() {
-  return <><section className="hero-intro container"><p className="eyebrow">ABOUT CHII & BOOKING RULES</p><h1>A little studio.<br />A lot of imagination.</h1><p>Desainmu personal. Waktu nail date-mu juga kami jaga.</p></section><AboutIntro full /><section id="booking-rules" className="section rules-section"><div className="container"><p className="eyebrow">BEFORE YOUR NAIL DATE</p><h2>Sebelum booking, baca dulu ya.</h2><p className="muted">Aturan ini membantu kami menyiapkan waktu khusus untuk setiap pelanggan.</p><div className="rules-layout"><div className="rules-list">{bookingRules.map((rule, index) => <details key={rule.title} open={index === 0}><summary><span className="rule-number">0{index + 1}</span>{rule.title}<span className="rule-plus" aria-hidden="true">+</span></summary><p>{rule.body}</p></details>)}</div><aside className="booking-note"><p className="eyebrow">A LITTLE REMINDER</p><h3>Your slot.<br />Reserved with a deposit.</h3><p>Booking wajib DP. Konfirmasikan nominal melalui WhatsApp. Pembatalan membuat DP hangus, dan keterlambatan dikenakan denda Rp10.000 per 10 menit.</p><p><strong>{salon.hours}</strong><br />{salon.lastBooking}<br />Booking only · Tidak menerima walk-in</p><LinkButton href={salon.whatsapp}>Booking via WhatsApp</LinkButton></aside></div></div></section><Booking /></>;
+  return <><section className="hero-intro container"><p className="eyebrow">ABOUT CHII & BOOKING RULES</p><h1>A little studio.<br />A lot of imagination.</h1><p>Desainmu personal. Waktu nail date-mu juga kami jaga.</p></section><AboutIntro full /><section id="booking-rules" className="section rules-section"><div className="container"><p className="eyebrow">BEFORE YOUR NAIL DATE</p><h2>Sebelum booking, baca dulu ya.</h2><p className="muted">Aturan ini membantu kami menyiapkan waktu khusus untuk setiap pelanggan.</p><div className="rules-layout"><div className="rules-list">{bookingRules.map((rule, index) => <details key={rule.title} open={index === 0}><summary><span className="rule-number">0{index + 1}</span>{rule.title}<span className="rule-plus" aria-hidden="true">+</span></summary><p>{rule.body}</p></details>)}</div><aside className="booking-note"><p className="eyebrow">A LITTLE REMINDER</p><h3>Your slot.<br />Reserved with a deposit.</h3><p>Booking wajib DP. Konfirmasikan nominal melalui WhatsApp. Pembatalan membuat DP hangus, dan keterlambatan dikenakan denda Rp10.000 per 10 menit.</p><StudioHours /><LinkButton href={salon.whatsapp}>Booking via WhatsApp</LinkButton></aside></div></div></section><Booking /></>;
 }
 
 function FloatingChat() {
@@ -213,7 +218,7 @@ function FloatingChat() {
     document.addEventListener('keydown', dismiss); document.addEventListener('pointerdown', dismiss);
     return () => { document.removeEventListener('keydown', dismiss); document.removeEventListener('pointerdown', dismiss); };
   }, [open]);
-  return <div className="chat-widget" ref={widget}>{open && <section id="chat-panel" className="chat-panel" role="region" aria-labelledby="chat-title"><div className="chat-heading"><h2 id="chat-title">Let’s talk nails</h2><button ref={closeButton} className="icon-button" aria-label="Tutup chat" onClick={() => { setOpen(false); trigger.current?.focus(); }}>×</button></div><p className="muted">Punya desain incaran? Kirim referensimu lewat:</p><a className="contact-option" href={salon.custom} {...external}><span className="contact-symbol" aria-hidden="true">W</span><span><strong>WhatsApp</strong><small>Konsultasi desain & booking</small></span><span aria-hidden="true">↗</span></a><a className="contact-option" href={salon.instagram} {...external}><span className="contact-symbol" aria-hidden="true">◎</span><span><strong>Instagram</strong><small>Lihat karya & kirim DM</small></span><span aria-hidden="true">↗</span></a></section>}<button ref={trigger} className="chat-trigger" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="chat-panel"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-8 8 9 9 0 0 1-4-.9L3 20l1.4-4.4A8 8 0 1 1 20 11.5Z" stroke="currentColor" strokeWidth="1.6" /><path d="M8 9h7M8 13h5" stroke="currentColor" strokeWidth="1.6" /></svg>{open ? 'Close chat' : 'Chat with us'}</button></div>;
+  return <div className="chat-widget" ref={widget}>{open && <section id="chat-panel" className="chat-panel" role="region" aria-labelledby="chat-title"><div className="chat-heading"><h2 id="chat-title">Let’s talk nails</h2><button ref={closeButton} className="icon-button" aria-label="Tutup chat" onClick={() => { setOpen(false); trigger.current?.focus(); }}>×</button></div><p className="muted">Punya desain incaran? Kirim referensimu lewat:</p><a className="contact-option" href={salon.custom} {...external}><span className="contact-symbol" aria-hidden="true"><img src="/images/whatsapp.svg" width="28" height="28" alt="" /></span><span><strong>WhatsApp</strong><small>Konsultasi desain & booking</small></span><span aria-hidden="true">↗</span></a><a className="contact-option" href={salon.instagram} {...external}><span className="contact-symbol" aria-hidden="true"><img src="/images/instagram.svg" width="28" height="28" alt="" /></span><span><strong>Instagram</strong><small>Lihat karya & kirim DM</small></span><span aria-hidden="true">↗</span></a></section>}<button ref={trigger} className="chat-trigger" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="chat-panel"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-8 8 9 9 0 0 1-4-.9L3 20l1.4-4.4A8 8 0 1 1 20 11.5Z" stroke="currentColor" strokeWidth="1.6" /><path d="M8 9h7M8 13h5" stroke="currentColor" strokeWidth="1.6" /></svg>{open ? 'Close chat' : 'Chat with us'}</button></div>;
 }
 
 function Footer({ year }) {

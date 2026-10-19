@@ -15,8 +15,8 @@ export const salon = {
     addressLocality: 'Palembang', addressRegion: 'Sumatera Selatan', postalCode: '30116', addressCountry: 'ID',
   },
   openingHours: [
-    { days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '08:00', closes: '17:00' },
-    { days: ['Saturday', 'Sunday'], opens: '08:00', closes: '12:00' },
+    { label: 'Senin–Jumat', days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '08:00', closes: '17:00', lastBooking: '15:00' },
+    { label: 'Sabtu–Minggu', days: ['Saturday', 'Sunday'], opens: '08:00', closes: '12:00', lastBooking: '10:00' },
   ],
 };
 

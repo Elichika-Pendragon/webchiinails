@@ -18,7 +18,7 @@ pnpm build
 pnpm preview
 ```
 
-Use Cloudflare Pages with Git integration for the site and its Instagram Function; follow [DEPLOYMENT.md](./DEPLOYMENT.md). Static-only hosting can serve `dist/` but cannot run the automatic Instagram API. Keep both `index.html` and `about.html`. Root-relative paths expect hosting at a domain root. Nothing has been published or connected to a domain yet.
+Use Cloudflare Pages with Git integration for the site and its Instagram Function; follow [DEPLOYMENT.md](./DEPLOYMENT.md). Static-only hosting can serve `dist/` but cannot run the automatic Instagram API. Keep both `index.html` and `about.html`. Root-relative paths expect hosting at a domain root. The site is live at https://webchiinails.pages.dev with automatic deployment from the main branch. Instagram authorization and automatic renewal activation are deferred at the owner's request.
 
 ## Edit the content
 
@@ -55,11 +55,15 @@ Supabase is not needed for this feed. Consider it later only for stored bookings
 
 Official references: [Vite guide](https://vite.dev/guide/), [Supabase React quickstart](https://supabase.com/docs/guides/getting-started/quickstarts/reactjs), [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security).
 
-## Before launch
+## Owner follow-up
 
 Confirm that 0851-1102-8211 is the preferred booking number (older public listings use a different number), confirm the DP amount and payment instructions, and test the four embeds on the production domain. Keep the Instagram-sourced assets only with the salon owner's authorization. The supplied studio photo is cropped from a story screenshot; replace it with the original high-resolution photo when available.
 
 Design: https://www.figma.com/design/lBhcVrZPmNAJO4MlFg9bVC/Chii-Nails-web-mark-1?node-id=9-21
+
+## Studio and mobile polish
+
+The studio photograph has been retouched to remove the captured cursor and encoded as `studio-clean.jpg` (about 180 kB). See [STUDIO-RETOUCH.md](./STUDIO-RETOUCH.md) for the built-in image edit prompt. Hours use a shared accessible weekday/weekend table, with separate last-booking cutoffs and a DP/no-walk-in reminder. Chat uses local SVG logos from [Simple Icons](https://github.com/simple-icons/simple-icons), distributed under [CC0](https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md); their fills match the existing brand color. No icon package is required.
 
 Figma contains editable desktop/mobile layouts and visual previews of the post slider. The DP policy, weekday/weekend hours, last-booking cutoffs and no-walk-in wording have also been updated directly in the Figma editor through Chrome after the connector reached its limit. No Figma Code Layer was created because the connector's code upload tools were unavailable; the runnable React source is separate.
 
