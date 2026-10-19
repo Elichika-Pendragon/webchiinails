@@ -18,7 +18,7 @@ pnpm build
 pnpm preview
 ```
 
-Use Cloudflare Pages with Git integration for the site and its Instagram Function; follow [DEPLOYMENT.md](./DEPLOYMENT.md). Static-only hosting can serve `dist/` but cannot run the automatic Instagram API. Keep both `index.html` and `about.html`. Root-relative paths expect hosting at a domain root. The site is live at https://webchiinails.pages.dev with automatic deployment from the main branch. Instagram authorization and automatic renewal activation are deferred at the owner's request.
+Use Cloudflare Pages with Git integration for the site and its Instagram Function; follow [DEPLOYMENT.md](./DEPLOYMENT.md). Static-only hosting can serve `dist/` but cannot run the automatic Instagram API. Keep both `index.html` and `about.html`. Root-relative paths expect hosting at a domain root. The site is live at https://chiinails.pages.dev with automatic deployment from the main branch of Elichika-Pendragon/webchiinails. The previous webchiinails.pages.dev address permanently forwards to the new address, preserving paths and query strings. Instagram authorization and automatic renewal activation remain pending owner-account setup.
 
 ## Edit the content
 

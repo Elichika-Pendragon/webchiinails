@@ -1,5 +1,7 @@
 # Tutorial publish Chii Nails dengan biaya rendah
 
+Alamat utama saat ini: **https://chiinails.pages.dev**. Proyek Cloudflare Pages `chiinails` tetap memakai repo private `Elichika-Pendragon/webchiinails`, branch `main`. Alamat lama `webchiinails.pages.dev` diarahkan dengan 301 melalui Bulk Redirects Cloudflare; path dan query tetap dibawa. Jangan hapus proyek lama selama redirect masih digunakan. Instagram dan Google Search Console memerlukan otorisasi/verifikasi akun pemilik yang benar sebelum dianggap aktif.
+
 Diperiksa 19 Oktober 2026. Pilihan pemilik: **tanpa LightWidget**, memakai Cloudflare Pages Free + API Instagram sendiri + Worker renewal harian + KV terenkripsi, dengan booking melalui WhatsApp. Lihat [LOW-MAINTENANCE.md](./LOW-MAINTENANCE.md). Source renewal sudah tersedia, tetapi setup/otorisasi/deployment produksi belum dilakukan. Tidak perlu membeli VPS, shared hosting, database booking atau payment gateway.
 
 ## Perkiraan biaya yang bisa dipilih

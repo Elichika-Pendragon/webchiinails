@@ -1,5 +1,7 @@
 # Persiapan SEO Chii Nails
 
+Domain utama: **https://chiinails.pages.dev**. Alamat sebelumnya `webchiinails.pages.dev` memakai redirect 301 ke alamat baru, termasuk path dan query. Canonical, sitemap, robots dan structured data harus merujuk domain baru. Setup Search Console menunggu konfirmasi akun Google pemilik; jangan menganggap situs sudah terindeks sampai laporan Google mengonfirmasinya.
+
 ## Yang sudah disiapkan di source
 
 - Halaman utama dan About dibuat menjadi HTML lengkap saat build. Google dan pengunjung dapat membaca layanan, lokasi dan aturan tanpa menunggu React. React mengaktifkan interaksi setelah halaman dimuat.

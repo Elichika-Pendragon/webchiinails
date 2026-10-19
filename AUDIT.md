@@ -54,11 +54,18 @@ Checked 19 October 2026. User's newest rules take precedence over older screensh
 
 Chrome checked the corrected hero at desktop (660px total height) and mobile (764px with fixed 380/190/170px image rows), including a narrow 300px available CSS viewport: document width matched viewport and the care strip started after the hero. Google Maps external CID link resolved to the exact salon. Embed load was slow in the testing browser, so the loading card falls back to a direct location link after 12 seconds. The owner's subsequent phone screenshot confirms that the actual business map renders.
 
-## Photo, hours and chat polish — ready for the next commit
+## Photo, hours and chat polish — deployed
 
 - Replaced the cursor-marked studio screenshot with `studio-clean.jpg`, retouched with the built-in image editing tool and encoded at 180 kB. The original is backed up privately and removed from published assets. Updated the structured-data image URL too.
 - Home and About share one weekday/weekend hours table. Each opening range keeps its own last-booking cutoff, followed by the required-DP and no-walk-in notice. Mobile address, heading and button spacing adjusted.
 - Replaced W/◎ placeholders with local WhatsApp and Instagram SVG logos. No dependency added.
 - All 16 Node tests and the production build pass. Browser checks at 380px available CSS width found no page overflow; both 28px logos loaded and the open chat stayed between x=16 and x=364. Escape closed it. The About hours table renders correctly; no console errors in the local preview.
 - Desktop screenshots confirm the cursor removal, hours layout and recognizable chat logos. Narrow-browser screenshot capture was unreliable; mobile checks used rendered DOM dimensions and interaction checks. A fresh physical-phone visual check after deployment remains useful.
-- These changes are prepared locally and are not live until committed and pushed to `main`. Instagram connection remains deferred.
+- These changes were pushed as commit `7333cd5` and deployed successfully. Instagram connection still requires owner-account authorization.
+
+## Shorter website address and SEO
+
+- The main website is now https://chiinails.pages.dev, built from the same private GitHub repository and main branch. New Pages project: `chiinails`; build `pnpm build`; output `dist`; `PNPM_VERSION=11.25.0`; `SITE_URL=https://chiinails.pages.dev`.
+- Home canonical, robots metadata and the cleaned studio asset were checked on the new live domain. Existing rendered page content and NailSalon structured data are retained.
+- Cloudflare account-level Bulk Redirect list `chii_legacy_address` and rule `Chii Nails new website address` forward the old address with HTTP 301, preserving paths and query strings. A browser visit to the old `/about?source=old-link` resolved to the same path and query on chiinails.pages.dev. No project was deleted.
+- Google Search Console setup has started but ownership is not yet verified; the intended Google account must be confirmed first. No sitemap submission or indexing request has been confirmed yet. Instagram remains awaiting the intended Meta developer account; no developer terms accepted or app created in the personal Facebook session.
