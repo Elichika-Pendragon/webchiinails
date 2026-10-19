@@ -4,7 +4,7 @@ Astro generates five HTML pages using the existing React presentation components
 
 ## Run locally
 
-Use Node **22.22.0 or newer** on a supported even-numbered release. This prototype was built with Node 24.19.0 and pnpm 11.25.0. Cloudflare's earlier Node 22.16.0 default must be updated before deploying this migration.
+Use Node **22.22.0 or newer** on a supported even-numbered release. Local and successful Cloudflare production builds use Node 24.19.0 and pnpm 11.25.0; Cloudflare is already configured. The site is live at https://chiinails.pages.dev.
 
 ```powershell
 pnpm.cmd install --frozen-lockfile
@@ -39,4 +39,4 @@ Instagram authorization remains pending owner setup. Local curated posts and pho
 
 Deploy to **Cloudflare Pages**, with build command `pnpm build`, output `dist`, and the root `functions/` directory. This is static Astro with **no Cloudflare Astro adapter**. Keep the existing Pages Functions/KV bindings and separate scheduled renewal Worker. `pnpm build:worker` and `pnpm seed:instagram` remain available; never commit credentials or `.private/`.
 
-Read [MIGRATION-ASTRO.md](MIGRATION-ASTRO.md) before switching production. All existing operational documents are preserved. [README-REACT.md](README-REACT.md) retains the original React instructions as historical reference; its Vite/prerender commands are superseded here.
+Read [MIGRATION-ASTRO.md](MIGRATION-ASTRO.md) for architecture and rollback, [REQUIREMENTS.md](REQUIREMENTS.md) for the consolidated decisions, and [PERFORMANCE.md](PERFORMANCE.md) for measured results. Mobile Home includes automatic Maps after core loading as the section approaches the viewport. EmDash was cancelled; no CMS or billing subscription was activated. All previous operational documents are preserved. [README-REACT.md](README-REACT.md) retains historical React instructions; its Vite/prerender commands are superseded here.

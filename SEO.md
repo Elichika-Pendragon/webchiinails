@@ -28,7 +28,7 @@ Preview branch selain `SEO_PRODUCTION_BRANCH` tetap noindex. Cloudflare juga mem
 2. Untuk pages.dev gunakan properti **URL prefix** dengan alamat HTTPS lengkap. Untuk domain sendiri dapat memakai properti Domain dengan verifikasi DNS.
 3. Jika memilih verifikasi HTML tag, salin hanya nilai `content` ke build variable `GOOGLE_SITE_VERIFICATION`, lalu deploy ulang dan klik Verify. String verifikasi ini bersifat publik; bukan password.
 4. Kirim `sitemap.xml`, lalu gunakan URL Inspection untuk halaman utama, `/services`, `/custom-sets`, `/visit`, dan `/about`. Periksa status indexing setelah Google memprosesnya; hasil tidak selalu langsung.
-5. Periksa structured data melalui [Rich Results Test](https://search.google.com/test/rich-results) dan performa melalui [PageSpeed Insights](https://pagespeed.web.dev/). Skor produksi belum diukur dalam proyek ini.
+5. Periksa structured data melalui [Rich Results Test](https://search.google.com/test/rich-results) dan performa melalui [PageSpeed Insights](https://pagespeed.web.dev/). Kelima halaman sudah diukur pada Chrome Lighthouse mobile/desktop; lihat [PERFORMANCE.md](PERFORMANCE.md). Skor SEO bukan konfirmasi indexing atau peringkat.
 
 ## SEO lokal yang perlu pemilik lakukan
 

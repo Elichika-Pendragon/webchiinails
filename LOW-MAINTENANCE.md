@@ -8,9 +8,9 @@ Keputusan pemilik 19 Oktober 2026: integrasi Instagram sendiri, tanpa layanan fe
 | Booking dan DP | WhatsApp | Jessica mengonfirmasi desain, jadwal dan DP; website tidak mengecek slot otomatis. |
 | Galeri | API resmi, cache lima menit, slider embed | Posting Instagram seperti biasa setelah koneksi aktif. |
 | Renewal | Worker harian dan token KV terenkripsi | Berjalan tanpa kunjungan, renewal sekitar 30 hari untuk token 60 hari. |
-| Maps | Peta publik dan tautan pemilik | Update Google Business Profile jika data usaha berubah. |
+| Maps | Otomatis setelah halaman siap dan bagian peta mendekati layar; termasuk Home mobile | Update Google Business Profile jika data usaha berubah. |
 | Konten utama | Teks/foto lokal | Jam, WA, alamat dan aturan perlu diperbarui saat berubah; tidak otomatis ditarik dari bio IG. |
-| Domain | pages.dev atau domain sendiri | Auto-renew bila membeli domain, cek pembayaran dan email. |
+| Domain | chiinails.pages.dev gratis | Tidak ada pembelian/renewal domain berbayar. |
 | SEO | HTML/metadata/sitemap saat build | Search Console disiapkan sekali; posting IG tidak perlu build ulang. |
 
 Setup pertama memerlukan operator teknis: otorisasi profesional Meta, encrypted seed, KV bindings, secrets dan Worker. Ikuti [INSTAGRAM-SETUP.md](./INSTAGRAM-SETUP.md). Tidak ada endpoint renewal publik atau token di JavaScript browser.
@@ -21,3 +21,5 @@ Meta masih dapat mencabut izin. Jika itu terjadi, pemilik perlu mengotorisasi ul
 
 Jika Instagram gagal, foto pilihan lokal/link asli, WhatsApp dan Maps tetap tersedia; fallback tidak diklaim sebagai post terbaru. Simpan akses/pemulihan GitHub, Cloudflare, Meta dan domain dalam pengelolaan salon. Perubahan API besar masih dapat memerlukan developer.
 
+
+Keputusan 20 Oktober 2026: tetap Pages/Workers Free dan chiinails.pages.dev. EmDash dibatalkan; tidak ada CMS, R2 subscription, billing activation, atau upgrade berbayar. Data usaha yang berubah tetap memerlukan edit source/commit; tidak ada CMS yang diam-diam dipasang.

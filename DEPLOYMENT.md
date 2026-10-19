@@ -1,32 +1,26 @@
-# Tutorial publish Chii Nails dengan biaya rendah
+# Tutorial Chii Nails di hosting gratis
 
-Alamat utama saat ini: **https://chiinails.pages.dev**. Proyek Cloudflare Pages `chiinails` tetap memakai repo private `Elichika-Pendragon/webchiinails`, branch `main`. Alamat lama `webchiinails.pages.dev` diarahkan dengan 301 melalui Bulk Redirects Cloudflare; path dan query tetap dibawa. Jangan hapus proyek lama selama redirect masih digunakan. Instagram dan Google Search Console memerlukan otorisasi/verifikasi akun pemilik yang benar sebelum dianggap aktif.
+Alamat utama saat ini: **https://chiinails.pages.dev**. Proyek Cloudflare Pages `chiinails` memakai repo private `Elichika-Pendragon/webchiinails`, branch `main`. Alamat lama `webchiinails.pages.dev` memakai 301 melalui Bulk Redirects; path/query dipertahankan. Jangan hapus proyek lama selama redirect digunakan. Search Console URL-prefix sudah diverifikasi; indexing belum dikonfirmasi. Instagram masih menunggu otorisasi Meta.
 
-Diperiksa 19 Oktober 2026. Pilihan pemilik: **tanpa LightWidget**, memakai Cloudflare Pages Free + API Instagram sendiri + Worker renewal harian + KV terenkripsi, dengan booking melalui WhatsApp. Lihat [LOW-MAINTENANCE.md](./LOW-MAINTENANCE.md). Source renewal sudah tersedia, tetapi setup/otorisasi/deployment produksi belum dilakukan. Tidak perlu membeli VPS, shared hosting, database booking atau payment gateway.
+Diperiksa 20 Oktober 2026. Pilihan pemilik: **tanpa LightWidget**, memakai Cloudflare Pages Free + API Instagram sendiri + Worker renewal harian + KV terenkripsi, dengan booking melalui WhatsApp. Lihat [LOW-MAINTENANCE.md](./LOW-MAINTENANCE.md). Source renewal sudah tersedia, tetapi setup/otorisasi/deployment produksi belum dilakukan. Tidak perlu membeli VPS, shared hosting, database booking atau payment gateway.
 
-## Perkiraan biaya yang bisa dipilih
+## Batas biaya: gratis saja
 
-| Pilihan | Hosting | Alamat website | Biaya domain yang ditampilkan registrar |
-| --- | --- | --- | --- |
-| Mulai gratis | Rp0 dalam batas paket Free | Subdomain `nama-proyek.pages.dev` | Rp0 |
-| Domain custom paling hemat | Rp0 dalam batas Free | Domain `.my.id` pilihanmu | Rumahweb menampilkan promo Rp9.900 tahun pertama; renewal Rp25.000/tahun |
-| Pilihan saya untuk brand salon | Rp0 dalam batas Free | Domain `.com` pilihanmu | Rumahweb menampilkan promo Rp137.000 tahun pertama; renewal Rp201.000/tahun |
+Keputusan terakhir pemilik: tidak ada pengeluaran. Gunakan Cloudflare Pages Free dan alamat chiinails.pages.dev. Tidak ada domain berbayar, upgrade Workers, VPS, atau layanan feed berbayar yang diaktifkan. EmDash dibatalkan karena upload gambarnya memerlukan R2 dengan hubungan billing. R2 tidak diaktifkan.
 
-Harga domain adalah harga halaman penawaran, bukan tagihan final. Nama harus tersedia; cek pajak, promo, dan harga renewal saat checkout. Tidak perlu membeli paket hosting dari registrar jika memakai Cloudflare Pages. Contoh nama di panduan ini bukan nama yang sudah dipesan.
+Panduan domain/hosting berbayar sebelumnya adalah riwayat yang tidak dipilih; salinannya tetap tersedia di archive/react-before-astro. Tidak perlu mengubah DNS atau membeli domain untuk menggunakan situs ini.
 
 Cloudflare mencantumkan static asset requests gratis tanpa batas dan Pages Functions memakai kuota Workers Free: 100.000 request per hari, dibagi dengan Workers lain dalam akun. Batas CPU dan batas paket lain tetap berlaku. Endpoint proyek ini hanya dipanggil pada `/api/instagram`; foto, CSS dan halaman tidak perlu menjalankan Function. Kuota Meta Instagram terpisah. Ini perkiraan kecocokan untuk salon kecil, bukan jaminan hosting gratis tanpa batas selamanya. [Harga Cloudflare](https://developers.cloudflare.com/pages/functions/pricing/), [paket Workers](https://www.cloudflare.com/plans/developer-platform/), [domain Rumahweb](https://www.rumahweb.com/domain-murah/).
 
-Saya tidak merekomendasikan Vercel Hobby untuk website salon komersial karena paket tersebut dibatasi untuk penggunaan personal/nonkomersial. Adapter Vercel tetap tersedia jika nanti memilih paket yang sesuai. Netlify Free alternatifnya memiliki 300 kredit/bulan yang dibagi untuk beberapa jenis penggunaan; Cloudflare lebih sederhana untuk kebutuhan ini. [Vercel Hobby](https://vercel.com/docs/plans/hobby), [harga Netlify](https://www.netlify.com/pricing/).
-
 ## Migrasi Astro — 20 Oktober 2026
 
-Folder ini adalah prototipe lokal Astro, belum mengganti produksi. Astro membuat lima halaman statis: Home, Services, Custom Sets & Prices, Visit, About. React hanya dipakai saat build; interaksi browser memakai controller native. Panduan hosting dan API tetap berlaku dengan koreksi Astro di bawah. Simpan semua bindings Pages Functions/KV dan Worker terpisah; output tetap dist. Lihat [MIGRATION-ASTRO.md](./MIGRATION-ASTRO.md).
+Astro sudah mengganti build produksi dan berhasil dideploy. Lima halaman statis: Home, Services, Custom Sets & Prices, Visit, About. React hanya saat build; browser memakai controller native. Desktop tetap scrolling, mobile memakai halaman terpisah dan lokasi/Maps otomatis di Home. Output tetap dist. Kode Pages Functions/KV dan Worker dipertahankan, aktivasi Meta/KV/cron masih pending. Node 24.19.0 sudah dikonfigurasi. Lihat [MIGRATION-ASTRO.md](./MIGRATION-ASTRO.md). Bagian setup di bawah untuk pemulihan/setup ulang, bukan pekerjaan yang harus diulang pemilik sekarang.
 
 ## 1. Siapkan folder proyek
 
 Ekstrak ZIP source. Folder proyek yang benar berisi `package.json`, `src/`, `public/`, `functions/` dan `server/` pada tingkat yang sama. Jangan hanya mengambil `dist`, karena integrasi Instagram memerlukan kode server di `functions/`.
 
-Untuk mencoba di komputer sendiri, instal Node.js LTS yang kompatibel (22.22.0+ pada versi genap yang didukung; prototipe ini memakai Node 24.19.0) dari [nodejs.org](https://nodejs.org/en/download). Buka ulang PowerShell setelah instalasi. Siapkan package manager sekali dengan `npm install --global pnpm@11.25.0`. Lalu buka terminal pada folder proyek:
+Untuk mencoba di komputer sendiri, instal Node.js LTS yang kompatibel (22.22.0+ pada versi genap yang didukung; versi ini memakai Node 24.19.0) dari [nodejs.org](https://nodejs.org/en/download). Buka ulang PowerShell setelah instalasi. Siapkan package manager sekali dengan `npm install --global pnpm@11.25.0`. Lalu buka terminal pada folder proyek:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -77,13 +71,9 @@ Website dapat dibuka sebelum API siap menggunakan foto/post lokal. Untuk feed ot
 
 Worker bekerja tanpa kunjungan dan menyimpan token baru sekitar setiap 30 hari untuk token 60 hari. Cache feed sekitar lima menit. Meta tetap dapat mencabut izin; reconnect/reseed memerlukan pemilik dan operator. OAuth dashboard dan alert otomatis belum disediakan. Jangan mengirim token/key ke chat atau memasukkannya ke GitHub. [Pengaturan secrets](https://developers.cloudflare.com/pages/functions/bindings/#secrets).
 
-## 5. Domain custom, jika ingin
+## 5. Domain tetap gratis
 
-1. Beli **domain saja** di registrar pilihanmu setelah memeriksa harga perpanjangan. Hosting gratis bisa dipakai dulu tanpa domain.
-2. Pada Pages → **Custom domains**, tambahkan domain melalui alur yang disediakan Cloudflare.
-3. Domain utama/apex biasanya memerlukan zone domain di akun Cloudflare dan nameserver Cloudflare. Untuk subdomain, ikuti CNAME yang diminta oleh setup Pages. Jangan membuat record DNS secara acak sebelum domain ditambahkan ke proyek.
-4. Jika domain sudah dipakai untuk email, pertahankan record MX/TXT yang diperlukan saat mengatur DNS.
-5. Tunggu sampai domain dan HTTPS dinyatakan aktif, lalu tes halaman utama, About, Maps, WhatsApp dan API dari alamat baru. [Panduan domain Cloudflare](https://developers.cloudflare.com/pages/configuration/custom-domains/).
+Pertahankan chiinails.pages.dev sebagai domain utama. HTTPS sudah disediakan Pages. Tidak ada pembelian atau perpindahan domain dalam scope ini.
 
 ## 6. Pemeriksaan sebelum memasang link di bio Instagram
 

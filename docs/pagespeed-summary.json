@@ -1,0 +1,137 @@
+{
+  "measuredRelease": "0fca81d60401a31166e5239874a596150103cd82",
+  "date": "2026-10-20",
+  "notes": "Reports precede the one-byte map loading hint correction and About eyebrow contrast correction. Maps are absent from initial Home viewport in both versions; do not attribute unmeasured scores to a later release.",
+  "results": [
+    {
+      "path": "/",
+      "mobile": {
+        "performance": 100,
+        "accessibility": 100,
+        "bestPractices": 96,
+        "seo": 100,
+        "fcp": "0.9 s",
+        "lcp": "1.4 s",
+        "tbt": "0 ms",
+        "cls": "0.028",
+        "speedIndex": "2.2 s"
+      },
+      "desktop": {
+        "performance": 100,
+        "accessibility": 100,
+        "bestPractices": 96,
+        "seo": 100,
+        "fcp": "0.3 s",
+        "lcp": "0.4 s",
+        "tbt": "0 ms",
+        "cls": "0",
+        "speedIndex": "0.3 s"
+      },
+      "report": "https://pagespeed.web.dev/analysis/https-chiinails-pages-dev/iou4ajqzi0?form_factor=desktop"
+    },
+    {
+      "path": "/services",
+      "mobile": {
+        "performance": 100,
+        "accessibility": 100,
+        "bestPractices": 100,
+        "seo": 100,
+        "fcp": "0.9 s",
+        "lcp": "1.2 s",
+        "tbt": "0 ms",
+        "cls": "0",
+        "speedIndex": "0.9 s"
+      },
+      "desktop": {
+        "performance": 100,
+        "accessibility": 100,
+        "bestPractices": 100,
+        "seo": 100,
+        "fcp": "0.3 s",
+        "lcp": "0.3 s",
+        "tbt": "0 ms",
+        "cls": "0.001",
+        "speedIndex": "0.3 s"
+      },
+      "report": "https://pagespeed.web.dev/analysis/https-chiinails-pages-dev-services/malwq9vqxr?form_factor=desktop"
+    },
+    {
+      "path": "/custom-sets",
+      "mobile": {
+        "performance": 100,
+        "accessibility": 100,
+        "bestPractices": 96,
+        "seo": 100,
+        "fcp": "0.9 s",
+        "lcp": "1.7 s",
+        "tbt": "0 ms",
+        "cls": "0",
+        "speedIndex": "1.0 s"
+      },
+      "desktop": {
+        "performance": 100,
+        "accessibility": 100,
+        "bestPractices": 96,
+        "seo": 100,
+        "fcp": "0.2 s",
+        "lcp": "0.4 s",
+        "tbt": "0 ms",
+        "cls": "0",
+        "speedIndex": "0.5 s"
+      },
+      "report": "https://pagespeed.web.dev/analysis/https-chiinails-pages-dev-custom-sets/g0cqotrqtb?form_factor=desktop"
+    },
+    {
+      "path": "/visit",
+      "mobile": {
+        "performance": 100,
+        "accessibility": 100,
+        "bestPractices": 96,
+        "seo": 100,
+        "fcp": "0.9 s",
+        "lcp": "1.2 s",
+        "tbt": "0 ms",
+        "cls": "0",
+        "speedIndex": "0.9 s"
+      },
+      "desktop": {
+        "performance": 100,
+        "accessibility": 100,
+        "bestPractices": 96,
+        "seo": 100,
+        "fcp": "0.3 s",
+        "lcp": "0.4 s",
+        "tbt": "40 ms",
+        "cls": "0",
+        "speedIndex": "1.0 s"
+      },
+      "report": "https://pagespeed.web.dev/analysis/https-chiinails-pages-dev-visit/7uznyoe276?form_factor=desktop"
+    },
+    {
+      "path": "/about",
+      "mobile": {
+        "performance": 100,
+        "accessibility": 95,
+        "bestPractices": 100,
+        "seo": 100,
+        "fcp": "0.9 s",
+        "lcp": "1.2 s",
+        "tbt": "0 ms",
+        "cls": "0",
+        "speedIndex": "0.9 s"
+      },
+      "desktop": {
+        "performance": 100,
+        "accessibility": 95,
+        "bestPractices": 100,
+        "seo": 100,
+        "fcp": "0.2 s",
+        "lcp": "0.3 s",
+        "tbt": "0 ms",
+        "cls": "0",
+        "speedIndex": "0.2 s"
+      },
+      "report": "https://pagespeed.web.dev/analysis/https-chiinails-pages-dev-about/rysb5a83le?form_factor=desktop"
+    }
+  ]
+}

@@ -34,7 +34,7 @@
 [hidden]{display:none!important}
 
 /* Keep small copy readable on blush cards and the stronger booking pink. */
-:root{--muted:#78666d}.booking .eyebrow,.booking .text-link{color:#8d2d55}
+:root{--muted:#78666d}.booking .eyebrow,.booking .text-link,.booking-note .eyebrow{color:#8d2d55}
 
 .mobile-home-visit{display:none}
 @media(max-width:720px){.mobile-home-visit{display:block;padding-top:0}.mobile-home-visit h2{font-size:40px}.mobile-home-visit h3{font-family:'DM Sans',sans-serif;font-size:23px;line-height:1.4;margin-top:24px}.mobile-home-visit address{font-style:normal;color:var(--muted);font-size:14px;line-height:1.7;margin-top:12px}.mobile-home-visit .map-area{height:300px}.mobile-home-visit .map-column>.button{width:100%}.mobile-home-visit>.text-link{margin-top:20px}}
