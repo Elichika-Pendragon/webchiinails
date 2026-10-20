@@ -1,0 +1,6 @@
+{
+  "fieldData": "No Data",
+  "performance": "90\nFCP\n+10\nLCP\n+25\nTBT\n+30\nCLS\n+25\nSI\n+0\nPerformance\nValues are estimated and may vary. The performance score is calculated directly from these metrics.See calculator.\n0–49\n50–89\n90–100\nMETRICS\nExpand view\nFirst Contentful Paint\n1.0 s\nLargest Contentful Paint\n1.4 s\nTotal Blocking Time\n0 ms\nCumulative Layout Shift\n0.017\nSpeed Index\n12.2 s\nCaptured at Oct 21, 2026, 3:12 AM GMT+7\nEmulated Moto G Power with Lighthouse 13.5.0\nSingle page session\nInitial page load\nSlow 4G throttling\nUsing HeadlessChromium 153.0.8010.36 with lr\nView Treemap\nShow audits relevant to:\nAll\nFCP\nLCP\nCLS\nINSIGHTS\nNetwork dependency tree\nImprove image delivery Est savings of 12 KiB\nLayout shift culprits\nLCP breakdown\nThese insights are also available in the Chrome DevTools Performance Panel - record a trace to view more detailed information.\nPASSED AUDITS (23)\nShow",
+  "scoreCalculator": "https://googlechrome.github.io/lighthouse/scorecalc/#FCP=952&LCP=1352&TBT=0&CLS=0.02&SI=12246&TTI=1352&device=mobile&version=13.5.0",
+  "url": "https://pagespeed.web.dev/analysis/https-chiinails-pages-dev/x9ppgtn1xn?form_factor=mobile"
+}

@@ -36,6 +36,11 @@ const fields = [
           <h2 id="booking-form-title" tabindex="-1">Detail booking</h2>
           <noscript><p class="booking-noscript">Aktifkan JavaScript untuk mengisi formulir, atau <a class="text-link" href={salon.whatsapp} target="_blank" rel="noopener noreferrer">hubungi Chii melalui WhatsApp</a>.</p></noscript>
           <form id="booking-form" action="/book" method="post" novalidate data-whatsapp={salon.whatsapp}>
+            <div class="booking-draft-note">
+              <p>Isian dan bukti pembayaran dapat dipulihkan di tab browser ini hingga 24 jam jika penyimpanan tersedia, termasuk setelah koneksi terputus atau halaman dimuat ulang. Hapus isian setelah memakai perangkat bersama. Browser dapat menghapus simpanan ini lebih awal.</p>
+              <p id="booking-draft-status" role="status" aria-live="polite" aria-atomic="true">Belum ada isian tersimpan.</p>
+              <button id="booking-draft-clear" class="booking-status-retry text-link" type="button" hidden>Hapus isian tersimpan</button>
+            </div>
             <div id="booking-errors" class="booking-error-summary" role="alert" tabindex="-1" hidden><strong>Periksa detail berikut.</strong><ul></ul></div>
             <fieldset disabled>
               <legend>Data diri</legend>

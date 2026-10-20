@@ -215,7 +215,10 @@ export function createBookingHttpHandlers(overrides = {}) {
   const signOut = overrides.signOutOwner ?? signOutOwner;
   const createCalendar = overrides.createGoogleCalendarProvider ?? createGoogleCalendarProvider;
   const bodyTimeoutMs = overrides.bodyTimeoutMs ?? 5000;
-  const proofBodyTimeoutMs = overrides.bodyTimeoutMs ?? 30000;
+  // A near-limit receipt includes base64 overhead and may need over 45 seconds
+  // on a weak mobile uplink. Keep uploads bounded without applying the much
+  // shorter small-JSON budget to their streaming request body.
+  const proofBodyTimeoutMs = overrides.bodyTimeoutMs ?? 120000;
   const authOptions = { now, ...(overrides.fetch ? { fetch: overrides.fetch } : {}) };
   // Keep at most two credential sets per isolate. Tokens/imported RSA keys live
   // in the provider; owner reads/cancel/login never instantiate this adapter.

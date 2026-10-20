@@ -1,0 +1,17 @@
+{
+  "url": "https://pagespeed.web.dev/analysis/https-chiinails-pages-dev-book/th6ixv6jk5?form_factor=mobile",
+  "release": "1b8b0d0a68e8e915653d549b34f79d4906948bae",
+  "page": "/book",
+  "conditions": "Emulated Moto G Power, Lighthouse13.5.0, slow4G, initialpage load",
+  "performance": 100,
+  "accessibility": 100,
+  "bestPractices": 100,
+  "seo": 58,
+  "seoNote": "Booking is intentionally noindex; public SEO unchanged.",
+  "fcpMs": 919,
+  "lcpMs": 1276,
+  "tbtMs": 0,
+  "cls": 0.011,
+  "speedIndexMs": 2175,
+  "fieldData": false
+}

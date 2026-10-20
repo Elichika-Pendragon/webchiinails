@@ -10,6 +10,31 @@ const now = Date.parse('2026-10-19T17:30:00Z'); // 20 Oct, 00.30 WIB.
 const options = { now };
 const form = overrides => ({ name: 'Jesika Aydilla', whatsapp: '081234567890', agreedPrice: '155000', date: '2026-10-20', time: '08:00', ...overrides });
 
+test('shared booking rules work without Object.hasOwn on older mobile browsers', () => {
+  const original = Object.getOwnPropertyDescriptor(Object, 'hasOwn');
+  Object.defineProperty(Object, 'hasOwn', { configurable: true, writable: true, value: undefined });
+  try {
+    for (const [designType, { durations }] of Object.entries(BOOKING_DESIGNS)) {
+      for (const durationMinutes of durations) {
+        assert.deepEqual(normalizeBookingDesign(designType, String(durationMinutes)), { designType, durationMinutes });
+        const result = validateBooking(form({ designType, durationMinutes: String(durationMinutes) }), options);
+        assert.equal(result.valid, true);
+        assert.equal(result.preview.durationMinutes, durationMinutes);
+        assert.ok(listBookingSlots('2026-10-20', { now, designType, durationMinutes }).length > 0);
+      }
+    }
+    for (const designType of ['toString', 'constructor', '__proto__', 'invalid']) {
+      assert.equal(normalizeBookingDesign(designType, '60'), null);
+      const result = validateBooking(form({ designType, durationMinutes: '60' }), options);
+      assert.equal(result.valid, false);
+      assert.ok(result.errors.designType);
+    }
+  } finally {
+    if (original) Object.defineProperty(Object, 'hasOwn', original);
+    else delete Object.hasOwn;
+  }
+});
+
 test('hours match the published content for every weekday and weekend', () => {
   for (const date of ['2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25']) {
     const hours = getOperatingHours(date);

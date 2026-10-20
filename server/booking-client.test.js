@@ -5,6 +5,7 @@ import { webcrypto } from 'node:crypto';
 import test from 'node:test';
 import { BOOKING_DESIGNS, calculatePayment, getBookingDateBounds, listBookingSlots, normalizeBookingDesign, validateBooking } from './booking.js';
 import { PaymentProofError } from '../src/scripts/booking-proof.js';
+import { createBookingDraft } from '../src/scripts/booking-draft.js';
 import { calendarMonthDays } from '../src/scripts/booking-calendar.js';
 
 // This deliberately small DOM/API fixture exercises the native controller without
@@ -80,7 +81,7 @@ function harness(options = {}) {
     addEventListener(key, callback) { this.listeners[key] = callback; },
   };
   const document = { visibilityState: 'visible', listeners: {}, addEventListener(key, callback) { this.listeners[key] = callback; }, querySelector: selector => nodes[selector], getElementById: id => nodes[`#${id}`], querySelectorAll: () => copyButtons, createElement: tag => ({ ...element(), tagName: tag.toUpperCase() }) };
-  const navigator = { clipboard: { async writeText(value) { if (config.clipboardFailure) throw new Error('synthetic clipboard denied'); clipboardWrites.push(value); } } };
+  const navigator = { onLine: config.online !== false, clipboard: { async writeText(value) { if (config.clipboardFailure) throw new Error('synthetic clipboard denied'); clipboardWrites.push(value); } } };
   const fetch = async (path, request) => {
     calls.push({ path, request });
     if (path.endsWith('/status')) {
@@ -146,17 +147,18 @@ function harness(options = {}) {
     if (config.holdProof) await new Promise(resolve => proofReleases.push(resolve));
     if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
     if (config.proofFailure) throw new PaymentProofError('PROOF_TYPE', 'Gunakan gambar JPEG, PNG, atau WebP.');
-    const bytes = Buffer.from(file.syntheticBytes || 'synthetic image');
+    const bytes = Buffer.concat([config.storage ? Buffer.from([255, 216, 255, 219]) : Buffer.alloc(0), Buffer.from(file.syntheticBytes || 'synthetic image')]);
     const digest = Buffer.from(await webcrypto.subtle.digest('SHA-256', bytes)).toString('hex');
     return { contentType: 'image/jpeg', base64: bytes.toString('base64'), digest, blob: new Blob([bytes], { type: 'image/jpeg' }) };
   };
   vm.runInNewContext(source, {
     document, window, navigator, Intl, URL: TestURL, URLSearchParams, Date: FixedDate, Option, fetch, AbortController, DOMException, Uint8Array, PaymentProofError, preparePaymentProof,
     BOOKING_DESIGNS, calculatePayment, getBookingDateBounds, listBookingSlots, normalizeBookingDesign, validateBooking, calendarMonthDays,
+    createBookingDraft: options => createBookingDraft({ ...options, storage: config.storage || null, receiptStore: config.receiptStore || { async purge() {}, async put() {}, async get() {}, async remove() {} }, crypto: webcrypto, now: FixedDate.now }),
     createBookingCalendar: (root, input, options) => { onMonthChange = options?.onMonthChange; return calendar; },
   });
   return {
-    nodes, inputs, form, fieldsets, values, calls, redirects, window, document, config, calendar, monthReleases, availabilityReleases, copyButtons, clipboardWrites, proofReleases, objectUrls, revokedUrls, timeoutBudgets, intervals,
+    nodes, inputs, form, fieldsets, values, calls, redirects, window, document, config, calendar, monthReleases, availabilityReleases, copyButtons, clipboardWrites, proofReleases, objectUrls, revokedUrls, timeoutBudgets, intervals, navigator,
     tickRefresh() { [...intervals.values()].forEach(timer => timer.callback()); },
     visibility(value) { document.visibilityState = value; document.listeners.visibilitychange(); },
     release: () => release(),
@@ -176,6 +178,185 @@ function harness(options = {}) {
     posts: () => calls.filter(call => call.path.endsWith('/requests')).map(call => JSON.parse(call.request.body)),
   };
 }
+
+function draftStorage() {
+  const values = new Map(); const images = new Map();
+  return {
+    values, images,
+    storage: { getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) },
+    receiptStore: { async purge() {}, async put(value) { images.set(value.id, structuredClone(value)); }, async get(id) { return images.get(id); }, async remove(id) { images.delete(id); } },
+  };
+}
+const recover = async () => { await settle(); await settle(); await settle(); };
+
+test('reload restores text, selected service, payment proof and requested time while fresh availability is pending', async () => {
+  const saved = draftStorage();
+  const original = harness(saved); await settle(); await original.fill();
+  original.window.listeners.pagehide(); await recover();
+  const next = harness({ ...saved, holdAvailability: true, holdMonth: true }); await recover();
+  assert.equal(next.inputs.name.value, 'Synthetic Customer');
+  assert.equal(next.inputs.whatsapp.value, '081234567890');
+  assert.equal(next.inputs.serviceDuration.value, 'simple:120');
+  assert.equal(next.inputs.date.value, '2026-10-21');
+  assert.equal(next.inputs.time.value, '', 'a restored choice is not treated as checked availability');
+  assert.equal(next.nodes['#booking-review'].disabled, true);
+  assert.equal(next.nodes['#booking-proof-preview'].hidden, false);
+  assert.match(next.nodes['#booking-proof-status'].textContent, /dipulihkan/);
+  assert.equal(next.posts().length, 0); assert.equal(next.redirects.length, 0);
+  next.monthReleases.forEach(release => release()); next.availabilityReleases.forEach(release => release());
+  await recover();
+  assert.equal(next.inputs.time.value, '14:00');
+  assert.equal(next.nodes['#booking-review'].disabled, false);
+});
+
+test('an ambiguous failed upload survives reload with identical proof and retry key until explicit Book', async () => {
+  const saved = draftStorage();
+  const original = harness({ ...saved, requestFailures: 1 }); await settle(); await original.fill(); await original.submit();
+  original.window.listeners.pagehide(); await recover();
+  const before = original.posts()[0];
+  const next = harness(saved); await recover();
+  assert.equal(next.posts().length, 0); assert.equal(next.redirects.length, 0);
+  await next.submit();
+  const after = next.posts()[0];
+  assert.equal(after.idempotencyKey, before.idempotencyKey);
+  assert.equal(after.proof.base64, before.proof.base64);
+  assert.equal(next.redirects.length, 1);
+  assert.equal(saved.values.size, 0, 'validated acknowledgement clears text and retry metadata');
+  await recover(); assert.equal(saved.images.size, 0, 'acknowledgement clears the temporary receipt');
+});
+
+test('BFCache return restarts a held receipt restore and ignores the stale departed callback', async () => {
+  const saved = draftStorage(); const original = harness(saved); await settle(); await original.fill();
+  original.window.listeners.pagehide(); await recover();
+  const releases = [];
+  const next = harness({ ...saved, receiptStore: { ...saved.receiptStore, get: async id => { await new Promise(resolve => releases.push(resolve)); return saved.images.get(id); } } });
+  await recover();
+  assert.equal(releases.length, 1);
+  assert.match(next.nodes['#booking-proof-status'].textContent, /Memulihkan bukti/);
+  next.window.listeners.pagehide();
+  next.window.listeners.pageshow({ persisted: true }); await recover();
+  assert.equal(releases.length, 2, 'a fresh restore begins after the previous callback was invalidated');
+  releases[0](); await recover();
+  assert.equal(next.nodes['#booking-proof-preview'].hidden, true, 'stale callback cannot complete the new restore');
+  assert.equal(next.nodes['#booking-review'].disabled, true);
+  releases[1](); await recover();
+  assert.equal(next.nodes['#booking-proof-preview'].hidden, false);
+  assert.match(next.nodes['#booking-proof-status'].textContent, /dipulihkan dan siap/);
+  assert.equal(next.nodes['#booking-review'].disabled, false);
+  assert.equal(next.inputs.time.value, '14:00');
+  assert.equal(next.posts().length, 0); assert.equal(next.redirects.length, 0);
+});
+
+test('temporary availability failure during reload preserves the lost-ack identity across a second reload', async () => {
+  const saved = draftStorage(); const original = harness({ ...saved, requestFailures: 1 });
+  await settle(); await original.fill(); await original.submit();
+  const first = original.posts()[0];
+  original.window.listeners.pagehide(); await recover();
+  const unavailable = harness({ ...saved, availabilityFailures: 1 }); await recover();
+  assert.equal(unavailable.nodes['#booking-review'].disabled, true);
+  assert.equal(unavailable.posts().length, 0);
+  assert.equal(JSON.parse([...saved.values.values()][0]).requestKey, first.idempotencyKey);
+  unavailable.window.listeners.pagehide(); await recover();
+  const recovered = harness(saved); await recover();
+  assert.equal(recovered.inputs.time.value, '14:00');
+  assert.equal(recovered.nodes['#booking-review'].disabled, false);
+  assert.equal(recovered.posts().length, 0);
+  await recovered.submit();
+  assert.equal(recovered.posts()[0].idempotencyKey, first.idempotencyKey);
+  assert.equal(recovered.posts()[0].proof.base64, first.proof.base64);
+});
+
+test('a newly occupied restored time is removed after revalidation without changing customer details or submitting', async () => {
+  const saved = draftStorage(); const original = harness(saved); await settle(); await original.fill();
+  original.window.listeners.pagehide(); await recover();
+  const next = harness({ ...saved, blockedTimes: ['14:00'] }); await recover();
+  assert.equal(next.inputs.name.value, 'Synthetic Customer');
+  assert.equal(next.inputs.date.value, '2026-10-21');
+  assert.equal(next.inputs.time.value, '');
+  assert.equal(next.nodes['#booking-proof-preview'].hidden, false);
+  assert.equal(next.nodes['#booking-review'].disabled, true);
+  assert.equal(next.posts().length, 0);
+});
+
+test('offline pauses refresh and retains inputs; reconnect checks fresh slots without sending a request', async () => {
+  const saved = draftStorage(); const page = harness(saved); await settle(); await page.fill();
+  page.navigator.onLine = false; page.window.listeners.offline();
+  const before = page.calls.length;
+  assert.equal(page.intervals.size, 0);
+  assert.equal(page.nodes['#booking-review'].disabled, true);
+  page.tickRefresh(); page.visibility('hidden'); page.visibility('visible');
+  page.change('name', 'Synthetic offline edit');
+  page.change('date', '2026-10-22'); await recover();
+  await page.submit();
+  assert.equal(page.calls.length, before);
+  assert.equal(page.inputs.name.value, 'Synthetic offline edit');
+  assert.equal(page.nodes['#booking-proof-preview'].hidden, false);
+  assert.match(page.nodes['#booking-slot-status'].textContent, /14.00 WIB dipertahankan/);
+  page.navigator.onLine = true; page.window.listeners.online(); await recover();
+  assert.equal(page.inputs.date.value, '2026-10-22');
+  assert.equal(page.inputs.time.value, '14:00');
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+  assert.equal(page.posts().length, 0); assert.equal(page.redirects.length, 0);
+  assert.equal(page.intervals.size, 1);
+});
+
+test('a tab restored offline keeps its intended time and proof until the connection returns', async () => {
+  const saved = draftStorage(); const original = harness(saved); await settle(); await original.fill();
+  original.window.listeners.pagehide(); await recover();
+  const next = harness({ ...saved, online: false }); await recover();
+  assert.equal(next.calls.length, 0);
+  assert.equal(next.inputs.name.value, 'Synthetic Customer');
+  assert.equal(next.nodes['#booking-proof-preview'].hidden, false);
+  assert.equal(next.nodes['#booking-review'].disabled, true);
+  next.navigator.onLine = true; next.window.listeners.online(); await recover();
+  assert.equal(next.inputs.time.value, '14:00');
+  assert.equal(next.nodes['#booking-review'].disabled, false);
+  assert.equal(next.posts().length, 0);
+});
+
+test('reconnection during receipt preparation waits for completion before refreshing availability', async () => {
+  const saved = draftStorage(); const page = harness(saved); await settle(); await page.fill();
+  page.config.holdProof = true;
+  const preparing = page.uploadProof(); await settle();
+  page.navigator.onLine = false; page.window.listeners.offline();
+  const before = page.calls.length;
+  page.navigator.onLine = true; page.window.listeners.online(); await settle();
+  assert.equal(page.calls.length, before, 'no network refresh competes with image preparation');
+  page.proofReleases[0](); await preparing; await recover();
+  assert(page.calls.slice(before).some(call => call.path === '/api/booking/status'));
+  assert(page.calls.slice(before).some(call => call.path === '/api/booking/calendar'));
+  assert(page.calls.slice(before).some(call => call.path === '/api/booking/availability'));
+  assert.equal(page.inputs.time.value, '14:00');
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+  assert.equal(page.posts().length, 0);
+});
+
+test('explicit clear removes draft, proof and fields and never posts or opens WhatsApp', async () => {
+  const saved = draftStorage(); const page = harness(saved); await settle(); await page.fill(); await recover();
+  page.nodes['#booking-draft-clear'].listeners.click(); await recover();
+  for (const name of ['name', 'whatsapp', 'agreedPrice', 'date', 'time']) assert.equal(page.inputs[name].value, '', name);
+  assert.equal(page.nodes['#booking-proof-preview'].hidden, true);
+  assert.equal(saved.values.size, 0); assert.equal(saved.images.size, 0);
+  assert.equal(page.inputs.name.focused, true);
+  assert.equal(page.posts().length, 0); assert.equal(page.redirects.length, 0);
+});
+
+test('receipt storage failure warns about reload recovery while keeping the current form usable', async () => {
+  const saved = draftStorage(); saved.receiptStore.put = async () => { throw new Error('quota'); };
+  const page = harness(saved); await settle(); await page.fill(); await recover();
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+  assert.match(page.nodes['#booking-draft-status'].textContent, /Bukti belum tersimpan/);
+  await page.submit(); assert.equal(page.redirects.length, 1);
+});
+
+test('storage metadata never contains an approval link or credentials, including malformed server acknowledgements', async () => {
+  const saved = draftStorage(); const page = harness({ ...saved, reviewUrl: 'https://outside.invalid/book/approve?r=private' });
+  await settle(); await page.fill(); await page.submit();
+  assert.equal(page.redirects.length, 0);
+  assert(saved.values.size > 0, 'an unvalidated response must retain recovery data');
+  const raw = [...saved.values.values()].join('');
+  assert.doesNotMatch(raw, /outside.invalid|book\/approve|authorization|accessToken|synthetic.png/);
+});
 
 test('Book requires every editable value and derives rather than trusts DP', async () => {
   const page = harness(); await settle();
@@ -611,9 +792,9 @@ test('fresh slot conflict refreshes availability, asks for another time, and kee
 test('receipt submission has a longer bounded upload budget while status and availability stay short', async () => {
   const page = harness({ hold: true }); await settle(); await page.fill();
   assert(page.timeoutBudgets.length > 0);
-  assert(page.timeoutBudgets.every(milliseconds => milliseconds === 12000));
+  assert(page.timeoutBudgets.filter(milliseconds => milliseconds !== 200).every(milliseconds => milliseconds === 12000));
   const pending = page.submit(); await settle();
-  assert.equal(page.timeoutBudgets.at(-1), 30000);
+  assert.equal(page.timeoutBudgets.at(-1), 120000);
   assert.equal(page.nodes['#booking-review'].disabled, true);
   assert.match(page.nodes['#booking-submit-status'].textContent, /Mengunggah bukti/);
   assert.equal(page.form.attrs['aria-busy'], 'true');

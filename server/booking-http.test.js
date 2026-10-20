@@ -255,6 +255,37 @@ test('slow request bodies are timed out and cancelled without touching the ledge
   assert.equal(item.calls.length, 0);
 });
 
+test('default receipt upload accepts a weak-uplink body arriving after 45 seconds', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const item = fixture();
+  const bytes = new TextEncoder().encode(JSON.stringify(input));
+  let upload;
+  const body = new ReadableStream({ start(controller) { upload = controller; controller.enqueue(bytes.slice(0, 32)); } });
+  const incoming = new Request(`${env.SITE_URL}/api/booking/requests`, { method: 'POST', headers: { Origin: env.SITE_URL, 'Content-Type': 'application/json' }, body, duplex: 'half' });
+  const response = item.handlers.requests(incoming, env);
+  t.mock.timers.tick(45000);
+  upload.enqueue(bytes.slice(32));
+  upload.close();
+  assert.equal((await response).status, 201);
+  assert.deepEqual(item.calls.map(call => call[0]), ['calendar', 'create']);
+  assert.deepEqual(item.calls[1][2], input);
+});
+
+test('default receipt upload still cancels a stalled body after two minutes without touching the ledger', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let cancelled = false;
+  const item = fixture();
+  const body = new ReadableStream({ cancel() { cancelled = true; } });
+  const incoming = new Request(`${env.SITE_URL}/api/booking/requests`, { method: 'POST', headers: { Origin: env.SITE_URL, 'Content-Type': 'application/json' }, body, duplex: 'half' });
+  const pending = item.handlers.requests(incoming, env);
+  t.mock.timers.tick(120000);
+  const response = await pending;
+  assert.equal(response.status, 503);
+  assert.equal((await response.json()).code, 'BOOKING_TIMEOUT');
+  assert.equal(cancelled, true);
+  assert.equal(item.calls.length, 0);
+});
+
 test('unauthenticated review cannot inspect tokens, bodies or private ledger data', async () => {
   const item = fixture({ requireBookingOwner: async () => { throw new BookingAuthError('AUTH_REQUIRED'); } });
   for (const incoming of [request('review?token=invalid'), request(`review?token=${reviewToken}`, { method: 'POST', body: '{bad json' })]) {

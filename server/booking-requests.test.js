@@ -217,6 +217,57 @@ test('concurrent creation retries resolve to one SQLite row', async () => {
   assert.equal(one.booking.hasPaymentProof, true);
 });
 
+test('lost database acknowledgement after atomic commit recovers the original request and receipt without another write', async () => {
+  const { env, db, calls } = setup();
+  const commit = db.batch.bind(db);
+  let batches = 0;
+  db.batch = async statements => {
+    batches++;
+    await commit(statements);
+    throw new Error('Synthetic database connection lost after COMMIT');
+  };
+  const recovered = await createBookingRequest(env, customer(), { now: initial });
+  assert.equal(recovered.status, 'pending');
+  assert.equal(recovered.booking.hasPaymentProof, true);
+  assert.equal(db.rows().length, 1);
+  assert.equal(db.rows()[0].id, recovered.requestId);
+  assert.deepEqual(db.rows('SELECT content FROM booking_payment_proofs')[0].content, proofBytes);
+  const beforeRetry = db.sqlite.prepare('SELECT total_changes() AS changes').get().changes;
+  assert.deepEqual(await createBookingRequest(env, customer(), { now: initial + 1000 }), recovered);
+  assert.equal(db.sqlite.prepare('SELECT total_changes() AS changes').get().changes, beforeRetry);
+  assert.equal(batches, 1);
+  assert.deepEqual(calls, { availability: 1, insert: 0, lookup: 0 });
+  assert.equal(db.rows('SELECT * FROM booking_slot_claims').length, 0);
+});
+
+test('retry after a committed request loses its final read preserves one receipt even while Calendar is offline', async () => {
+  const { env, db, calendar, calls } = setup();
+  const commit = db.batch.bind(db);
+  db.batch = async statements => {
+    const result = await commit(statements);
+    // The commit succeeded, but the subsequent summary read is unavailable.
+    // The customer cannot know whether saving succeeded and must reuse the key.
+    db.fail = sql => sql.includes('WHERE r.id = ?');
+    return result;
+  };
+  await assert.rejects(createBookingRequest(env, customer(), { now: initial }), isCode('BOOKING_STORAGE', 503));
+  const storedRequest = db.rows()[0];
+  const storedProof = db.rows('SELECT * FROM booking_payment_proofs')[0];
+  assert.ok(storedRequest);
+  assert.equal(storedProof.request_id, storedRequest.id);
+  assert.deepEqual(storedProof.content, proofBytes);
+  calendar.availability = async () => { throw new Error('Synthetic Calendar offline during retry'); };
+  const beforeRetry = db.sqlite.prepare('SELECT total_changes() AS changes').get().changes;
+  const recovered = await createBookingRequest(env, customer(), { now: initial + 1000 });
+  assert.equal(recovered.requestId, storedRequest.id);
+  assert.equal(recovered.status, 'pending');
+  assert.equal(recovered.booking.hasPaymentProof, true);
+  assert.equal(db.sqlite.prepare('SELECT total_changes() AS changes').get().changes, beforeRetry);
+  assert.equal(db.rows().length, 1);
+  assert.equal(db.rows('SELECT * FROM booking_payment_proofs').length, 1);
+  assert.deepEqual(calls, { availability: 1, insert: 0, lookup: 0 });
+});
+
 test('invalid required fields, customer flags and last-book bounds cannot bypass server validation', async () => {
   const { env, db } = setup();
   for (const changes of [{ name: '' }, { whatsapp: '' }, { agreedPrice: '' }, { agreedPrice: '1e5' }, { date: '' }, { time: '' }, { time: '14:30' }, { time: '15:00' }, { date: '2026-10-24', time: '10:30' }, { idempotencyKey: '' }]) {

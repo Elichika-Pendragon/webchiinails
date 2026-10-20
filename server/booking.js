@@ -22,7 +22,7 @@ export const BOOKING_DESIGNS = Object.freeze({
 
 /** Public choices only. Legacy is a trusted persisted snapshot, never an input. */
 export function normalizeBookingDesign(designType = 'simple', durationMinutes) {
-  if (typeof designType !== 'string' || !Object.hasOwn(BOOKING_DESIGNS, designType)) return null;
+  if (typeof designType !== 'string' || !Object.prototype.hasOwnProperty.call(BOOKING_DESIGNS, designType)) return null;
   const design = BOOKING_DESIGNS[designType];
   const duration = durationMinutes === undefined ? design.defaultDurationMinutes
     : typeof durationMinutes === 'string' && /^(?:60|120|180|240|300)$/.test(durationMinutes) ? Number(durationMinutes) : durationMinutes;
@@ -226,7 +226,7 @@ export function validateBooking(input, options = {}) {
   if (source.paymentMode !== undefined && !['deposit', 'full'].includes(source.paymentMode)) errors.paymentMode = 'Pilih DP atau full payment.';
   const design = normalizeBookingDesign(source.designType, source.durationMinutes);
   if (!design) {
-    if (typeof source.designType !== 'string' || !Object.hasOwn(BOOKING_DESIGNS, source.designType)) errors.designType = 'Pilih jenis desain yang valid.';
+    if (typeof source.designType !== 'string' || !Object.prototype.hasOwnProperty.call(BOOKING_DESIGNS, source.designType)) errors.designType = 'Pilih jenis desain yang valid.';
     errors.durationMinutes = 'Pilih durasi yang sudah disepakati dengan Chii.';
   }
   if (agreedPrice === null || agreedPrice <= 0) errors.agreedPrice = `Isi harga dalam angka Rupiah, maksimal ${config.maxAmount} (batas teknis formulir).`;

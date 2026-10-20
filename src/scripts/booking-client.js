@@ -1,6 +1,7 @@
 import { calculatePayment, getBookingDateBounds, listBookingSlots, normalizeBookingDesign, validateBooking } from '../../server/booking.js';
 import { createBookingCalendar, calendarMonthDays } from './booking-calendar.js';
 import { PaymentProofError, preparePaymentProof } from './booking-proof.js';
+import { createBookingDraft } from './booking-draft.js';
 
 const form = document.querySelector('#booking-form');
 if (form) {
@@ -24,6 +25,8 @@ if (form) {
   const proofPreview = document.querySelector('#booking-proof-preview');
   const proofImage = document.querySelector('#booking-proof-image');
   const proofStatus = document.querySelector('#booking-proof-status');
+  const draftStatus = document.querySelector('#booking-draft-status');
+  const draftClear = document.querySelector('#booking-draft-clear');
   const touched = new Set();
   const controllers = new Set();
   let calendar = null;
@@ -46,6 +49,21 @@ if (form) {
   let proofSequence = 0;
   let proofController = null;
   let refreshTimer = null;
+  let draftTimer = null;
+  let draftComplete = false;
+  let draftRestoring = true;
+  let restoringProofDigest = '';
+  let reconnectPending = false;
+  const offline = () => navigator.onLine === false;
+  const draft = createBookingDraft({ onState(info) {
+    draftClear.hidden = !info.metadataSaved && !info.hasReceipt;
+    const message = !info.metadataSaved
+      ? 'Penyimpanan tab belum tersedia. Isian tetap ada selama halaman ini terbuka; jangan muat ulang.'
+      : info.hasReceipt && !info.receiptSaved
+        ? 'Detail tersimpan di tab ini. Bukti belum tersimpan untuk pemulihan; jangan muat ulang sebelum selesai.'
+        : info.restored ? 'Isian dipulihkan di tab ini. Jadwal diperiksa ulang sebelum Book.' : 'Isian tersimpan sementara di tab ini.';
+    if (draftStatus.textContent !== message) draftStatus.textContent = message;
+  } });
   const monthCache = new Map();
   let monthController = null;
   let monthRequest = '';
@@ -76,9 +94,9 @@ if (form) {
     monthRequest = '';
   };
   const startRefresh = () => {
-    if (refreshTimer !== null || !active || document.visibilityState !== 'visible' || form.hidden || service !== 'enabled' || submitting || proofState === 'processing') return;
+    if (refreshTimer !== null || !active || offline() || document.visibilityState !== 'visible' || form.hidden || service !== 'enabled' || submitting || proofState === 'processing') return;
     refreshTimer = window.setInterval(() => {
-      if (!active || document.visibilityState !== 'visible' || form.hidden || service !== 'enabled' || submitting || proofState === 'processing') return;
+      if (!active || offline() || document.visibilityState !== 'visible' || form.hidden || service !== 'enabled' || submitting || proofState === 'processing') return;
       if (!monthController) refreshMonth({ force: true, quiet: true });
       if (!slotController && input('date').value && selectedDesign()) fillTimes({ quiet: true });
     }, 45000);
@@ -107,6 +125,17 @@ if (form) {
     return result;
   };
   const signature = value => JSON.stringify([value.name, value.whatsapp, value.agreedPrice, value.paymentMode, value.designType, value.durationMinutes, value.date, value.time, proof?.digest || '']);
+  const saveDraft = () => {
+    if (draftTimer !== null) window.clearTimeout(draftTimer);
+    draftTimer = null;
+    if (draftRestoring || draftComplete) return;
+    draft.save({ fields: { ...Object.fromEntries(editable.map(name => [name, input(name).value])), paymentMode: requestedPaymentMode, time: input('time').value || lastSelectedTime }, proofDigest: proof?.digest || restoringProofDigest, requestKey, requestSignature });
+    if (proofState === 'ready') draft.saveProof(proof);
+  };
+  const scheduleDraft = () => {
+    if (draftTimer !== null) window.clearTimeout(draftTimer);
+    draftTimer = window.setTimeout(saveDraft, 200);
+  };
   const setStatus = (message, error = false) => {
     status.textContent = message;
     status.dataset.tone = error ? 'error' : 'normal';
@@ -124,7 +153,8 @@ if (form) {
   };
   const updateButton = () => {
     const result = validation();
-    bookButton.disabled = submitting || !['enabled', 'preview'].includes(service) || !result.valid;
+    bookButton.disabled = submitting || offline() || !['enabled', 'preview'].includes(service) || !result.valid;
+    draftClear.disabled = submitting;
     if (result.valid && requestSignature && requestSignature !== signature(result.value)) {
       requestSignature = '';
       requestKey = '';
@@ -170,6 +200,7 @@ if (form) {
     if (!quietUpdate || previousBounds !== `${input('date').min}|${input('date').max}`) calendar?.refresh();
     if (calendar && service === 'enabled') refreshMonth();
     const selected = input('time').value || lastSelectedTime;
+    lastSelectedTime = selected;
     const design = selectedDesign();
     const date = input('date').value;
     if (!quietUpdate) {
@@ -188,6 +219,15 @@ if (form) {
       return;
     }
     const candidates = listBookingSlots(date, { now: Date.now(), ...design, includeElapsed: true });
+    if (offline()) {
+      availability = 'error';
+      renderSlots(candidates.map(slot => ({ ...slot, available: false })), '');
+      slotStatus.dataset.tone = 'error';
+      slotStatus.textContent = selected ? `Offline. Pilihan ${selected.replace(':', '.')} WIB dipertahankan; jadwal diperiksa ulang setelah tersambung.` : 'Offline. Sambungkan internet untuk memeriksa jam yang tersedia.';
+      input('time').setAttribute('aria-busy', 'false');
+      updateButton();
+      return;
+    }
     if (service !== 'enabled') {
       renderSlots(candidates.map(slot => ({ ...slot, available: slot.start > Date.now() })), selected);
       availability = 'preview';
@@ -229,6 +269,7 @@ if (form) {
         ? 'Jam yang dipilih tidak lagi tersedia. Pilih jam lain.'
         : !slots.length ? 'Durasi ini tidak muat dalam jam studio. Pilih tanggal atau durasi lain sesuai konsultasi.' : availableTimes.size ? 'Pilihan hanya menampilkan jam yang tersedia.' : 'Semua jam pada tanggal ini tidak tersedia. Pilih tanggal lain.';
       if (slotStatus.textContent !== message) slotStatus.textContent = message;
+      saveDraft();
     } catch {
       if (!active || sequence !== slotSequence) return;
       availability = 'error';
@@ -265,6 +306,14 @@ if (form) {
   const refreshMonth = async ({ force = false, quiet = false } = {}) => {
     const month = calendar?.getMonth();
     if (!month || !active || form.hidden || submitting || proofState === 'processing') return;
+    if (offline()) {
+      pauseMonthCheck();
+      calendar.setAvailability({ month, status: 'error', closedDates: [] });
+      calendarStatus.textContent = 'Offline. Tanggal diperiksa ulang setelah internet tersambung.';
+      calendarRetry.hidden = true;
+      updateButton();
+      return;
+    }
     if (service !== 'enabled') {
       calendar.setAvailability({ month, status: service === 'preview' ? 'preview' : 'loading', closedDates: [] });
       calendarStatus.textContent = service === 'preview' ? 'Pratinjau tanggal; jadwal tetap diperiksa langsung oleh Chii.' : 'Memeriksa jadwal bulan ini…';
@@ -297,7 +346,7 @@ if (form) {
       const response = await api('/api/booking/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ month, designType: design.designType, durationMinutes: String(design.durationMinutes) }) }, controller);
       if (!active || sequence !== monthSequence || calendar.getMonth() !== month) return;
       const dates = calendarMonthDays(month, { minDate: input('date').min, maxDate: input('date').max }).filter(day => day && !day.disabled).map(day => day.date);
-      if (!response || Object.keys(response).sort().join(',') !== 'closedDates,designType,durationMinutes,maxDate,minDate,month,timeZone' || response.month !== month || response.designType !== design.designType || response.durationMinutes !== design.durationMinutes || response.timeZone !== 'Asia/Jakarta' || response.minDate !== dates[0] || response.maxDate !== dates.at(-1) || !Array.isArray(response.closedDates) || response.closedDates.length > dates.length || response.closedDates.some((date, index) => typeof date !== 'string' || !dates.includes(date) || (index > 0 && date <= response.closedDates[index - 1]))) throw new Error('calendar');
+      if (!response || Object.keys(response).sort().join(',') !== 'closedDates,designType,durationMinutes,maxDate,minDate,month,timeZone' || response.month !== month || response.designType !== design.designType || response.durationMinutes !== design.durationMinutes || response.timeZone !== 'Asia/Jakarta' || response.minDate !== dates[0] || response.maxDate !== dates[dates.length - 1] || !Array.isArray(response.closedDates) || response.closedDates.length > dates.length || response.closedDates.some((date, index) => typeof date !== 'string' || !dates.includes(date) || (index > 0 && date <= response.closedDates[index - 1]))) throw new Error('calendar');
       applyMonth(month, { status: 'ready', closedDates: response.closedDates, checkedAt: Date.now(), key, selectionKey });
     } catch {
       if (!active || sequence !== monthSequence || calendar.getMonth() !== month) return;
@@ -334,8 +383,11 @@ if (form) {
   };
 
   async function api(path, options = {}, controller = new AbortController()) {
+    if (offline()) throw new Error('offline');
     controllers.add(controller);
-    const timeoutMs = path === '/api/booking/requests' && options.method === 'POST' ? 30000 : 12000;
+    // A 500 KiB JPEG becomes about 667 KiB of JSON base64: around 43 seconds
+    // at 128 kbps before latency/server work. Keep this bounded but upload-safe.
+    const timeoutMs = path === '/api/booking/requests' && options.method === 'POST' ? 120000 : 12000;
     const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
     try {
       const response = await fetch(path, {
@@ -359,6 +411,13 @@ if (form) {
 
   async function checkService() {
     if (submitting) return;
+    if (offline()) {
+      service = 'unavailable';
+      setStatus('Koneksi terputus. Isian tetap di formulir. Sambungkan internet untuk memeriksa jadwal dan melanjutkan.', true);
+      statusRetry.hidden = false;
+      updateButton();
+      return;
+    }
     service = 'checking';
     statusRetry.hidden = true;
     statusRetry.disabled = true;
@@ -400,6 +459,7 @@ if (form) {
       requestKey = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
       requestSignature = nextSignature;
     }
+    saveDraft();
     return requestKey;
   }
 
@@ -445,7 +505,7 @@ if (form) {
 
   form.addEventListener('submit', async event => {
     event.preventDefault();
-    if (submitting || !['enabled', 'preview'].includes(service)) return;
+    if (submitting || offline() || !['enabled', 'preview'].includes(service)) return;
     updateDeposit();
     const result = updateButton();
     showErrors(result.errors);
@@ -472,6 +532,10 @@ if (form) {
           body: JSON.stringify({ name: value.name, whatsapp: value.whatsapp, agreedPrice: String(value.agreedPrice), paymentMode: value.paymentMode, designType: value.designType, durationMinutes: String(value.durationMinutes), date: value.date, time: value.time, idempotencyKey: idempotencyKey(value), proof: { contentType: proof.contentType, base64: proof.base64 } }),
         });
         reviewUrl = approvalUrl(response, value, result.preview);
+        draftComplete = true;
+        if (draftTimer !== null) window.clearTimeout(draftTimer);
+        draftTimer = null;
+        draft.clear();
       }
       const destination = prepareWhatsApp(result, reviewUrl);
       window.location.assign(destination);
@@ -483,7 +547,7 @@ if (form) {
         await fillTimes();
         setStatus('Jadwal baru saja terisi. Pilih tanggal atau jam lain, lalu tekan Book lagi. Detail dan bukti pembayaranmu tetap di formulir.', true);
       } else if (error.status === 429) setStatus('Terlalu banyak permintaan. Tunggu sebentar, lalu tekan Book lagi. Detailmu tetap tersimpan di formulir ini.', true);
-      else setStatus('Permintaan belum dapat diselesaikan. Detailmu tetap di formulir. Periksa koneksi, lalu tekan Book untuk mencoba lagi.', true);
+      else setStatus('Konfirmasi pengiriman belum diterima. Detail dan bukti tetap di formulir. Periksa koneksi, lalu tekan Book lagi; pengiriman yang sama tidak membuat permintaan ganda.', true);
     } finally {
       if (active) {
         submitting = false;
@@ -491,7 +555,8 @@ if (form) {
         form.querySelectorAll('fieldset').forEach(fieldset => { fieldset.disabled = false; });
         bookButton.textContent = 'Book';
         updateButton();
-        startRefresh();
+        if (reconnectPending && !offline() && !form.hidden) { reconnectPending = false; monthCache.clear(); checkService(); }
+        else startRefresh();
       }
     }
   });
@@ -513,10 +578,12 @@ if (form) {
   });
   const onValueChange = event => {
     if (!editable.includes(event.target.name)) return;
+    draftComplete = false;
     if (event.target.name === 'paymentMode') requestedPaymentMode = input('paymentMode').value;
     updateDeposit();
     const result = updateButton();
     if (touched.size) showErrors(Object.fromEntries(Object.entries(result.errors).filter(([name]) => touched.has(name))));
+    scheduleDraft();
   };
   form.addEventListener('input', onValueChange);
   form.addEventListener('change', onValueChange);
@@ -542,10 +609,11 @@ if (form) {
     proofImage.src = proofUrl;
     proofPreview.hidden = false;
   };
-  const clearProof = (keepSelection = false) => {
+  const clearProof = (keepSelection = false, persist = true) => {
     proofSequence++;
     proofController?.abort();
     proofController = null;
+    restoringProofDigest = '';
     proof = null; proofBlob = null; proofState = 'empty';
     if (!keepSelection) proofInput.value = '';
     proofInput.setAttribute('aria-invalid', 'false');
@@ -554,6 +622,7 @@ if (form) {
     proofStatus.textContent = 'Unggah bukti pembayaran untuk melanjutkan.';
     proofStatus.dataset.tone = 'normal';
     updateButton();
+    if (persist) { draftComplete = false; draft.removeProof(); saveDraft(); }
   };
   proofInput.addEventListener('change', async () => {
     const file = proofInput.files?.[0];
@@ -574,6 +643,7 @@ if (form) {
       proofState = 'ready';
       restoreProofPreview();
       proofStatus.textContent = service === 'preview' ? 'Gambar siap. Pratinjau ini belum mengunggah gambar; lampirkan bukti di WhatsApp.' : 'Bukti pembayaran siap dikirim bersama permintaan.';
+      saveDraft();
     } catch (error) {
       if (!active || sequence !== proofSequence) return;
       proofState = 'error';
@@ -584,11 +654,30 @@ if (form) {
       if (active && sequence === proofSequence) {
         proofController = null;
         updateButton();
-        startRefresh();
+        if (reconnectPending && !offline()) { reconnectPending = false; monthCache.clear(); checkService(); }
+        else startRefresh();
       }
     }
   });
   document.querySelector('#booking-proof-remove').addEventListener('click', () => clearProof());
+  draftClear.addEventListener('click', () => {
+    if (submitting) return;
+    if (draftTimer !== null) window.clearTimeout(draftTimer);
+    draftTimer = null;
+    draftRestoring = true;
+    clearProof(false, false);
+    draft.clear();
+    requestKey = ''; requestSignature = ''; lastSelectedTime = '';
+    ['name', 'whatsapp', 'agreedPrice', 'date', 'time'].forEach(name => { input(name).value = ''; });
+    input('serviceDuration').value = 'simple:120';
+    requestedPaymentMode = 'deposit'; input('paymentMode').value = 'deposit';
+    touched.clear(); showErrors({});
+    updateServiceHint(); updateDeposit(); fillTimes(); calendar?.refresh();
+    draftRestoring = false; draftComplete = false;
+    draftStatus.textContent = 'Isian dan bukti pembayaran tersimpan sudah dihapus dari tab ini.';
+    draftClear.hidden = true;
+    input('name').focus();
+  });
   document.querySelectorAll('[data-copy-payment]').forEach(button => {
     button.addEventListener('click', async () => {
       const number = document.getElementById(button.dataset.copyPayment);
@@ -603,7 +692,28 @@ if (form) {
       }
     });
   });
+  const restoreStoredProof = () => {
+    if (!restoringProofDigest || proofState === 'ready') return;
+    const sequence = ++proofSequence;
+    proofState = 'restoring';
+    proofStatus.textContent = 'Memulihkan bukti pembayaran di tab ini…';
+    draft.loadProof().then(prepared => {
+      if (!active || sequence !== proofSequence) return;
+      restoringProofDigest = '';
+      if (prepared) {
+        proof = { contentType: prepared.contentType, base64: prepared.base64, digest: prepared.digest };
+        proofBlob = prepared.blob; proofState = 'ready'; restoreProofPreview();
+        proofStatus.textContent = 'Bukti pembayaran dipulihkan dan siap dikirim.';
+      } else {
+        proofState = 'empty';
+        proofStatus.textContent = 'Bukti tersimpan tidak dapat dipulihkan. Unggah kembali gambar untuk melanjutkan.';
+      }
+      updateButton();
+      saveDraft();
+    });
+  };
   window.addEventListener('pagehide', () => {
+    saveDraft();
     active = false;
     stopRefresh();
     pauseSlotCheck();
@@ -623,6 +733,9 @@ if (form) {
       form.setAttribute('aria-busy', 'false');
       form.querySelectorAll('fieldset').forEach(fieldset => { fieldset.disabled = false; });
       bookButton.textContent = 'Book';
+      // A suspended IndexedDB/hash callback was invalidated on departure. Start
+      // a new guarded read rather than leaving the restored page busy forever.
+      if (proofState === 'restoring') restoreStoredProof();
     }
     if (!form.hidden) {
       if (event.persisted) checkService();
@@ -639,11 +752,38 @@ if (form) {
       pauseMonthCheck();
       return;
     }
-    if (!active || form.hidden || service !== 'enabled' || submitting || proofState === 'processing') return;
+    if (!active || offline() || form.hidden || service !== 'enabled' || submitting || proofState === 'processing') return;
     refreshMonth({ force: true, quiet: true });
     fillTimes({ quiet: true });
     startRefresh();
   });
+  window.addEventListener('offline', () => {
+    saveDraft(); stopRefresh(); pauseSlotCheck(); pauseMonthCheck();
+    availability = 'error'; availabilityKey = ''; monthCache.clear();
+    controllers.forEach(controller => controller.abort());
+    setStatus('Koneksi terputus. Isian tetap di formulir. Setelah tersambung, periksa jadwal lalu tekan Book untuk melanjutkan.', true);
+    updateButton();
+  });
+  window.addEventListener('online', () => {
+    reconnectPending = true;
+    if (!active || form.hidden || submitting || proofState === 'processing') return;
+    reconnectPending = false;
+    monthCache.clear();
+    checkService();
+  });
+  const restored = draft.read();
+  if (restored) {
+    editable.filter(name => name !== 'time').forEach(name => { input(name).value = restored.fields[name]; });
+    requestedPaymentMode = restored.fields.paymentMode || 'deposit';
+    lastSelectedTime = restored.fields.time;
+    requestKey = restored.requestKey;
+    requestSignature = restored.requestSignature;
+    if (restored.proofDigest) {
+      restoringProofDigest = restored.proofDigest;
+      restoreStoredProof();
+    }
+  }
+  draftRestoring = false;
   setBounds();
   updateServiceHint();
   calendar = createBookingCalendar(document.querySelector('#booking-calendar'), input('date'), { onMonthChange: () => refreshMonth() });
