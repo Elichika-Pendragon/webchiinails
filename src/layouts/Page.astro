@@ -15,7 +15,6 @@ const settings = siteSettings(env);
     <meta name="description" content={page.description} />
     <meta name="theme-color" content="#ffd2e6" />
     <title>{page.title}</title>
-    <link rel="icon" href="/images/logo.jpg" />
     <link rel="preload" href="/fonts/cormorant-garamond-latin-500.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/dm-sans-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
     <Fragment set:html={seoHead(page, settings, salon, env.GOOGLE_SITE_VERIFICATION || '')} />

@@ -1,0 +1,237 @@
+{
+  "collection": "Jessica photographs supplied 2026-10-21",
+  "encoder": {
+    "library": "Pillow",
+    "version": "12.3.0",
+    "format": "WebP",
+    "quality": 82,
+    "method": 6
+  },
+  "socialEncoder": {
+    "library": "Pillow",
+    "version": "12.3.0",
+    "format": "JPEG",
+    "quality": 85,
+    "progressive": true,
+    "optimize": true
+  },
+  "processing": [
+    "EXIF orientation",
+    "uncropped aspect ratio",
+    "Lanczos resize",
+    "no upscaling",
+    "strip export metadata"
+  ],
+  "photos": [
+    {
+      "slug": "jessica-french-gold",
+      "source": {
+        "file": "WhatsApp Image 2026-10-21 at 00.33.42.jpeg",
+        "width": 1200,
+        "height": 1600,
+        "bytes": 139728,
+        "sha256": "8c1ac7cb2ab2a28e8a08c7af193291cbe670640ac39c46e9ce306df21b5cfba4"
+      },
+      "exports": [
+        {
+          "file": "public/images/jessica-french-gold-360.webp",
+          "width": 360,
+          "height": 480,
+          "bytes": 15110,
+          "sha256": "5c8b2f31d5207e806c6ac9af0c1f074363db2cc67bd97014187d6f48e9eda954"
+        },
+        {
+          "file": "public/images/jessica-french-gold-720.webp",
+          "width": 720,
+          "height": 960,
+          "bytes": 38964,
+          "sha256": "ad5129f6868ca0428e214d92ad052c0e99a12dd3fb8991148aa7f85e9348cdee"
+        },
+        {
+          "file": "public/images/jessica-french-gold-1080.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 66388,
+          "sha256": "741bae57556095d22849d9dc0040231cde7e3ee157c56256ef85c478d01a77ca"
+        }
+      ],
+      "socialExport": {
+        "file": "public/images/jessica-french-gold-share.jpg",
+        "width": 1080,
+        "height": 1440,
+        "bytes": 151355,
+        "sha256": "099c3110ac5dcf15f1e96d80b38c5c9fd0c803adb2280a01159a7a1d8e6a96d9",
+        "usage": "social-only; not the served hero image"
+      }
+    },
+    {
+      "slug": "jessica-red-silver",
+      "source": {
+        "file": "WhatsApp Image 2026-10-21 at 00.33.42 (3).jpeg",
+        "width": 1200,
+        "height": 1600,
+        "bytes": 135518,
+        "sha256": "c0f9ebdb57ebdc2f5a9ffbd7c8a0f18fd80f1bad807fec8b9af4b378ff0ec4f6"
+      },
+      "exports": [
+        {
+          "file": "public/images/jessica-red-silver-360.webp",
+          "width": 360,
+          "height": 480,
+          "bytes": 14914,
+          "sha256": "98e237dbad75a00dcc4d629c27551f2edb7409721a2168599d732804cffbcbf4"
+        },
+        {
+          "file": "public/images/jessica-red-silver-720.webp",
+          "width": 720,
+          "height": 960,
+          "bytes": 38572,
+          "sha256": "064923d8fff59a8425cb1187efa79d0ba008d0b055c0abcd6974151d7e28f68c"
+        },
+        {
+          "file": "public/images/jessica-red-silver-1080.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 66044,
+          "sha256": "b097572ccf70a94d1f17e02059d99ee63bfa77f5d95fb0488f81f950cd27121f"
+        }
+      ]
+    },
+    {
+      "slug": "jessica-forest-characters",
+      "source": {
+        "file": "WhatsApp Image 2026-10-21 at 00.33.44.jpeg",
+        "width": 900,
+        "height": 1600,
+        "bytes": 112643,
+        "sha256": "ee0bd8230eb1f1479dc4f30e468d86a16f2a3005d827143391a910fb93ab38b3"
+      },
+      "exports": [
+        {
+          "file": "public/images/jessica-forest-characters-360.webp",
+          "width": 360,
+          "height": 640,
+          "bytes": 19668,
+          "sha256": "7e20e9cb23d96e7c7672c1a19127924435cddde5135d5d724237296b6f77bc0e"
+        },
+        {
+          "file": "public/images/jessica-forest-characters-720.webp",
+          "width": 720,
+          "height": 1280,
+          "bytes": 46038,
+          "sha256": "49a56f3c2103d83645357c8ac450f7157b31779f7c54480109236ad0415169ad"
+        },
+        {
+          "file": "public/images/jessica-forest-characters-900.webp",
+          "width": 900,
+          "height": 1600,
+          "bytes": 61504,
+          "sha256": "225063c23d88974ea5c411a5c98224d11f686f4e35e1a315a5e1621697016bc5"
+        }
+      ]
+    },
+    {
+      "slug": "jessica-cat-characters",
+      "source": {
+        "file": "WhatsApp Image 2026-10-21 at 00.33.44 (1).jpeg",
+        "width": 1200,
+        "height": 1600,
+        "bytes": 141296,
+        "sha256": "5e9bcab9bda5502d6d22504dd927f418eff8c4d99766ac1684a1665205fa6583"
+      },
+      "exports": [
+        {
+          "file": "public/images/jessica-cat-characters-360.webp",
+          "width": 360,
+          "height": 480,
+          "bytes": 16958,
+          "sha256": "a02e7d0a7796d7cc2a72d5d121aeec260cdb8ea192c5c0c35584d31d9aca4418"
+        },
+        {
+          "file": "public/images/jessica-cat-characters-720.webp",
+          "width": 720,
+          "height": 960,
+          "bytes": 41140,
+          "sha256": "70ce206eb6dd0b58662751620e0a4f1841a60d891f289a155d4e81125a2ff6c5"
+        },
+        {
+          "file": "public/images/jessica-cat-characters-1080.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 66734,
+          "sha256": "c02ae234ddefd59daf714ec8b79f2b2e5558ba14e8f2e21968019ff57c5805c8"
+        }
+      ]
+    },
+    {
+      "slug": "jessica-spider-art",
+      "source": {
+        "file": "WhatsApp Image 2026-10-21 at 00.33.43.jpeg",
+        "width": 1200,
+        "height": 1600,
+        "bytes": 124996,
+        "sha256": "364642c658f921398f49925ab570a0e0b1164bb2a5022d7cff3422ec9621b4b6"
+      },
+      "exports": [
+        {
+          "file": "public/images/jessica-spider-art-360.webp",
+          "width": 360,
+          "height": 480,
+          "bytes": 14212,
+          "sha256": "cb6cb56385b5e3d9b5810b68c583338a6cb072599e5e22eef3518136f23ea541"
+        },
+        {
+          "file": "public/images/jessica-spider-art-720.webp",
+          "width": 720,
+          "height": 960,
+          "bytes": 35790,
+          "sha256": "feda2e6298989c9f84f3a703e3e24278833b762bfc8dbc15317406c47ea391ac"
+        },
+        {
+          "file": "public/images/jessica-spider-art-1080.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 59042,
+          "sha256": "90ba6e6e7b22994eee0fcdfdb690ef5301356a287e8ff45d57a24918c525a518"
+        }
+      ]
+    },
+    {
+      "slug": "jessica-press-on-collection",
+      "source": {
+        "file": "WhatsApp Image 2026-10-21 at 00.33.43 (1).jpeg",
+        "width": 1200,
+        "height": 1600,
+        "bytes": 176580,
+        "sha256": "50a26649b7ae95039a6cc200a211143d57aa4d1eca9ee5d265823db2bc44f147"
+      },
+      "exports": [
+        {
+          "file": "public/images/jessica-press-on-collection-360.webp",
+          "width": 360,
+          "height": 480,
+          "bytes": 23390,
+          "sha256": "df3f2993402688009d64cbf151be751d29a10a8fbc6e201e61f865a03129fe1e"
+        },
+        {
+          "file": "public/images/jessica-press-on-collection-720.webp",
+          "width": 720,
+          "height": 960,
+          "bytes": 58640,
+          "sha256": "ed8d1dfc1531ab2c3072e37cc4cf6e90a420dcce4e07dc85c2019b4dccf075df"
+        },
+        {
+          "file": "public/images/jessica-press-on-collection-1080.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 94438,
+          "sha256": "a192f5a96fde29c318968f874f3249e317c90fbc3dc310bcfed089bc444cf1c4"
+        }
+      ]
+    }
+  ],
+  "sourceBytes": 830761,
+  "responsiveExportBytes": 777546,
+  "socialExportBytes": 151355,
+  "exportBytes": 928901
+}

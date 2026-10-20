@@ -206,7 +206,8 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
       return { start: Math.max(busyStart, start), end: Math.min(busyEnd, end) };
     });
     // Free/busy omits transparent (Free) events. The owner does not need to
-    // manage that setting: every active all-day event closes its calendar dates.
+    // manage that setting: every active event blocks its interval; all-day
+    // events close their calendar dates.
     // Request dates/status only, not titles, contacts, descriptions or event IDs.
     const pageTokens = new Set();
     for (let page = 0; page < EVENT_MAX_PAGES; page++) {
@@ -220,11 +221,10 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
         if (event.status === 'cancelled') continue;
         if (!record(event.start) || !record(event.end)) throw failure('CALENDAR_RESPONSE');
         const allDay = Object.hasOwn(event.start, 'date') || Object.hasOwn(event.end, 'date');
-        if (!allDay) continue; // Timed occupancy remains authoritative in free/busy.
-        const eventStart = businessMidnight(event.start.date);
-        const eventEnd = businessMidnight(event.end.date);
+        const eventStart = allDay ? businessMidnight(event.start.date) : timestamp(event.start.dateTime);
+        const eventEnd = allDay ? businessMidnight(event.end.date) : timestamp(event.end.dateTime);
         if (eventStart === null || eventEnd === null || eventEnd <= eventStart
-          || Object.hasOwn(event.start, 'dateTime') || Object.hasOwn(event.end, 'dateTime')) throw failure('CALENDAR_RESPONSE');
+          || (allDay && (Object.hasOwn(event.start, 'dateTime') || Object.hasOwn(event.end, 'dateTime')))) throw failure('CALENDAR_RESPONSE');
         if (eventEnd > start && eventStart < end) busyIntervals.push({ start: Math.max(eventStart, start), end: Math.min(eventEnd, end) });
       }
       if (events.nextPageToken === undefined) break;

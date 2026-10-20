@@ -1,5 +1,6 @@
 import { posts, salon } from '../content.js';
 import { normalizeFeed, selectHeroMedia } from '../feed-data.js';
+import { studioPhotos, photoSourceSet } from '../studio-photos.js';
 
 // This is the only first-party browser entry. React renders HTML at build time.
 const localImage = name => `/images/${name || 'maroon'}.webp`;
@@ -66,7 +67,7 @@ document.addEventListener('keydown', event => {
 });
 
 // The original local photograph stays available if Instagram's CDN expires.
-const heroLinks = [...document.querySelectorAll('.mosaic-photo-link')];
+const heroLinks = [...document.querySelectorAll('.mosaic-photo-link')].filter(link => link.dataset.curated !== 'true');
 function updateHero(feed) {
   selectHeroMedia(feed).forEach((post, index) => {
     const link = heroLinks[index];
@@ -99,6 +100,117 @@ function updateHero(feed) {
 if (heroLinks.length) updateHero(posts);
 
 const gallery = document.querySelector('#gallery');
+// Rotate one visible mosaic tile at a time; Instagram remains a manual gallery.
+const heroSlideshow = document.querySelector('[data-hero-slideshow]');
+if (heroSlideshow) {
+  const photoSlots = [...heroSlideshow.querySelectorAll('.mosaic-photo-link')]
+    .filter(link => link.dataset.curated === 'true')
+    .map((link, index) => ({ link, base: link.querySelector('img'), index }));
+  const visiblePhotoSlots = () => photoSlots.filter(slot => {
+    const bounds = slot.link.getBoundingClientRect();
+    return slot.base && bounds.width > 0 && bounds.height > 0;
+  });
+  const controls = document.querySelector('[data-hero-controls]');
+  const previousPhoto = document.querySelector('[data-hero-direction="-1"]');
+  const nextPhoto = document.querySelector('[data-hero-direction="1"]');
+  const autoplayPhoto = document.querySelector('[data-hero-autoplay]');
+  const photoPosition = document.querySelector('[data-hero-position]');
+  const photoMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  let panelCursor = 0, poolCursor = 0, pendingPhoto = null;
+  let photoTimer = null, fadeTimer = null, loadTimer = null, photoGeneration = 0;
+  let photoVisible = false, photoHovered = false, photoActive = true, photoAuto = !photoMotion.matches;
+  const stopPhotoTimer = () => { if (photoTimer !== null) clearInterval(photoTimer); photoTimer = null; };
+  const cancelPhoto = () => {
+    photoGeneration++;
+    clearTimeout(fadeTimer); clearTimeout(loadTimer); fadeTimer = null; loadTimer = null;
+    if (pendingPhoto) { pendingPhoto.onload = null; pendingPhoto.onerror = null; pendingPhoto.remove(); pendingPhoto = null; }
+  };
+  const syncPhotoAuto = () => {
+    stopPhotoTimer();
+    autoplayPhoto.textContent = photoAuto ? 'Jeda' : 'Putar';
+    autoplayPhoto.setAttribute('aria-label', photoAuto ? 'Jeda pergantian foto' : 'Putar foto secara otomatis');
+    if (!photoAuto || !photoVisible || photoHovered || !photoActive || document.hidden || pendingPhoto || !visiblePhotoSlots().length) return;
+    photoTimer = setInterval(() => {
+      if (photoVisible && !photoHovered && photoActive && !document.hidden) advancePhoto(1);
+    }, 8000);
+  };
+  const advancePhoto = direction => {
+    if (pendingPhoto || !photoActive || document.hidden) return;
+    const visible = visiblePhotoSlots();
+    if (!visible.length) return;
+    const slot = visible[panelCursor % visible.length];
+    const shownIndexes = new Set(visible.map(item => item.index));
+    let index = poolCursor;
+    for (let step = 0; step < studioPhotos.length; step++) {
+      index = (index + direction + studioPhotos.length) % studioPhotos.length;
+      if (!shownIndexes.has(index)) break;
+    }
+    if (shownIndexes.has(index)) return;
+    stopPhotoTimer();
+    const photo = studioPhotos[index], next = element('img', 'photo hero-photo-next');
+    const generation = ++photoGeneration;
+    pendingPhoto = next;
+    next.alt = photo.alt; next.width = photo.width; next.height = photo.height;
+    next.sizes = slot.base.getAttribute('sizes') || slot.base.sizes || '100vw';
+    next.srcset = photoSourceSet(photo); next.decoding = 'async'; next.loading = 'eager';
+    next.fetchPriority = 'low'; next.style.objectPosition = photo.position;
+    next.setAttribute('aria-hidden', 'true');
+    const current = () => pendingPhoto === next && generation === photoGeneration && photoActive && !document.hidden && visiblePhotoSlots().includes(slot);
+    const failed = () => { if (pendingPhoto !== next || generation !== photoGeneration) return; cancelPhoto(); syncPhotoAuto(); };
+    const commit = () => {
+      if (!current()) { failed(); return; }
+      slot.base.remove(); next.className = 'photo'; next.removeAttribute('aria-hidden');
+      slot.base = next; slot.index = index; pendingPhoto = null; poolCursor = index; panelCursor++;
+      clearTimeout(loadTimer); clearTimeout(fadeTimer); loadTimer = null; fadeTimer = null;
+      next.onload = null; next.onerror = null;
+      photoPosition.textContent = `${index + 1} / ${studioPhotos.length}`;
+      syncPhotoAuto();
+    };
+    let decoding = false;
+    next.onload = async () => {
+      if (decoding) return;
+      if (!current()) { failed(); return; }
+      decoding = true;
+      try { if (next.decode) await next.decode(); } catch { failed(); return; }
+      if (!current()) { failed(); return; }
+      clearTimeout(loadTimer); loadTimer = null;
+      if (photoMotion.matches) { commit(); return; }
+      next.getBoundingClientRect(); // Resolve the transparent layer before its opacity changes.
+      next.classList.add('is-visible');
+      fadeTimer = setTimeout(commit, 650);
+    };
+    next.onerror = failed;
+    slot.link.append(next);
+    loadTimer = setTimeout(failed, 12000);
+    next.src = `/images/${photo.name}-720.webp`;
+    if (next.complete && next.naturalWidth) next.onload();
+  };
+  const pausePhotos = () => { photoAuto = false; syncPhotoAuto(); };
+  if (photoSlots.length && controls && previousPhoto && nextPhoto && autoplayPhoto && photoPosition) {
+    controls.hidden = false; photoPosition.textContent = `1 / ${studioPhotos.length}`;
+    previousPhoto.addEventListener('click', () => { pausePhotos(); advancePhoto(-1); });
+    nextPhoto.addEventListener('click', () => { pausePhotos(); advancePhoto(1); });
+    autoplayPhoto.addEventListener('click', () => { photoAuto = !photoAuto; syncPhotoAuto(); });
+    for (const slot of photoSlots) {
+      slot.link.addEventListener('pointerdown', pausePhotos, { passive: true });
+      slot.link.addEventListener('focusin', pausePhotos);
+    }
+    heroSlideshow.addEventListener('mouseenter', () => { photoHovered = true; syncPhotoAuto(); });
+    heroSlideshow.addEventListener('mouseleave', () => { photoHovered = false; syncPhotoAuto(); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) cancelPhoto(); syncPhotoAuto(); });
+    addEventListener('pagehide', () => { photoActive = false; stopPhotoTimer(); cancelPhoto(); });
+    addEventListener('pageshow', () => { photoActive = true; syncPhotoAuto(); });
+    if ('IntersectionObserver' in window) new IntersectionObserver(([entry]) => {
+      photoVisible = entry.isIntersecting;
+      if (!photoVisible) cancelPhoto();
+      syncPhotoAuto();
+    }, { threshold: .25 }).observe(heroSlideshow);
+    const motionChanged = () => { if (photoMotion.matches) { pausePhotos(); cancelPhoto(); } };
+    if (photoMotion.addEventListener) photoMotion.addEventListener('change', motionChanged);
+    else photoMotion.addListener?.(motionChanged);
+    syncPhotoAuto();
+  }
+}
 const track = gallery?.querySelector('.instagram-track');
 const previous = gallery?.querySelector('[aria-label="Postingan sebelumnya"]');
 const next = gallery?.querySelector('[aria-label="Postingan berikutnya"]');

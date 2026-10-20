@@ -4,13 +4,14 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { posts, salon } from '../src/content.js';
 import { normalizeFeed, selectHeroMedia } from '../src/feed-data.js';
+import { studioPhotos, photoSourceSet } from '../src/studio-photos.js';
 
 // Execute the real browser entry with bounded DOM/event adapters. No browser,
 // third-party script, real timer, network request or account is used by this test.
 const controller = (await readFile(new URL('../src/scripts/client.js', import.meta.url), 'utf8'))
   .replace(/^import .*;\r?\n/gm, '');
 class Node {
-  constructor(tag = '') { this.tagName = tag; this.children = []; this.parentNode = null; this.attributes = {}; this.dataset = {}; this.events = {}; this.hidden = false; this._text = ''; this.width = 330; this.height = 200; this.scrollLeft = 0; this.clientWidth = 330; this.scrollWidth = 1400; }
+  constructor(tag = '') { this.tagName = tag; this.children = []; this.parentNode = null; this.attributes = {}; this.style = {}; this.dataset = {}; this.events = {}; this.hidden = false; this._text = ''; this.width = 330; this.height = 200; this.scrollLeft = 0; this.clientWidth = 330; this.scrollWidth = 1400; }
   set className(value) { this.attributes.class = value; }
   get className() { return this.attributes.class || ''; }
   get classList() { return { contains: name => this.className.split(' ').includes(name), add: name => { if (!this.classList.contains(name)) this.className += ` ${name}`; }, toggle: (name, on) => { this.className = this.className.split(' ').filter(item => item !== name).concat(on ? [name] : []).join(' '); } }; }
@@ -23,6 +24,8 @@ class Node {
   get src() { return this.getAttribute('src'); }
   setAttribute(key, value) { this.attributes[key] = String(value); }
   getAttribute(key) { return this.attributes[key] ?? null; }
+  removeAttribute(key) { delete this.attributes[key]; }
+  decode() { return Promise.resolve(); }
   append(...nodes) { for (const node of nodes) this.insertBefore(node, null); }
   prepend(node) { this.insertBefore(node, this.children[0] || null); }
   insertBefore(node, before) { if (node === before) return node; node.remove(); const index = before ? this.children.indexOf(before) : this.children.length; this.children.splice(index, 0, node); node.parentNode = this; this.inserts = (this.inserts || 0) + 1; return node; }
@@ -48,17 +51,47 @@ class Node {
   getBoundingClientRect() { return { width: this.width, height: this.height, top: this.top || 0, bottom: (this.top || 0) + this.height }; }
   focus() { this.owner.activeElement = this; }
   scrollBy(options) { this.lastScroll = options; this.scrollLeft += options.left; }
+  scrollTo(options) { this.lastScroll = options; this.scrollLeft = options.left; }
 }
-function harness({ hero = true, gallery = true, controls = false, response, maps = [], idle = true, intersection = true } = {}) {
+function harness({ hero = true, curatedHero = false, gallery = true, heroSlide = false, heroSlideMobile = false, photoReduced = true, controls = false, response, maps = [], idle = true, intersection = true } = {}) {
   const document = new Node('document'); document.readyState = 'loading'; document.body = new Node('body'); document.append(document.body); document.createElement = tag => { const node = new Node(tag); node.owner = document; return node; }; document.createTextNode = text => { const node = document.createElement(''); node.textContent = text; return node; };
   const make = (tag, className, parent = document.body) => { const node = document.createElement(tag); node.className = className; parent?.append(node); return node; };
   const heroes = [];
-  if (hero) for (const fallback of selectHeroMedia(posts)) { const link = make('a', 'mosaic-photo-link'); const picture = make('picture', '', link); if (fallback.image === 'french') make('source', '', picture); const img = make('img', '', picture); img.src = `/images/${fallback.image}.webp`; heroes.push(link); }
+  if (hero) for (const fallback of selectHeroMedia(posts)) {
+    const link = make('a', 'mosaic-photo-link'); const picture = make('picture', '', link);
+    if (!curatedHero && fallback.image === 'french') make('source', '', picture);
+    const img = make('img', '', picture);
+    if (curatedHero) {
+      link.dataset.curated = 'true'; link.href = '/custom-sets#studio-portfolio';
+      img.src = '/images/jessica-french-gold-720.webp';
+      img.setAttribute('srcset', '/images/jessica-french-gold-360.webp 360w, /images/jessica-french-gold-720.webp 720w, /images/jessica-french-gold-1080.webp 1080w');
+    } else img.src = `/images/${fallback.image}.webp`;
+    heroes.push(link);
+  }
   let track;
   if (gallery) {
     const section = make('section', ''); section.setAttribute('id', 'gallery'); track = make('div', 'instagram-track', section);
     for (const post of posts) { const card = make('article', 'instagram-slide', track); const preview = make('div', 'post-placeholder', card); make('img', 'photo', preview).src = `/images/${post.image}.webp`; make('p', '', preview).textContent = 'Instagram post'; const link = make('a', 'post-original', card); link.href = post.url; link.append(document.createTextNode(`${post.title} `), make('span', '', null)); }
     const previous = make('button', '', section); previous.setAttribute('aria-label', 'Postingan sebelumnya'); const next = make('button', '', section); next.setAttribute('aria-label', 'Postingan berikutnya'); make('span', '', section).setAttribute('aria-live', 'polite');
+  }
+  let heroFeature, slideLink, slideLinks = [], slideControls, previousPhoto, nextPhoto, autoplayPhoto, photoPosition;
+  if (heroSlide) {
+    heroFeature = make('section', 'mosaic'); heroFeature.setAttribute('data-hero-slideshow', '');
+    for (let index = 0; index < 4; index++) {
+      const panel = make('div', index === 0 ? 'mosaic-feature' : 'mosaic-support', heroFeature);
+      const link = make('a', 'mosaic-photo-link', panel); link.dataset.curated = 'true'; link.href = '/custom-sets#studio-portfolio';
+      if (heroSlideMobile && index > 0) { link.width = 0; link.height = 0; }
+      const img = make('img', 'photo', link); img.src = `/images/${studioPhotos[index].name}-720.webp`; img.alt = studioPhotos[index].alt;
+      img.setAttribute('srcset', photoSourceSet(studioPhotos[index])); img.setAttribute('sizes', index === 0 ? '(max-width: 720px) calc(100vw - 40px), 642px' : '200px');
+      slideLinks.push(link);
+    }
+    slideLink = slideLinks[0];
+    const caption = make('div', 'mosaic-caption');
+    slideControls = make('div', '', caption); slideControls.setAttribute('data-hero-controls', ''); slideControls.hidden = true;
+    previousPhoto = make('button', '', slideControls); previousPhoto.setAttribute('data-hero-direction', '-1');
+    nextPhoto = make('button', '', slideControls); nextPhoto.setAttribute('data-hero-direction', '1');
+    autoplayPhoto = make('button', '', slideControls); autoplayPhoto.setAttribute('data-hero-autoplay', '');
+    photoPosition = make('span', '', slideControls); photoPosition.setAttribute('data-hero-position', '');
   }
   let menu, trigger, panel, close;
   if (controls) {
@@ -75,8 +108,9 @@ function harness({ hero = true, gallery = true, controls = false, response, maps
   const events = {}, timers = new Map(), intervals = [], fetches = [], observers = [], idleCallbacks = [];
   let timerId = 0;
   class Observer { constructor(callback, options) { this.callback = callback; this.options = options; observers.push(this); } observe(node) { this.node = node; } disconnect() { this.disconnected = true; } }
-  const context = { document, posts, salon, normalizeFeed, selectHeroMedia, URL, AbortController, Promise, getComputedStyle: () => ({ visibility: 'visible' }), matchMedia: () => ({ matches: true }), innerHeight: 800,
-    setTimeout: (fn, delay) => { const id = ++timerId; timers.set(id, { fn, delay }); return id; }, clearTimeout: id => timers.delete(id), setInterval: (fn, delay) => { intervals.push({ fn, delay }); return intervals.length; },
+  const photoMotion = { matches: photoReduced };
+  const context = { document, posts, salon, normalizeFeed, selectHeroMedia, studioPhotos, photoSourceSet, URL, AbortController, Promise, getComputedStyle: () => ({ visibility: 'visible' }), matchMedia: query => query === '(prefers-reduced-motion: reduce)' ? photoMotion : { matches: true }, innerHeight: 800,
+    setTimeout: (fn, delay) => { const id = ++timerId; timers.set(id, { fn, delay }); return id; }, clearTimeout: id => timers.delete(id), setInterval: (fn, delay) => { intervals.push({ fn, delay, active: true }); return intervals.length; }, clearInterval: id => { if (intervals[id - 1]) intervals[id - 1].active = false; },
     addEventListener: (type, handler) => { (events[type] ||= []).push(handler); }, removeEventListener: (type, handler) => { events[type] = (events[type] || []).filter(item => item !== handler); }, IntersectionObserver: Observer, ResizeObserver: Observer, MutationObserver: Observer,
     fetch: (...args) => { fetches.push(args); return response ? response(...args) : Promise.resolve({ ok: false }); },
   };
@@ -84,10 +118,132 @@ function harness({ hero = true, gallery = true, controls = false, response, maps
   if (!intersection) delete context.IntersectionObserver;
   context.window = context;
   vm.runInNewContext(`${controller}\nglobalThis.qa={updateHero,updateGallery,states,setMenu,setChat};`, context, { timeout: 1000 });
-  return { ...context.qa, window: context, document, heroes, track, menu, trigger, panel, close, mapAreas, events, timers, intervals, fetches, observers, idleCallbacks, fire: (type, event) => { for (const fn of events[type] || []) fn(event); } };
+  return { ...context.qa, window: context, document, heroes, track, heroFeature, slideLink, slideLinks, slideControls, previousPhoto, nextPhoto, autoplayPhoto, photoPosition, menu, trigger, panel, close, mapAreas, events, timers, intervals, fetches, observers, idleCallbacks, fire: (type, event) => { for (const fn of events[type] || []) fn(event); } };
 }
 // make(..., null) is used for detached nodes just like document.createElement.
 const settle = () => new Promise(resolve => setImmediate(resolve));
+
+test('desktop mosaic changes one tile at a time in round-robin order without duplicate designs', async () => {
+  const app = harness({ hero: false, gallery: false, heroSlide: true, photoReduced: false });
+  const expectedPhotos = [4, 5, 0, 1, 2, 3];
+  for (let tick = 0; tick < expectedPhotos.length; tick++) {
+    const panel = tick % 4, before = app.slideLinks.map(link => link.querySelector('img'));
+    app.nextPhoto.emit('click'); app.nextPhoto.emit('click');
+    assert.equal(app.heroFeature.querySelectorAll('img').length, 5, 'Only one next image is requested, including repeated clicks');
+    const next = app.slideLinks[panel].querySelectorAll('img')[1];
+    assert.equal(next.src, `/images/${studioPhotos[expectedPhotos[tick]].name}-720.webp`);
+    assert.equal(next.sizes, before[panel].getAttribute('sizes') || before[panel].sizes);
+    for (let index = 0; index < 4; index++) assert.equal(app.slideLinks[index].querySelector('img'), before[index]);
+    await next.onload();
+    [...app.timers.values()].find(timer => timer.delay === 650).fn();
+    assert.equal(app.heroFeature.querySelectorAll('img').length, 4);
+    assert.equal(app.slideLinks[panel].querySelector('img'), next);
+    assert.equal(new Set(app.slideLinks.map(link => link.querySelector('img').src)).size, 4);
+    for (let index = 0; index < 4; index++) if (index !== panel) assert.equal(app.slideLinks[index].querySelector('img'), before[index]);
+  }
+});
+
+test('mobile rotates all six photos in the visible tile without loading hidden supporting tiles', async () => {
+  const app = harness({ hero: false, gallery: false, heroSlide: true, heroSlideMobile: true });
+  const supporting = app.slideLinks.slice(1).map(link => link.querySelector('img'));
+  for (const index of [1, 2, 3, 4, 5, 0]) {
+    app.nextPhoto.emit('click'); const next = app.slideLink.querySelectorAll('img')[1];
+    assert.equal(next.src, `/images/${studioPhotos[index].name}-720.webp`);
+    for (let panel = 1; panel < 4; panel++) {
+      assert.equal(app.slideLinks[panel].querySelectorAll('img').length, 1);
+      assert.equal(app.slideLinks[panel].querySelector('img'), supporting[panel - 1]);
+    }
+    await next.onload(); assert.equal(app.slideLink.querySelectorAll('img').length, 1);
+  }
+});
+
+test('hero rotates one decoded photograph every eight visible seconds with a covered crossfade', async () => {
+  const app = harness({ hero: false, gallery: false, heroSlide: true, heroSlideMobile: true, photoReduced: false });
+  const active = () => app.intervals.filter(timer => timer.active);
+  const visibility = app.observers.find(observer => observer.node === app.heroFeature);
+  const initial = app.slideLink.querySelector('img');
+  assert.equal(app.heroFeature.contains(app.slideControls), false, 'Controls live in the separate hero caption');
+  assert.equal(app.slideControls.hidden, false); assert.equal(app.photoPosition.textContent, '1 / 6');
+  assert.equal(app.slideLink.querySelectorAll('img').length, 1); assert.equal(active().length, 0);
+  visibility.callback([{ isIntersecting: true }]); assert.equal(active().length, 1); assert.equal(active()[0].delay, 8000);
+  active()[0].fn(); const next = app.slideLink.querySelectorAll('img')[1];
+  assert.equal(active().length, 0); assert.equal(app.slideLink.querySelectorAll('img').length, 2);
+  assert.equal(next.src, '/images/jessica-red-silver-720.webp'); assert.equal(next.srcset, photoSourceSet(studioPhotos[1]));
+  assert.equal(next.sizes, initial.getAttribute('sizes')); assert.equal(next.width, studioPhotos[1].width); assert.equal(next.height, studioPhotos[1].height);
+  assert.equal(next.getAttribute('aria-hidden'), 'true'); assert.equal(initial.parentNode, app.slideLink);
+  let decodeReady; next.decode = () => new Promise(resolve => { decodeReady = resolve; });
+  next.onload(); assert.equal(next.classList.contains('is-visible'), false); decodeReady(); await settle();
+  assert.equal(next.classList.contains('is-visible'), true); assert.equal(initial.parentNode, app.slideLink);
+  const fade = [...app.timers.values()].find(timer => timer.delay === 650); assert.ok(fade); fade.fn();
+  assert.equal(initial.parentNode, null); assert.equal(app.slideLink.querySelector('img'), next); assert.equal(next.className, 'photo');
+  assert.equal(next.getAttribute('aria-hidden'), null); assert.equal(next.alt, studioPhotos[1].alt); assert.equal(app.photoPosition.textContent, '2 / 6');
+  assert.equal(active().length, 1);
+  visibility.callback([{ isIntersecting: false }]); assert.equal(active().length, 0);
+  app.document.hidden = true; visibility.callback([{ isIntersecting: true }]); assert.equal(active().length, 0);
+  app.document.hidden = false; app.document.emit('visibilitychange'); assert.equal(active().length, 1);
+  app.document.hidden = true; app.document.emit('visibilitychange'); assert.equal(active().length, 0);
+});
+
+test('hero pause and manual navigation preserve user control without moving Instagram', async () => {
+  const app = harness({ hero: false, heroSlide: true, heroSlideMobile: true, photoReduced: false });
+  const active = () => app.intervals.filter(timer => timer.active && timer.delay === 8000);
+  const instagramPosition = app.track.scrollLeft;
+  app.observers.find(observer => observer.node === app.heroFeature).callback([{ isIntersecting: true }]);
+  app.autoplayPhoto.emit('click'); assert.equal(active().length, 0); assert.equal(app.autoplayPhoto.textContent, 'Putar');
+  app.autoplayPhoto.emit('click'); app.heroFeature.emit('mouseenter'); assert.equal(active().length, 0);
+  app.heroFeature.emit('mouseleave'); assert.equal(active().length, 1);
+  app.slideLink.emit('pointerdown'); assert.equal(active().length, 0);
+  app.autoplayPhoto.emit('click'); app.slideLink.emit('focusin'); assert.equal(active().length, 0);
+  app.autoplayPhoto.emit('click'); app.nextPhoto.emit('click'); assert.equal(active().length, 0);
+  const next = app.slideLink.querySelectorAll('img')[1]; await next.onload();
+  [...app.timers.values()].find(timer => timer.delay === 650).fn();
+  assert.equal(app.photoPosition.textContent, '2 / 6'); assert.equal(active().length, 0); assert.equal(app.track.scrollLeft, instagramPosition);
+  app.previousPhoto.emit('click'); const previous = app.slideLink.querySelectorAll('img')[1];
+  assert.equal(previous.src, '/images/jessica-french-gold-720.webp');
+});
+
+test('reduced motion starts the hero paused and manual previous wraps without a fade', async () => {
+  const app = harness({ hero: false, gallery: false, heroSlide: true, heroSlideMobile: true });
+  app.observers.find(observer => observer.node === app.heroFeature).callback([{ isIntersecting: true }]);
+  assert.equal(app.autoplayPhoto.textContent, 'Putar'); assert.equal(app.intervals.filter(timer => timer.active).length, 0);
+  app.previousPhoto.emit('click'); const next = app.slideLink.querySelectorAll('img')[1];
+  assert.equal(next.src, '/images/jessica-press-on-collection-720.webp'); await next.onload();
+  assert.equal(app.slideLink.querySelectorAll('img').length, 1); assert.equal(app.photoPosition.textContent, '6 / 6');
+  assert.equal([...app.timers.values()].some(timer => timer.delay === 650), false);
+});
+
+test('failed or stale hero image work never removes the photograph already displayed', async () => {
+  const app = harness({ hero: false, gallery: false, heroSlide: true, heroSlideMobile: true, photoReduced: false });
+  const initial = app.slideLink.querySelector('img');
+  app.nextPhoto.emit('click'); let next = app.slideLink.querySelectorAll('img')[1]; next.onerror();
+  assert.equal(app.slideLink.querySelectorAll('img').length, 1); assert.equal(initial.parentNode, app.slideLink);
+  app.nextPhoto.emit('click'); next = app.slideLink.querySelectorAll('img')[1];
+  next.decode = () => Promise.reject(new Error('decode')); await next.onload();
+  assert.equal(app.slideLink.querySelectorAll('img').length, 1); assert.equal(initial.parentNode, app.slideLink);
+  app.nextPhoto.emit('click'); next = app.slideLink.querySelectorAll('img')[1];
+  let decodeReady; next.decode = () => new Promise(resolve => { decodeReady = resolve; }); next.onload();
+  app.fire('pagehide', {}); decodeReady(); await settle();
+  assert.equal(app.slideLink.querySelectorAll('img').length, 1); assert.equal(initial.parentNode, app.slideLink);
+  assert.equal(app.photoPosition.textContent, '1 / 6'); assert.equal(app.intervals.filter(timer => timer.active).length, 0);
+  app.fire('pageshow', {}); app.nextPhoto.emit('click'); next = app.slideLink.querySelectorAll('img')[1];
+  app.document.hidden = true; app.document.emit('visibilitychange');
+  assert.equal(next.parentNode, null); assert.equal(initial.parentNode, app.slideLink);
+});
+
+test('Instagram feed refresh preserves curated hero photography and responsive sources', () => {
+  const app = harness({ curatedHero: true });
+  const snapshots = app.heroes.map(link => ({ link, img: link.querySelector('img'), src: link.querySelector('img').src, srcset: link.querySelector('img').getAttribute('srcset'), href: link.href }));
+  const feed = normalizeFeed({ posts: [{ id: 'fresh-studio-set', url: 'https://www.instagram.com/p/fresh-studio-set/', imageUrl: 'https://cdn.example/fresh-studio-set.jpg', title: 'Fresh studio set', alt: 'New Instagram preview', timestamp: '2026-10-21T00:00:00Z' }] });
+  assert.equal(feed.length, 1);
+  app.updateHero(feed);
+  for (const { link, img, src, srcset, href } of snapshots) {
+    assert.equal(img.src, src); assert.equal(img.getAttribute('srcset'), srcset); assert.equal(link.href, href);
+  }
+  app.updateGallery(feed);
+  assert.equal(app.track.children.length, 1);
+  assert.equal(app.track.querySelector('.post-original').href, feed[0].url);
+  assert.equal(app.track.querySelector('img').src, feed[0].imageUrl);
+});
 
 test('hero AVIF/network errors select the local WebP backup and keep it on repeated feeds', () => {
   const app = harness({ gallery: false });

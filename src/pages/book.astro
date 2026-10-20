@@ -1,6 +1,7 @@
 ---
 import { Header, Footer } from '../App.jsx';
 import { salon } from '../content.js';
+import { brandHead } from '../../scripts/seo.mjs';
 import '../booking.css';
 const fields = [
   { name: 'name', label: 'Nama', type: 'text', autocomplete: 'name', max: 80 },
@@ -16,7 +17,7 @@ const fields = [
     <meta name="referrer" content="no-referrer" />
     <meta name="theme-color" content="#ffd2e6" />
     <title>Booking setelah konsultasi | Chii Nails Palembang</title>
-    <link rel="icon" href="/images/logo.jpg" />
+    <Fragment set:html={brandHead(salon.name)} />
     <link rel="preload" href="/fonts/cormorant-garamond-latin-500.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/dm-sans-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
   </head>

@@ -5,6 +5,8 @@ import { readFileSync } from 'node:fs';
 import { BookingRequestError, createBookingRequest as createRequest, getBookingRequest, decideBookingRequest, getBookingAvailability, getBookingPaymentProof } from './booking-requests.js';
 import { proof, proofBytes } from './fixtures/payment-proof.js';
 import { cleanupExpiredPaymentProofs, PAYMENT_PROOF_RETENTION_MS } from './booking-proofs.js';
+import { getBookingCalendarMonth } from './booking-month.js';
+import { createGoogleCalendarProvider } from './google-calendar.js';
 
 const fixtureCalendars = new WeakMap();
 const createBookingRequest = (env, input, options = {}) => createRequest(env, input, { calendar: fixtureCalendars.get(env), ...options });
@@ -714,6 +716,63 @@ test('new submission checks its actual interval and rejects Busy all-day or part
     assert.equal(db.rows('SELECT * FROM booking_slot_claims').length, 0);
     assert.deepEqual(calls, { availability: 1, insert: 0, lookup: 0 });
   }
+});
+
+test('a personal timed Free event blocks month, day, Book and owner acceptance; deleting it reopens the same interval', async () => {
+  const { env, db, calendar, calls } = setup();
+  // Exercise the real provider's transparent-event normalization with synthetic
+  // JSON and an ephemeral key; all transport is stubbed and no Google call runs.
+  const keys = await crypto.subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['sign', 'verify']);
+  const bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', keys.privateKey));
+  const calendarId = 'synthetic-workflow@group.calendar.google.com';
+  let personalEventExists = false;
+  const personalEvent = { status: 'confirmed', transparency: 'transparent', start: { dateTime: '2026-10-30T08:00:00+07:00' }, end: { dateTime: '2026-10-30T10:00:00+07:00' }, summary: 'Private personal appointment', id: 'private-personal-event' };
+  const json = value => new Response(JSON.stringify(value), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  const transport = [];
+  const provider = createGoogleCalendarProvider({ GOOGLE_SERVICE_ACCOUNT_EMAIL: 'synthetic@workflow.iam.gserviceaccount.com', GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: `-----BEGIN PRIVATE KEY-----\n${Buffer.from(bytes).toString('base64')}\n-----END PRIVATE KEY-----`, GOOGLE_CALENDAR_ID: calendarId }, {
+    now: () => initial,
+    fetch: async (url, init) => {
+      transport.push({ url, method: init.method });
+      if (url === 'https://oauth2.googleapis.com/token') return json({ access_token: 'synthetic-workflow-token', token_type: 'Bearer', expires_in: 3600 });
+      if (url === 'https://www.googleapis.com/calendar/v3/freeBusy') {
+        const { timeMin, timeMax } = JSON.parse(init.body);
+        return json({ kind: 'calendar#freeBusy', timeMin, timeMax, calendars: { [calendarId]: { busy: [] } } });
+      }
+      assert.equal(init.method, 'GET');
+      assert.equal(new URL(url).pathname, `/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`);
+      return json({ kind: 'calendar#events', items: personalEventExists ? [personalEvent] : [] });
+    },
+  });
+  calendar.availability = async bounds => { calls.availability++; return provider.availability(bounds); };
+  const input = customer({ date: '2026-10-30', time: '08:00', designType: 'full-art', durationMinutes: '300', idempotencyKey: 'synthetic_timed_free_pending' });
+  const pending = await createBookingRequest(env, input, { now: initial, calendar });
+  personalEventExists = true;
+  const beforeBlocked = db.sqlite.prepare('SELECT total_changes() AS changes').get().changes;
+  const month = await getBookingCalendarMonth(env, { month: '2026-10', designType: 'full-art', durationMinutes: '300' }, { now: initial, calendar });
+  assert.equal(month.closedDates.includes('2026-10-30'), true); // Its sole 08:00–13:00 candidate overlaps.
+  const shorter = await getBookingCalendarMonth(env, { month: '2026-10', designType: 'simple', durationMinutes: '120' }, { now: initial, calendar });
+  assert.equal(shorter.closedDates.includes('2026-10-30'), false);
+  const day = await getBookingAvailability(env, { date: input.date, designType: 'simple', durationMinutes: 120 }, { now: initial, calendar });
+  assert.equal(day.slots.find(slot => slot.time === '08:00').available, false);
+  assert.equal(day.slots.find(slot => slot.time === '10:00').available, true); // Exact end is exclusive.
+  await assert.rejects(createBookingRequest(env, { ...input, idempotencyKey: 'synthetic_timed_free_blocked' }, { now: initial, calendar }), isCode('SLOT_CONFLICT', 409));
+  await assert.rejects(decideBookingRequest(env, tokenOf(pending), 'accept', { owner, now: initial, calendar }), isCode('SLOT_CONFLICT', 409));
+  assert.equal(db.rows().length, 1);
+  assert.equal(db.rows()[0].status, 'pending');
+  assert.equal(db.rows('SELECT * FROM booking_payment_proofs').length, 1);
+  assert.equal(db.rows('SELECT * FROM booking_slot_claims').length, 0);
+  assert.equal(db.sqlite.prepare('SELECT total_changes() AS changes').get().changes, beforeBlocked);
+  assert.equal(calls.insert, 0);
+  for (const value of ['Private personal appointment', 'private-personal-event', calendarId, 'synthetic-workflow-token']) assert.equal(JSON.stringify({ month, day }).includes(value), false);
+  personalEventExists = false;
+  assert.equal((await getBookingCalendarMonth(env, { month: '2026-10', designType: 'full-art', durationMinutes: '300' }, { now: initial, calendar })).closedDates.includes(input.date), false);
+  assert.equal((await getBookingAvailability(env, { date: input.date, designType: 'full-art', durationMinutes: 300 }, { now: initial, calendar })).slots[0].available, true);
+  const replacement = await createBookingRequest(env, { ...input, idempotencyKey: 'synthetic_timed_free_reopened' }, { now: initial, calendar });
+  assert.equal(replacement.status, 'pending');
+  assert.equal((await decideBookingRequest(env, tokenOf(pending), 'accept', { owner, now: initial, calendar })).status, 'accepted');
+  assert.equal(calls.insert, 1); // Only the existing in-memory fixture insert.
+  assert.equal(db.rows('SELECT * FROM booking_slot_claims').length, 10);
+  assert.ok(transport.every(item => item.url === 'https://oauth2.googleapis.com/token' || item.url.endsWith('/freeBusy') || item.method === 'GET'));
 });
 
 test('new submission fails closed on unavailable Calendar or claims storage without creating a request or receipt', async () => {

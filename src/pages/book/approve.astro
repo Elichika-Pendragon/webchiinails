@@ -1,6 +1,7 @@
 ---
 import '../../styles.css';
 import '../../approval.css';
+import { brandHead } from '../../../scripts/seo.mjs';
 ---
 <!doctype html>
 <html lang="id">
@@ -11,7 +12,7 @@ import '../../approval.css';
     <meta name="referrer" content="no-referrer" />
     <meta name="theme-color" content="#ffd2e6" />
     <title>Konfirmasi booking | Chii Nails</title>
-    <link rel="icon" href="/images/logo.jpg" />
+    <Fragment set:html={brandHead()} />
     <link rel="preload" href="/fonts/cormorant-garamond-latin-500.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/dm-sans-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
   </head>

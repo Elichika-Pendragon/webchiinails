@@ -181,7 +181,7 @@ test('multi-day all-day dates use WIB midnight, exclusive ends and clipped merge
   ]);
 });
 
-test('cancelled all-day events and ordinary Free timed events do not add occupancy', async () => {
+test('ordinary Free timed events block their interval without requiring a Busy setting', async () => {
   const busy = [{ start: '2026-10-20T10:00:00+07:00', end: '2026-10-20T11:00:00+07:00' }];
   const calendar = provider(async url => {
     if (url.includes('oauth2')) return token();
@@ -194,7 +194,75 @@ test('cancelled all-day events and ordinary Free timed events do not add occupan
       { status: 'confirmed', start: { date: '2026-10-21' }, end: { date: '2026-10-22' } },
     ]));
   });
-  assert.deepEqual((await calendar.availability(range)).busyIntervals, [{ start: Date.parse(busy[0].start), end: Date.parse(busy[0].end) }]);
+  assert.deepEqual((await calendar.availability(range)).busyIntervals, [{ start: Date.parse(range.timeMin), end: Date.parse(range.timeMax) }]);
+});
+
+test('timed events normalize explicit offsets and merge with each other and Google freeBusy', async () => {
+  const busy = [{ start: '2026-10-20T10:00:00+07:00', end: '2026-10-20T11:00:00+07:00' }];
+  const calendar = provider(async url => {
+    if (url.includes('oauth2')) return token();
+    if (url.endsWith('/freeBusy')) return json(freeBusy(busy));
+    return json(events([
+      { status: 'confirmed', transparency: 'transparent', start: { dateTime: '2026-10-20T01:30:00Z' }, end: { dateTime: '2026-10-20T02:30:00Z' } },
+      { status: 'tentative', start: { dateTime: '2026-10-20T10:00:00+07:00' }, end: { dateTime: '2026-10-20T12:00:00+07:00' } },
+      { status: 'confirmed', start: { dateTime: '2026-10-20T04:30:00Z' }, end: { dateTime: '2026-10-20T06:00:00Z' } },
+    ]));
+  });
+  assert.deepEqual((await calendar.availability(range)).busyIntervals, [
+    { start: Date.parse('2026-10-20T08:30:00+07:00'), end: Date.parse('2026-10-20T09:30:00+07:00') },
+    { start: Date.parse('2026-10-20T10:00:00+07:00'), end: Date.parse('2026-10-20T13:00:00+07:00') },
+  ]);
+});
+
+test('multi-day timed events preserve overnight occupancy and clip to the requested range', async () => {
+  const bounds = { timeMin: '2026-10-20T08:00:00+07:00', timeMax: '2026-10-22T17:00:00+07:00' };
+  const calendar = provider(async url => {
+    if (url.includes('oauth2')) return token();
+    if (url.endsWith('/freeBusy')) return json(freeBusy([], bounds));
+    return json(events([
+      { status: 'confirmed', start: { dateTime: '2026-10-19T23:00:00+07:00' }, end: { dateTime: '2026-10-20T09:00:00+07:00' } },
+      { status: 'confirmed', start: { dateTime: '2026-10-20T23:00:00+07:00' }, end: { dateTime: '2026-10-21T03:00:00+07:00' } },
+      { status: 'confirmed', start: { dateTime: '2026-10-22T16:00:00+07:00' }, end: { dateTime: '2026-10-23T08:00:00+07:00' } },
+    ]));
+  });
+  assert.deepEqual((await calendar.availability(bounds)).busyIntervals, [
+    { start: Date.parse(bounds.timeMin), end: Date.parse('2026-10-20T09:00:00+07:00') },
+    { start: Date.parse('2026-10-20T23:00:00+07:00'), end: Date.parse('2026-10-21T03:00:00+07:00') },
+    { start: Date.parse('2026-10-22T16:00:00+07:00'), end: Date.parse(bounds.timeMax) },
+  ]);
+});
+
+test('cancelled events do not block and timed interval boundaries remain exclusive', async () => {
+  const calendar = provider(async url => {
+    if (url.includes('oauth2')) return token();
+    if (url.endsWith('/freeBusy')) return json(freeBusy());
+    return json(events([
+      { status: 'cancelled' },
+      { status: 'cancelled', start: { date: '2026-10-20' }, end: { date: '2026-10-21' } },
+      { status: 'cancelled', start: { dateTime: range.timeMin }, end: { dateTime: range.timeMax } },
+      { status: 'confirmed', start: { dateTime: '2026-10-20T07:00:00+07:00' }, end: { dateTime: range.timeMin } },
+      { status: 'confirmed', start: { dateTime: range.timeMax }, end: { dateTime: '2026-10-20T18:00:00+07:00' } },
+      { status: 'confirmed', start: { dateTime: '2026-10-20T16:00:00+07:00' }, end: { dateTime: range.timeMax } },
+    ]));
+  });
+  assert.deepEqual((await calendar.availability(range)).busyIntervals, [{ start: Date.parse('2026-10-20T16:00:00+07:00'), end: Date.parse(range.timeMax) }]);
+});
+
+test('malformed timed events fail closed rather than silently reopening their time', async () => {
+  for (const [start, end] of [
+    [{}, {}],
+    [{ dateTime: range.timeMin }, {}],
+    [{ dateTime: '2026-10-20T08:00:00', timeZone: 'Asia/Jakarta' }, { dateTime: range.timeMax }],
+    [{ dateTime: '2026-02-30T08:00:00+07:00' }, { dateTime: range.timeMax }],
+    [{ dateTime: '2026-10-20T08:60:00+07:00' }, { dateTime: range.timeMax }],
+    [{ dateTime: '2026-10-20T08:00:00+25:00' }, { dateTime: range.timeMax }],
+    [{ dateTime: range.timeMax }, { dateTime: range.timeMin }],
+    [{ dateTime: range.timeMin }, { dateTime: range.timeMin }],
+    [{ dateTime: null }, { dateTime: range.timeMax }],
+  ]) {
+    const calendar = provider(async url => url.includes('oauth2') ? token() : url.endsWith('/freeBusy') ? json(freeBusy()) : json(events([{ status: 'confirmed', start, end }])));
+    await assert.rejects(calendar.availability(range), isCode('CALENDAR_RESPONSE'));
+  }
 });
 
 test('expanded recurring all-day instances are read across bounded pages with the exact original range', async () => {
