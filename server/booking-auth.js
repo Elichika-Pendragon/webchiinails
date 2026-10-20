@@ -48,6 +48,13 @@ export class BookingAuthError extends Error {
       AUTH_BODY: [413, 'The sign-in request is too large.'],
       AUTH_TIMEOUT: [503, 'Owner sign-in timed out. Please try again.'],
       AUTH_UNAVAILABLE: [503, 'Owner sign-in is temporarily unavailable.'],
+      // Fixed public-key pipeline stages only. These diagnostics must never
+      // include upstream bodies, JWT values, account identities or cookies.
+      AUTH_JWKS_FETCH: [503, 'Owner sign-in is temporarily unavailable.'],
+      AUTH_JWKS_RESPONSE: [503, 'Owner sign-in is temporarily unavailable.'],
+      AUTH_JWKS_BODY: [503, 'Owner sign-in is temporarily unavailable.'],
+      AUTH_JWKS_FORMAT: [503, 'Owner sign-in is temporarily unavailable.'],
+      AUTH_JWKS_IMPORT: [503, 'Owner sign-in is temporarily unavailable.'],
     };
     const [status, message] = errors[code] || errors.AUTH_UNAVAILABLE;
     super(message);
@@ -228,23 +235,30 @@ async function googleKeys(config, kid) {
   const controller = new AbortController();
   holder.pending = withTimeout(async () => {
     let upstream;
+    let stage = 'AUTH_JWKS_FETCH';
     try {
       // Worker's native fetch rejects an unrelated receiver such as `config`.
       // Preserve its global receiver while keeping injected fetch/cache identity.
       upstream = await config.fetcher.call(globalThis, JWKS_URL, { headers: { Accept: 'application/json' }, credentials: 'omit', redirect: 'error', signal: controller.signal });
       if (controller.signal.aborted) throw fail('AUTH_TIMEOUT');
-      if (!(upstream instanceof Response) || !upstream.ok) throw fail('AUTH_UNAVAILABLE');
-      const document = await boundedJson(upstream, 65536, 'AUTH_UNAVAILABLE', controller.signal);
-      if (!Array.isArray(document.keys) || document.keys.length < 1 || document.keys.length > 20) throw fail('AUTH_UNAVAILABLE');
+      stage = 'AUTH_JWKS_RESPONSE';
+      if (!(upstream instanceof Response) || !upstream.ok) throw fail(stage);
+      stage = 'AUTH_JWKS_BODY';
+      const document = await boundedJson(upstream, 65536, stage, controller.signal);
+      stage = 'AUTH_JWKS_FORMAT';
+      if (!Array.isArray(document.keys) || document.keys.length < 1 || document.keys.length > 20) throw fail(stage);
       const keys = new Map();
       for (const key of document.keys) {
+        stage = 'AUTH_JWKS_FORMAT';
         if (!record(key) || key.kty !== 'RSA' || (key.alg && key.alg !== 'RS256') || (key.use && key.use !== 'sig')
           || typeof key.kid !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(key.kid) || keys.has(key.kid)
-          || typeof key.n !== 'string' || key.n.length > 1024 || typeof key.e !== 'string' || key.e.length > 16 || key.d) throw fail('AUTH_UNAVAILABLE');
+          || typeof key.n !== 'string' || key.n.length > 1024 || typeof key.e !== 'string' || key.e.length > 16 || key.d) throw fail(stage);
+        stage = 'AUTH_JWKS_IMPORT';
         const imported = await crypto.subtle.importKey('jwk', key, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
-        if (imported.algorithm.modulusLength < 2048) throw fail('AUTH_UNAVAILABLE');
+        if (imported.algorithm.modulusLength < 2048) throw fail(stage);
         keys.set(key.kid, imported);
       }
+      stage = 'AUTH_JWKS_RESPONSE';
       const control = upstream.headers.get('Cache-Control') || '';
       const maxAge = /(?:^|,)\s*max-age=(\d+)(?:\s*,|\s*$)/i.exec(control);
       const seconds = /\bno-store\b|\bno-cache\b/i.test(control) ? 0 : Math.min(Number(maxAge?.[1] ?? 300), 3600);
@@ -255,7 +269,7 @@ async function googleKeys(config, kid) {
       return keys;
     } catch (error) {
       if (error instanceof BookingAuthError) throw error;
-      throw fail('AUTH_UNAVAILABLE');
+      throw fail(stage);
     }
   }, config.timeoutMs, () => controller.abort());
   jwksCaches.set(config.fetcher, holder);

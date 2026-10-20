@@ -214,13 +214,31 @@ test('rotated Google key IDs refresh once while unknown IDs cannot force repeate
   assert.equal(calls, 2);
 });
 
-test('upstream failures and malformed key documents are sanitized and never grant sessions', async () => {
-  for (const upstream of [() => new Response('private upstream customer details', { status: 500 }), () => json({ keys: [] }), () => json({ keys: [{ ...publicKey, kid: 'synthetic-key', d: 'private' }] }), () => json({ keys: [{ ...publicKey, kid: 'synthetic-key', alg: 'HS256' }] }), () => new Response('not JSON', { headers: { 'Content-Type': 'application/json' } }), () => { throw new Error('private upstream owner@email.example'); }]) {
+test('public JWKS diagnostics distinguish fixed stages without leaking upstream data', async () => {
+  const cases = [
+    ['AUTH_JWKS_FETCH', () => { throw new Error('private upstream owner@email.example'); }],
+    ['AUTH_JWKS_RESPONSE', () => new Response('private upstream customer details', { status: 500 })],
+    ['AUTH_JWKS_RESPONSE', () => ({ ok: true, keys: [publicKey], private: 'owner@email.example' })],
+    ['AUTH_JWKS_BODY', () => new Response('private not JSON', { headers: { 'Content-Type': 'application/json' } })],
+    ['AUTH_JWKS_BODY', () => new Response('private unexpected HTML', { headers: { 'Content-Type': 'text/html' } })],
+    ['AUTH_JWKS_BODY', () => new Response(new ReadableStream({ start(controller) { controller.error(new Error('private upstream stream')); } }), { headers: { 'Content-Type': 'application/json' } })],
+    ['AUTH_JWKS_FORMAT', () => json({ keys: [] })],
+    ['AUTH_JWKS_FORMAT', () => json({ keys: [{ ...publicKey, kid: 'synthetic-key', d: 'private' }] })],
+    ['AUTH_JWKS_FORMAT', () => json({ keys: [{ ...publicKey, kid: 'synthetic-key', alg: 'HS256' }] })],
+    ['AUTH_JWKS_IMPORT', () => json({ keys: [{ ...publicKey, kid: 'synthetic-key', key_ops: ['encrypt'] }] })],
+  ];
+  for (const [code, upstream] of cases) {
     const fixture = await challenge({ fetch: async () => upstream() });
     await assert.rejects(login(fixture), error => {
       assert.equal(error.status, 503);
-      assert.equal(error.code, 'AUTH_UNAVAILABLE');
+      assert.equal(error.code, code);
+      // The HTTP boundary reconstructs this known error instead of serializing
+      // its raw cause. Only the fixed stage/code and generic copy may survive.
+      const safe = new BookingAuthError(error.code);
+      assert.equal(safe.code, code);
+      assert.equal(safe.message, 'Owner sign-in is temporarily unavailable.');
       assert.equal(error.message.includes('private'), false);
+      assert.equal(JSON.stringify(error).includes('owner@email.example'), false);
       assert.equal('cause' in error, false);
       return true;
     });
@@ -244,7 +262,7 @@ test('slow JSON bodies are cancelled and oversized Google key responses stay bou
   await assert.rejects(signInOwner(slowRequest, env, fixture.options), isCode('AUTH_TIMEOUT', 503));
   assert.equal(cancelled, true);
   const oversized = await challenge({ fetch: async () => new Response('x'.repeat(65537), { headers: { 'Content-Type': 'application/json' } }) });
-  await assert.rejects(login(oversized), isCode('AUTH_UNAVAILABLE', 503));
+  await assert.rejects(login(oversized), isCode('AUTH_JWKS_BODY', 503));
 });
 
 test('Google no-store key responses are not cached between sign-ins', async () => {
