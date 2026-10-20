@@ -1,0 +1,102 @@
+{
+  "checks": [
+    {
+      "clientWidth": 375,
+      "fadeDuration": "0.2s",
+      "gutter": "stable",
+      "headerHeight": 64,
+      "heroTransform": "none",
+      "path": "/",
+      "scrollWidth": 375,
+      "scrollY": 0,
+      "tabsY": 64,
+      "width": 390
+    },
+    {
+      "clientWidth": 375,
+      "fadeDuration": "0.2s",
+      "gutter": "stable",
+      "headerHeight": 64,
+      "heroTransform": "none",
+      "path": "/custom-sets",
+      "scrollWidth": 375,
+      "scrollY": 0,
+      "tabsY": 64,
+      "width": 390
+    },
+    {
+      "clientWidth": 375,
+      "fadeDuration": "0.2s",
+      "gutter": "stable",
+      "headerHeight": 64,
+      "heroTransform": "none",
+      "path": "/visit",
+      "scrollWidth": 375,
+      "scrollY": 0,
+      "tabsY": 64,
+      "width": 390
+    },
+    {
+      "clientWidth": 375,
+      "fadeDuration": "0.2s",
+      "gutter": "stable",
+      "headerHeight": 64,
+      "heroTransform": "none",
+      "path": "/about",
+      "scrollWidth": 375,
+      "scrollY": 0,
+      "tabsY": 64,
+      "width": 390
+    },
+    {
+      "clientWidth": 375,
+      "fadeDuration": "0.2s",
+      "gutter": "stable",
+      "headerHeight": 64,
+      "heroTransform": "none",
+      "path": "/services",
+      "scrollWidth": 375,
+      "scrollY": 0,
+      "tabsY": 64,
+      "width": 390
+    },
+    {
+      "clientWidth": 375,
+      "fadeDuration": "0.2s",
+      "gutter": "stable",
+      "headerHeight": 64,
+      "heroTransform": "none",
+      "path": "/visit",
+      "scrollWidth": 375,
+      "scrollY": 0,
+      "tabsY": 64,
+      "width": 390
+    },
+    {
+      "clientWidth": 375,
+      "fadeDuration": "0.2s",
+      "gutter": "stable",
+      "headerHeight": 64,
+      "heroTransform": "none",
+      "path": "/",
+      "scrollWidth": 375,
+      "scrollY": 0,
+      "tabsY": 64,
+      "width": 390
+    },
+    {
+      "clientWidth": 375,
+      "fadeDuration": "0.2s",
+      "gutter": "stable",
+      "headerHeight": 64,
+      "heroTransform": "none",
+      "path": "/about",
+      "scrollWidth": 375,
+      "scrollY": 0,
+      "tabsY": 64,
+      "width": 390
+    }
+  ],
+  "currentTabKeptDisclosure": true,
+  "backForward": true
+}

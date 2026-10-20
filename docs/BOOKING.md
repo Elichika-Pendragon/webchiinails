@@ -12,7 +12,7 @@ The owner selected the **existing Nail Art calendar** on the Google account supp
 
 The initial static preview was released at commit **`f41ca3e`**, with Cloudflare deployment **`02097797`** confirmed live. The 10% DP/contact/payment-copy/Last book follow-up **`387e4a6`** is confirmed live in successful Cloudflare deployment **`9b08261a`** at 20:54 WIB, with exact production CSS/JS and SEO checks passing on all six routes. See [the correction report](BOOKING-RULES-2026-10-20.md).
 
-On 20 October 2026 the owner accepted Google's first-use terms herself. Google Cloud shows **Google Calendar API enabled** in the existing **My First Project**; the credential wizard is open. **No credentials, service-account Calendar sharing grants or working application authorization exist yet.** No billing or free-trial action was taken. API enablement is a setup milestone, not proof that the site can read or write this calendar.
+On 20 October 2026 the owner accepted Google's first-use terms herself. Google Cloud shows **Google Calendar API enabled** in the existing **My First Project**. Later, after explicit approval to create the identity only, **Chii Nails Booking** was created as a dedicated service account without any project IAM role. **No private key, service-account Calendar sharing grant or working application authorization exists yet.** No billing or free-trial action was taken. API enablement and the account identity are setup milestones, not proof that the site can read or write this calendar.
 
 | Capability | Current status and honest meaning |
 | --- | --- |
@@ -92,7 +92,7 @@ The local preview validates these hours but does **not** check live availability
 
 ## Production architecture proposed
 
-This later backend phase is **not a dependency for the current preview's WhatsApp summary and manual transfer/QRIS check**. No booking route, persistent store, scheduler or Calendar-write connection is configured by the local preview. The Calendar API itself has separately been enabled in Google Cloud, but credentials and sharing remain unconfigured. The latest authenticated-approval workflow is planned rather than implemented; its only new Chii action is reviewing and explicitly approving the linked request after her WhatsApp/payment check.
+This later backend phase is **not a dependency for the current preview's WhatsApp summary and manual transfer/QRIS check**. No booking route, persistent store, scheduler or Calendar-write connection is configured by the local preview. The Calendar API is enabled and a dedicated service-account identity exists, but its private key and Calendar sharing remain unconfigured. The latest authenticated-approval workflow is planned rather than implemented; its only new Chii action is reviewing and explicitly approving the linked request after her WhatsApp/payment check.
 
 | Component | Responsibility |
 | --- | --- |

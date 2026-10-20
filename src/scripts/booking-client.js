@@ -1,4 +1,5 @@
 import { calculateDeposit, getBookingDateBounds, listBookingSlots, validateBooking } from '../../server/booking.js';
+import { createBookingCalendar } from './booking-calendar.js';
 
 const form = document.querySelector('#booking-form');
 if (form) {
@@ -7,6 +8,7 @@ if (form) {
   const review = document.querySelector('#booking-review-panel');
   const errors = document.querySelector('#booking-errors');
   const reviewButton = document.querySelector('#booking-review');
+  let calendar = null;
   const formatMoney = value => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
   const formatDate = value => new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }).format(new Date(value));
   const updateDeposit = () => {
@@ -20,6 +22,7 @@ if (form) {
   };
   const fillTimes = () => {
     setBounds();
+    calendar?.refresh();
     const selected = input('time').value;
     const slots = listBookingSlots(input('date').value, { now: Date.now() });
     input('time').replaceChildren(new Option(input('date').value ? (slots.length ? 'Pilih jam mulai' : 'Tidak ada pilihan jam. Pilih tanggal lain.') : 'Pilih tanggal terlebih dahulu', ''));
@@ -35,12 +38,17 @@ if (form) {
       fieldError.textContent = message || '';
       fieldError.hidden = !message;
       input(name).setAttribute('aria-invalid', message ? 'true' : 'false');
+      if (name === 'date') calendar?.setInvalid(Boolean(message));
       if (message) {
         const item = document.createElement('li');
         const link = document.createElement('a');
         link.href = `#booking-${name}`;
         link.textContent = message;
-        link.addEventListener('click', event => { event.preventDefault(); input(name).focus(); });
+        link.addEventListener('click', event => {
+          event.preventDefault();
+          if (name === 'date' && calendar) calendar.focus();
+          else input(name).focus();
+        });
         item.append(link); list.append(item);
       }
     });
@@ -74,7 +82,9 @@ if (form) {
   input('agreedPrice').addEventListener('input', updateDeposit);
   input('agreedPrice').addEventListener('change', updateDeposit);
   window.addEventListener('pageshow', () => { fillTimes(); updateDeposit(); });
-  setBounds(); fillTimes(); updateDeposit();
+  setBounds();
+  calendar = createBookingCalendar(document.querySelector('#booking-calendar'), input('date'));
+  fillTimes(); updateDeposit();
   form.querySelectorAll('fieldset').forEach(fieldset => { fieldset.disabled = false; });
   reviewButton.disabled = false;
 }

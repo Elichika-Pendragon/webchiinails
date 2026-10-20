@@ -1,0 +1,18 @@
+{
+  "desktopHomeCheck": {
+    "clientWidth": 1265,
+    "fade": "0.2s",
+    "headerHeight": 76,
+    "heroTransform": "none",
+    "path": "/",
+    "scrollWidth": 1265
+  },
+  "desktopAboutCheck": {
+    "clientWidth": 1265,
+    "fade": "0.2s",
+    "headerHeight": 76,
+    "heroTransform": "none",
+    "path": "/about",
+    "scrollWidth": 1265
+  }
+}

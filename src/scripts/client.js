@@ -30,6 +30,14 @@ const compactMenu = matchMedia('(max-width: 960px)');
 if (compactMenu.addEventListener) compactMenu.addEventListener('change', resetMenu);
 else compactMenu.addListener?.(resetMenu);
 
+// Re-selecting the current page needs no reload; modified clicks stay native.
+document.querySelectorAll('.mobile-page-tabs a[aria-current="page"]').forEach(link => {
+  link.addEventListener('click', event => {
+    if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || (link.target && link.target !== '_self')) return;
+    event.preventDefault();
+  });
+});
+
 const widget = document.querySelector('.chat-widget');
 const chatTrigger = widget?.querySelector('.chat-trigger');
 const chatPanel = widget?.querySelector('#chat-panel');

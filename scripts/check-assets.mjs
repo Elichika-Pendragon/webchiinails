@@ -30,6 +30,7 @@ for (const page of [...seoPages, bookingPage]) {
 const bookingHtml = await readFile(new URL(bookingPage.file, root), 'utf8');
 const depositInput = bookingHtml.match(/<input\b[^>]*id="booking-deposit"[^>]*>/)?.[0] || '';
 assert.match(depositInput, /\sreadonly(?:\s|=|>|\/)/, 'DP is calculated, never customer-editable');
+assert.equal(bookingHtml.match(/<label\b[^>]*for="booking-deposit"[^>]*>([^<]*)<\/label>/)?.[1], 'DP 10%', 'Concise requested DP label');
 assert.ok(bookingHtml.includes('DP 10%') && bookingHtml.includes('transfer atau QRIS'), 'Current deposit and payment copy');
 assert.ok(!bookingHtml.includes('Jessica') && !bookingHtml.includes('Mulai terakhir'), 'Customer-facing booking copy uses Chii and Last book');
 const bookingIds = [...bookingHtml.matchAll(/\sid="([^"]+)"/g)].map(match => match[1]);

@@ -50,13 +50,31 @@ const fields = [
               <p class="booking-fieldset-hint">Isi harga total dalam Rupiah tanpa titik atau koma. DP dihitung otomatis sebesar 10%.</p>
               <div class="booking-amounts">
                 <div class="booking-field"><label for="booking-agreedPrice">Harga total</label><div class="booking-currency"><span aria-hidden="true">Rp</span><input id="booking-agreedPrice" name="agreedPrice" type="text" inputmode="numeric" maxlength="8" required aria-describedby="error-agreedPrice" /></div><p id="error-agreedPrice" class="booking-field-error" hidden></p></div>
-                <div class="booking-field"><label for="booking-deposit">DP 10% · otomatis</label><div class="booking-currency"><span aria-hidden="true">Rp</span><input id="booking-deposit" name="deposit" type="text" readonly aria-describedby="hint-deposit error-deposit" /></div><small id="hint-deposit">Dihitung dari harga total. Pecahan Rupiah dibulatkan ke atas.</small><p id="error-deposit" class="booking-field-error" hidden></p></div>
+                <div class="booking-field"><label for="booking-deposit">DP 10%</label><div class="booking-currency"><span aria-hidden="true">Rp</span><input id="booking-deposit" name="deposit" type="text" readonly aria-describedby="hint-deposit error-deposit" /></div><small id="hint-deposit">Dihitung dari harga total. Pecahan Rupiah dibulatkan ke atas.</small><p id="error-deposit" class="booking-field-error" hidden></p></div>
               </div>
             </fieldset>
             <fieldset disabled>
               <legend>Permintaan jadwal</legend>
               <p class="booking-fieldset-hint">Durasi 2 jam · waktu Palembang (WIB). Chii akan memeriksa ketersediaannya.</p>
-              <div class="booking-field"><label for="booking-date">Tanggal</label><input id="booking-date" name="date" type="date" required aria-describedby="error-date" /><p id="error-date" class="booking-field-error" hidden></p></div>
+              <div class="booking-field">
+                <label id="booking-date-label" for="booking-date">Tanggal</label>
+                <input id="booking-date" name="date" type="date" required aria-describedby="error-date" />
+                <div id="booking-calendar" class="booking-calendar" role="group" aria-labelledby="booking-date-label" aria-describedby="booking-calendar-help error-date" hidden>
+                  <div class="booking-calendar-header">
+                    <button type="button" data-calendar-previous aria-label="Bulan sebelumnya"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg></button>
+                    <strong id="booking-calendar-month" aria-live="polite" aria-atomic="true"></strong>
+                    <button type="button" data-calendar-next aria-label="Bulan berikutnya"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg></button>
+                  </div>
+                  <table role="grid" aria-labelledby="booking-calendar-month" aria-describedby="booking-calendar-keys">
+                    <thead><tr>{[['Sen', 'Senin'], ['Sel', 'Selasa'], ['Rab', 'Rabu'], ['Kam', 'Kamis'], ['Jum', 'Jumat'], ['Sab', 'Sabtu'], ['Min', 'Minggu']].map(([short, full]) => <th scope="col" aria-label={full}>{short}</th>)}</tr></thead>
+                    <tbody></tbody>
+                  </table>
+                  <p class="booking-calendar-selection" data-calendar-selection role="status" aria-live="polite" aria-atomic="true">Belum ada tanggal dipilih.</p>
+                  <p id="booking-calendar-keys" class="sr-only">Gunakan tombol panah untuk berpindah hari, Home atau End untuk awal atau akhir minggu, dan Page Up atau Page Down untuk berpindah bulan. Tekan Enter atau Spasi untuk memilih.</p>
+                </div>
+                <small id="booking-calendar-help">Pilih tanggal permintaanmu. Ketersediaan tetap dikonfirmasi oleh Chii.</small>
+                <p id="error-date" class="booking-field-error" hidden></p>
+              </div>
               <div class="booking-field"><label for="booking-time">Jam mulai</label><select id="booking-time" name="time" required aria-describedby="hint-time error-time"><option value="">Pilih tanggal terlebih dahulu</option></select><small id="hint-time">Pilihan mengikuti jam studio; belum menunjukkan slot yang kosong.</small><p id="error-time" class="booking-field-error" hidden></p></div>
             </fieldset>
             <button id="booking-review" class="button" type="submit" disabled>Tinjau booking</button>

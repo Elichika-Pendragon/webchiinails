@@ -1,0 +1,52 @@
+{
+  "miniCalendarErrorFocus": {
+    "activeDate": "2026-10-20",
+    "date": ""
+  },
+  "miniCalendarArrow": {
+    "activeDate": "2026-10-21",
+    "date": ""
+  },
+  "miniCalendarSelected": {
+    "calendarHeight": 426.3333435058594,
+    "date": "2026-10-21",
+    "lastSlot": "14.00–16.00 WIB",
+    "selected": "21"
+  },
+  "layouts": [
+    {
+      "calendarHeight": 426.3333435058594,
+      "calendarWidth": 392,
+      "clientWidth": 1265,
+      "dayHeight": 44,
+      "dayWidth": 52.375,
+      "dpLabel": "DP 10%",
+      "scrollWidth": 1265,
+      "selectedDate": "2026-10-21",
+      "width": 1280
+    },
+    {
+      "calendarHeight": 426.3333435058594,
+      "calendarWidth": 334.66668701171875,
+      "clientWidth": 375,
+      "dayHeight": 44,
+      "dayWidth": 44.1875,
+      "dpLabel": "DP 10%",
+      "scrollWidth": 375,
+      "selectedDate": "2026-10-21",
+      "width": 390
+    },
+    {
+      "calendarHeight": 418.3333435058594,
+      "calendarWidth": 296.66668701171875,
+      "clientWidth": 305,
+      "dayHeight": 44,
+      "dayWidth": 42.1875,
+      "dpLabel": "DP 10%",
+      "scrollWidth": 305,
+      "selectedDate": "2026-10-21",
+      "width": 320
+    }
+  ],
+  "messageSent": false
+}
