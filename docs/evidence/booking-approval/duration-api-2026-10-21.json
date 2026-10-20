@@ -1,0 +1,244 @@
+{
+  "checkedAt": "2026-10-20T18:24:49.928Z",
+  "origin": "https://chiinails.pages.dev",
+  "passed": true,
+  "checks": [
+    {
+      "input": {
+        "date": "2026-10-22",
+        "designType": "plain",
+        "durationMinutes": "60"
+      },
+      "status": 200,
+      "expected": [
+        "08:00",
+        "09:00",
+        "10:00",
+        "11:00",
+        "12:00",
+        "13:00",
+        "14:00"
+      ],
+      "observed": [
+        "08:00",
+        "09:00",
+        "10:00",
+        "11:00",
+        "12:00",
+        "13:00",
+        "14:00"
+      ],
+      "onlyPublicFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-24",
+        "designType": "plain",
+        "durationMinutes": "60"
+      },
+      "status": 200,
+      "expected": [
+        "08:00",
+        "09:00",
+        "10:00"
+      ],
+      "observed": [
+        "08:00",
+        "09:00",
+        "10:00"
+      ],
+      "onlyPublicFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-22",
+        "designType": "simple",
+        "durationMinutes": "60"
+      },
+      "status": 200,
+      "expected": [
+        "08:00",
+        "09:00",
+        "10:00",
+        "11:00",
+        "12:00",
+        "13:00",
+        "14:00"
+      ],
+      "observed": [
+        "08:00",
+        "09:00",
+        "10:00",
+        "11:00",
+        "12:00",
+        "13:00",
+        "14:00"
+      ],
+      "onlyPublicFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-24",
+        "designType": "simple",
+        "durationMinutes": "60"
+      },
+      "status": 200,
+      "expected": [
+        "08:00",
+        "09:00",
+        "10:00"
+      ],
+      "observed": [
+        "08:00",
+        "09:00",
+        "10:00"
+      ],
+      "onlyPublicFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-22",
+        "designType": "simple",
+        "durationMinutes": "120"
+      },
+      "status": 200,
+      "expected": [
+        "08:00",
+        "10:00",
+        "12:00",
+        "14:00"
+      ],
+      "observed": [
+        "08:00",
+        "10:00",
+        "12:00",
+        "14:00"
+      ],
+      "onlyPublicFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-24",
+        "designType": "simple",
+        "durationMinutes": "120"
+      },
+      "status": 200,
+      "expected": [
+        "08:00",
+        "10:00"
+      ],
+      "observed": [
+        "08:00",
+        "10:00"
+      ],
+      "onlyPublicFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-22",
+        "designType": "full-art",
+        "durationMinutes": "180"
+      },
+      "status": 200,
+      "expected": [
+        "08:00",
+        "11:00"
+      ],
+      "observed": [
+        "08:00",
+        "11:00"
+      ],
+      "onlyPublicFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-24",
+        "designType": "full-art",
+        "durationMinutes": "180"
+      },
+      "status": 200,
+      "expected": [
+        "08:00"
+      ],
+      "observed": [
+        "08:00"
+      ],
+      "onlyPublicFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-22",
+        "designType": "full-art",
+        "durationMinutes": "240"
+      },
+      "status": 200,
+      "expected": [
+        "08:00",
+        "12:00"
+      ],
+      "observed": [
+        "08:00",
+        "12:00"
+      ],
+      "onlyPublicFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-24",
+        "designType": "full-art",
+        "durationMinutes": "240"
+      },
+      "status": 200,
+      "expected": [
+        "08:00"
+      ],
+      "observed": [
+        "08:00"
+      ],
+      "onlyPublicFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-22",
+        "designType": "full-art",
+        "durationMinutes": "300"
+      },
+      "status": 200,
+      "expected": [
+        "08:00"
+      ],
+      "observed": [
+        "08:00"
+      ],
+      "onlyPublicFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-24",
+        "designType": "full-art",
+        "durationMinutes": "300"
+      },
+      "status": 200,
+      "expected": [],
+      "observed": [],
+      "onlyPublicFields": true,
+      "passed": true
+    }
+  ],
+  "limits": [
+    "Availability is a snapshot, not a reservation.",
+    "Normal availability reconciliation may release a definitely deleted event claim; no booking creation, owner decision, receipt upload, Calendar write or WhatsApp send is requested.",
+    "No loading-time or real-device measurement."
+  ]
+}

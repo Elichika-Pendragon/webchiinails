@@ -1,0 +1,243 @@
+{
+  "checkedAt": "2026-10-20T18:24:47.090Z",
+  "expectedCommit": "18a726239b50b9bb6486f3a891279bb7d5566c32",
+  "commitEvidence": "Operator-supplied expectation; checked artifacts must also match the successful Cloudflare deployment record.",
+  "origin": "https://chiinails.pages.dev",
+  "requestMethod": "GET only",
+  "published": true,
+  "pages": [
+    {
+      "path": "/",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/",
+      "scriptPaths": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "stylesheetPaths": [],
+      "exactInlineCss": true,
+      "noBookingHeaderLink": true
+    },
+    {
+      "path": "/services",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/services",
+      "scriptPaths": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "stylesheetPaths": [],
+      "exactInlineCss": true,
+      "noBookingHeaderLink": true
+    },
+    {
+      "path": "/custom-sets",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/custom-sets",
+      "scriptPaths": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "stylesheetPaths": [],
+      "exactInlineCss": true,
+      "noBookingHeaderLink": true
+    },
+    {
+      "path": "/visit",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/visit",
+      "scriptPaths": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "stylesheetPaths": [],
+      "exactInlineCss": true,
+      "noBookingHeaderLink": true
+    },
+    {
+      "path": "/about",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/about",
+      "scriptPaths": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "stylesheetPaths": [],
+      "exactInlineCss": true,
+      "noBookingHeaderLink": true
+    },
+    {
+      "path": "/book",
+      "status": 200,
+      "canonical": null,
+      "scriptPaths": [
+        "/_astro/book.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+        "/_astro/book.astro_astro_type_script_index_1_lang.DQ2qER5m.js"
+      ],
+      "stylesheetPaths": [],
+      "exactInlineCss": true,
+      "noBookingHeaderLink": true,
+      "privacy": {
+        "noindex": true,
+        "referrerPolicy": "no-referrer",
+        "initialBookDisabled": true,
+        "requiredEditableFields": 7,
+        "requiredPaymentProof": true,
+        "staticControls": 9,
+        "derivedPaymentAmount": true,
+        "depositMinimumIdr": 20000,
+        "fullPaymentOption": true,
+        "combinedServiceDurationControl": true,
+        "serviceDurationChoices": [
+          "plain:60",
+          "simple:60",
+          "simple:120",
+          "full-art:180",
+          "full-art:240",
+          "full-art:300"
+        ],
+        "defaultServiceDuration": "simple:120",
+        "defaultDesign": "simple",
+        "defaultDurationMinutes": 120,
+        "inlineCalendar": true,
+        "nativeTimeDropdownVisible": true,
+        "obsoleteSlotGridAbsent": true,
+        "ownerProvidedPaymentDestinationsOnlyOnBookingRoute": true,
+        "receiptPreviewInitiallyAbsent": true
+      }
+    },
+    {
+      "path": "/book/approve",
+      "status": 200,
+      "canonical": null,
+      "scriptPaths": [
+        "/_astro/approve.astro_astro_type_script_index_0_lang.Bup1gieE.js"
+      ],
+      "stylesheetPaths": [],
+      "exactInlineCss": true,
+      "noBookingHeaderLink": true,
+      "privacy": {
+        "noindex": true,
+        "referrerPolicy": "no-referrer",
+        "cacheControlNoStore": true,
+        "privateValuesAbsent": true,
+        "privateProofInitiallyAbsent": true,
+        "proofPanelInitiallyHidden": true,
+        "dynamicPaymentAndDurationBrief": true,
+        "actionsInitiallyHidden": true,
+        "noInitialGoogleScript": true,
+        "noInitialIframe": true
+      }
+    }
+  ],
+  "assets": [
+    {
+      "path": "/_astro/approve.astro_astro_type_script_index_0_lang.Bup1gieE.js",
+      "bytes": 12352,
+      "sha256": "24798bc5ae485a34640195b16ac9a5c20a535d727d5885e296953d4a181de58e",
+      "exactPreparedBytes": true
+    },
+    {
+      "path": "/_astro/book.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+      "bytes": 29,
+      "sha256": "8889426bcaffb1cb8e3208eed2f47bfb4b9c4d06a55b9c36b50b9b6df3b617db",
+      "exactPreparedBytes": true
+    },
+    {
+      "path": "/_astro/book.astro_astro_type_script_index_1_lang.DQ2qER5m.js",
+      "bytes": 25187,
+      "sha256": "f0e6874f398a22c50374b2dcb3e2e6754422d5025d9f85bf39c4afd844bbd230",
+      "exactPreparedBytes": true
+    },
+    {
+      "path": "/_astro/booking.C_plcNN2.js",
+      "bytes": 7069,
+      "sha256": "1203590aced23d0a24d4268af14899159036e23afe9e87f3d97699d575dc41d5",
+      "exactPreparedBytes": true
+    },
+    {
+      "path": "/_astro/client.50lT8FtM.js",
+      "bytes": 12367,
+      "sha256": "c4087f228f0819337e20278c40e0464e29eca9d92a220123a8878ba299ddc7e5",
+      "exactPreparedBytes": true
+    },
+    {
+      "path": "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+      "bytes": 29,
+      "sha256": "8889426bcaffb1cb8e3208eed2f47bfb4b9c4d06a55b9c36b50b9b6df3b617db",
+      "exactPreparedBytes": true
+    }
+  ],
+  "limitations": [
+    "No customer submission, owner sign-in, Calendar write or end-to-end booking test.",
+    "GET-only artifact inspection does not execute dropdown interactions or availability refreshes.",
+    "No fresh loading-time, Cloudflare CPU or real Safari measurement."
+  ],
+  "seo": {
+    "indexablePages": 5,
+    "bookingRoutesNoindex": 2,
+    "bookingRoutesExcludedFromSitemap": true,
+    "publicCanonicalsAndStructuredDataMatch": true,
+    "robotsValid": true,
+    "ownershipFileMatches": true,
+    "ownershipRedirectChain": [
+      {
+        "from": "/googlefe4df279dce4c32d.html",
+        "status": 308,
+        "to": "/googlefe4df279dce4c32d"
+      }
+    ]
+  },
+  "bookingStatus": {
+    "status": 200,
+    "enabled": true,
+    "expectedEnabled": true,
+    "responseContainsOnlyEnabledBoolean": true,
+    "privacyHeaders": true
+  },
+  "automation": {
+    "configurationEnabled": true,
+    "endToEndVerifiedByThisProbe": false,
+    "calendarWritePerformed": false,
+    "paymentVerification": "manual",
+    "whatsappSendPerformed": false,
+    "availabilityRequestMethod": "POST",
+    "visibleBookingPageRefreshSeconds": 45,
+    "liveAvailabilityMutationPerformedByThisProbe": false
+  },
+  "rules": {
+    "depositPercent": 10,
+    "depositMinimumIdr": 20000,
+    "paymentCappedAtTotal": true,
+    "fullPaymentOption": true,
+    "paymentAmountReadonly": true,
+    "editableRequiredFields": 7,
+    "paymentProofRequired": true,
+    "namedControls": 9,
+    "receiptRetentionDaysAfterAppointment": 30,
+    "receiptBytesInWhatsApp": false,
+    "combinedServiceDurationControl": true,
+    "defaultServiceDuration": "simple:120",
+    "defaultDesign": "simple",
+    "defaultDurationMinutes": 120,
+    "allowedDesignDurations": {
+      "plain": [
+        60
+      ],
+      "simple": [
+        60,
+        120
+      ],
+      "full-art": [
+        180,
+        240,
+        300
+      ]
+    },
+    "timeControl": "native select",
+    "startCadence": "selected duration anchored at 08:00",
+    "unavailableTimeOptionsDisabledByController": true,
+    "buttonLabel": "Book",
+    "manualPayments": "transfer atau QRIS",
+    "contactLabel": "Chii",
+    "weekdayLastBook": "14:00",
+    "weekendLastBook": "10:00",
+    "fullArtWeekdayLastBook": "12:00",
+    "weekendAppointmentsFinishBy": "12:00"
+  }
+}

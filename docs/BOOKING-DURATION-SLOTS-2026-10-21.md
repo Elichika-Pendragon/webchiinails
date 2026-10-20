@@ -22,4 +22,9 @@ New off-cadence starts are rejected on the server before Calendar I/O or a new s
 - Local isolated browser: 4-hour weekday dropdown contained only 08:00–12:00 and 12:00–16:00. A synthetic 10:00–12:00 busy interval disabled the first. The 390px mobile 3-hour dropdown contained only 08:00–11:00 and 11:00–14:00; controls remained 50px tall with no horizontal overflow. No real booking or Calendar event was created.
 - Booking script import graph: 16,912 B gzip; public pages unchanged at 5,022 B each. Whole-build JavaScript: 57,033 B raw / 21,520 B gzip, six files, no emitted React runtime or hydration. Size estimates are not load-time measurements.
 
-No package, database migration, account permission, billing change or new login is required. Native receipt-chooser end-to-end completion and real Calendar insertion retain their previously documented verification boundaries. Publication and live API evidence will be recorded after deployment.
+No package, database migration, account permission, billing change or new login is required. Native receipt-chooser end-to-end completion and real Calendar insertion retain their previously documented verification boundaries. The publication and live API checks below are verified independently of those end-to-end boundaries.
+
+
+## Publication
+
+**Published and verified:** code commit `18a726239b50b9bb6486f3a891279bb7d5566c32`, successful Cloudflare Pages deployment `3ab5f8fc-b6fa-4a0a-9f54-4f10b5185681`. All seven routes and six exact browser assets match the prepared build; booking remains enabled and public/private SEO boundaries pass. All **12 public availability cases** (six service choices on weekdays and weekends) returned HTTP 200 with exactly the starts in the table, at 01:24 WIB on 21 October. [Artifact evidence](evidence/booking-approval/duration-live-2026-10-21.json), [availability evidence](evidence/booking-approval/duration-api-2026-10-21.json). No new request, owner decision, Calendar event or WhatsApp message was created by verification.
