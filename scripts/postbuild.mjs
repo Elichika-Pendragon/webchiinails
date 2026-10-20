@@ -14,7 +14,7 @@ for (const page of seoPages) {
   assert.ok(!/tanpa DP|tidak memerlukan DP|No deposit/.test(html), 'Current booking deposit rules');
   if (page.path === '/about') {
     assert.equal((html.match(/<summary\b/g) || []).length, 6);
-    assert.ok(html.includes('Booking wajib DP') && html.includes('15.00') && html.includes('10.00'));
+    assert.ok(html.includes('Booking wajib DP') && html.includes('Last book') && html.includes('14:00') && html.includes('10:00'));
   }
 }
 const robots = ['User-agent: *', 'Allow: /', 'Disallow: /api/'];

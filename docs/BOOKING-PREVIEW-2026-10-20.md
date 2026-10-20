@@ -1,5 +1,7 @@
 # Booking preview and integration handoff — 20 October 2026
 
+This is the **initial preview snapshot**, published at commit `f41ca3e` and Cloudflare deployment `02097797`. Its six-editable-field and 15:00 weekday examples are historical. The later owner corrections replace them with five editable fields, calculated 10% DP and **Last book 14:00**; see [the correction report](BOOKING-RULES-2026-10-20.md).
+
 ## Delivered locally
 
 `/book` is a standalone Astro page with the existing Chii theme, header and footer. There is **no Book/Booking header or menu destination**. Jessica shares the same form URL after consultation. The route is `noindex, nofollow` and absent from the five-page SEO sitemap.
@@ -54,4 +56,4 @@ The booking route loads the first three JavaScript items: **20,242 bytes raw / 8
 
 ## Publication and remaining work
 
-The owner authorized pushing this prepared preview on **20 October 2026**. At this report's pre-push capture, deployment verification is still pending. Publication of the preview does not activate booking automation. Figma remains deferred. Before automation activation: finish the authenticated approval UI/backend, decide request/hold expiry and capacity rules, authorize Calendar credentials/access, add server-side persistence/reservations, then test owner approval, spoofing, duplicate clicks, competing requests and Calendar recovery with synthetic data. Review real wallet instructions/costs before publishing them. Do not claim the automation is live from the static preview or from the API's Enabled label.
+The owner authorized pushing this preview on **20 October 2026**. The initial release `f41ca3e` was confirmed live in successful Cloudflare deployment `02097797` at 20:32 WIB. All six routes returned 200, expected CSS/JS matched the build, and the public SEO/ownership checks passed. Publication of the preview does not activate booking automation. Figma remains deferred. Before automation activation: finish the authenticated approval UI/backend, decide request/hold expiry and capacity rules, authorize Calendar credentials/access, add server-side persistence/reservations, then test owner approval, spoofing, duplicate clicks, competing requests and Calendar recovery with synthetic data. Review real wallet instructions/costs before publishing them. Do not claim the automation is live from the static preview or from the API's Enabled label.

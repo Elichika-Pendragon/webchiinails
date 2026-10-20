@@ -7,7 +7,7 @@ export const seoPages = [
   {
     file: 'about.html', path: '/about',
     title: 'Tentang Chii Nails & Aturan Booking | Palembang',
-    description: 'Kenali Chii Nails Palembang dan aturan booking: wajib DP, jam layanan, batas booking terakhir, denda keterlambatan, dan tanpa walk-in.',
+    description: 'Kenali Chii Nails Palembang dan aturan booking: wajib DP, jam layanan, Last book, denda keterlambatan, dan tanpa walk-in.',
   },
   {
     file: 'services.html', path: '/services',
@@ -22,7 +22,7 @@ export const seoPages = [
   {
     file: 'visit.html', path: '/visit',
     title: 'Lokasi & Jam Buka Chii Nails Palembang | Booking Only',
-    description: 'Dewi Salon & Chii.Nails dekat SMA N 5 Palembang. Senin–Jumat 08.00–17.00, Sabtu–Minggu 08.00–12.00 WIB. Cek batas booking terakhir; wajib DP, tanpa walk-in.',
+    description: 'Dewi Salon & Chii.Nails dekat SMA N 5 Palembang. Senin–Jumat 08.00–17.00, Sabtu–Minggu 08.00–12.00 WIB. Cek Last book; wajib DP, tanpa walk-in.',
   },
 ];
 

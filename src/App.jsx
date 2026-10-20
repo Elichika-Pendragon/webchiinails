@@ -184,7 +184,7 @@ function StudioPhoto() {
 
 function StudioHours() {
   const time = value => value.replace(':', '.');
-  return <div className="studio-hours"><table><caption>Jam layanan · WIB</caption><thead className="sr-only"><tr><th scope="col">Hari</th><th scope="col">Jam layanan dan batas booking</th></tr></thead><tbody>{salon.openingHours.map(day => <tr key={day.label}><th scope="row">{day.label}</th><td><strong>{time(day.opens)}–{time(day.closes)}</strong><small>Last booking {time(day.lastBooking)}</small></td></tr>)}</tbody></table><p className="booking-status"><strong>Booking only · Wajib DP</strong><span>Tidak menerima walk-in.</span></p></div>;
+  return <div className="studio-hours"><table><caption>Jam layanan · WIB</caption><thead className="sr-only"><tr><th scope="col">Hari</th><th scope="col">Jam layanan dan Last book</th></tr></thead><tbody>{salon.openingHours.map(day => <tr key={day.label}><th scope="row">{day.label}</th><td><strong>{time(day.opens)}–{time(day.closes)}</strong><small>Last book {day.lastBooking}</small></td></tr>)}</tbody></table><p className="booking-status"><strong>Booking only · Wajib DP</strong><span>Tidak menerima walk-in.</span></p></div>;
 }
 
 function MapArea() {
@@ -247,7 +247,7 @@ function PageIntro({ eyebrow, title, children }) {
 }
 
 function MobileHomeSummary() {
-  return <section className="mobile-home-summary section container"><p className="eyebrow">MAKE IT YOURS</p><h2>Your next nail date, made simple.</h2><p className="muted">Salon nail art di Palembang untuk custom nail art, extensions, basic manicure &amp; vitamin oil. Press-on custom bisa dikirim ke seluruh Indonesia.</p><div className="mobile-destination-cards"><a href="/services"><strong>Services <span>↗</span></strong><span>Nail art, extensions &amp; nail treatment.</span></a><a href="/custom-sets"><strong>Custom sets &amp; prices <span>↗</span></strong><span>Lihat karya, daftar harga &amp; paket press-on.</span></a><a href="/visit"><strong>Visit the studio <span>↗</span></strong><span>Lokasi di dekat SMA N 5 Palembang, jam layanan &amp; batas booking.</span></a></div><p className="mobile-booking-note"><strong>Booking only · Wajib DP</strong><span>Tidak menerima walk-in. <a className="text-link" href="/about#booking-rules">Baca aturan booking →</a></span></p></section>;
+  return <section className="mobile-home-summary section container"><p className="eyebrow">MAKE IT YOURS</p><h2>Your next nail date, made simple.</h2><p className="muted">Salon nail art di Palembang untuk custom nail art, extensions, basic manicure &amp; vitamin oil. Press-on custom bisa dikirim ke seluruh Indonesia.</p><div className="mobile-destination-cards"><a href="/services"><strong>Services <span>↗</span></strong><span>Nail art, extensions &amp; nail treatment.</span></a><a href="/custom-sets"><strong>Custom sets &amp; prices <span>↗</span></strong><span>Lihat karya, daftar harga &amp; paket press-on.</span></a><a href="/visit"><strong>Visit the studio <span>↗</span></strong><span>Lokasi di dekat SMA N 5 Palembang, jam layanan &amp; Last book.</span></a></div><p className="mobile-booking-note"><strong>Booking only · Wajib DP</strong><span>Tidak menerima walk-in. <a className="text-link" href="/about#booking-rules">Baca aturan booking →</a></span></p></section>;
 }
 
 function MobileHomeVisit() {

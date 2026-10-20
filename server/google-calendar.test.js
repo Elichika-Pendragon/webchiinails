@@ -9,7 +9,7 @@ const pem = `-----BEGIN PRIVATE KEY-----\n${Buffer.from(exported).toString('base
 const env = { GOOGLE_SERVICE_ACCOUNT_EMAIL: 'booking@synthetic-test.iam.gserviceaccount.com', GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: pem, GOOGLE_CALENDAR_ID: 'synthetic-calendar@group.calendar.google.com' };
 const current = Date.parse('2026-10-20T00:00:00+07:00');
 const range = { timeMin: '2026-10-20T08:00:00+07:00', timeMax: '2026-10-20T17:00:00+07:00' };
-const appointment = { bookingId: 'booking_test_001', name: 'Client Test', whatsapp: '081234567890', agreedPrice: 155000, deposit: 50000, date: '2026-10-20', time: '08:00' };
+const appointment = { bookingId: 'booking_test_001', name: 'Client Test', whatsapp: '081234567890', agreedPrice: 155000, date: '2026-10-20', time: '08:00' };
 const json = (value, status = 200) => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
 const token = () => json({ access_token: 'synthetic-token', token_type: 'Bearer', expires_in: 3600 });
 const freeBusy = (busy = [], other = {}) => ({ kind: 'calendar#freeBusy', ...range, calendars: { [env.GOOGLE_CALENDAR_ID]: { busy } }, ...other });
@@ -135,13 +135,50 @@ test('approved appointment writes a private, opaque WIB two-hour event without a
   assert.equal('attendees' in body, false);
   assert.equal('approved' in body, false);
   assert.match(body.description, /WhatsApp: \+6281234567890/);
+  assert.match(body.description, /Harga disepakati: Rp155000\nDP 10%: Rp15500\n/);
   assert.equal(JSON.stringify(result).includes(appointment.name), false);
+});
+
+test('event DP and fingerprint ignore legacy deposit input and recalculate from the total', async () => {
+  const bodies = [];
+  const calendar = provider(async (url, init) => {
+    if (url.includes('oauth2')) return token();
+    const body = JSON.parse(init.body);
+    bodies.push(body);
+    return json(body);
+  });
+  await calendar.createApprovedAppointment(appointment);
+  const original = bodies[0];
+  for (const deposit of [undefined, null, 0, 1, 50000, 155000, '0', '1e5', 'invalid', {}, []]) {
+    await calendar.createApprovedAppointment({ ...appointment, deposit });
+    assert.deepEqual(bodies.at(-1), original);
+  }
+  const unread = Object.defineProperty({ ...appointment }, 'deposit', { get() { throw new Error('must not read customer deposit'); } });
+  await calendar.createApprovedAppointment(unread);
+  assert.deepEqual(bodies.at(-1), original);
+  await calendar.createApprovedAppointment({ ...appointment, agreedPrice: 155001, deposit: 50000 });
+  const changed = bodies.at(-1);
+  assert.equal(changed.id, original.id);
+  assert.match(changed.description, /Harga disepakati: Rp155001\nDP 10%: Rp15501\n/);
+  assert.notEqual(changed.extendedProperties.private.fingerprint, original.extendedProperties.private.fingerprint);
+});
+
+test('weekday 14.00 last-book boundary creates a two-hour event ending at 16.00', async () => {
+  let body;
+  const calendar = provider(async (url, init) => {
+    if (url.includes('oauth2')) return token();
+    body = JSON.parse(init.body);
+    return json(body);
+  });
+  await calendar.createApprovedAppointment({ ...appointment, time: '14:00' });
+  assert.deepEqual(body.start, { dateTime: '2026-10-20T14:00:00+07:00', timeZone: 'Asia/Jakarta' });
+  assert.deepEqual(body.end, { dateTime: '2026-10-20T16:00:00+07:00', timeZone: 'Asia/Jakarta' });
 });
 
 test('invalid and customer-flag-only appointments cannot create events', async () => {
   let calls = 0;
   const calendar = provider(async () => { calls++; return token(); });
-  for (const value of [null, [], { approved: true }, { ...appointment, bookingId: 'short' }, { ...appointment, bookingId: 'booking_test\n' }, { ...appointment, time: '07:00' }, { ...appointment, deposit: 0 }, { ...appointment, agreedPrice: '1e5' }, { ...appointment, date: '2026-02-30' }]) await assert.rejects(calendar.createApprovedAppointment(value), isCode('CALENDAR_INPUT'));
+  for (const value of [null, [], { approved: true }, { ...appointment, bookingId: 'short' }, { ...appointment, bookingId: 'booking_test\n' }, { ...appointment, time: '07:00' }, { ...appointment, time: '14:30' }, { ...appointment, time: '15:00' }, { ...appointment, agreedPrice: 0 }, { ...appointment, agreedPrice: '1e5' }, { ...appointment, agreedPrice: 10000001 }, { ...appointment, date: '2026-02-30' }]) await assert.rejects(calendar.createApprovedAppointment(value), isCode('CALENDAR_INPUT'));
   assert.equal(calls, 0);
 });
 
@@ -184,7 +221,7 @@ test('409 mismatched booking payload or cancelled event requires manual reconcil
     return json(stored);
   });
   await calendar.createApprovedAppointment(appointment);
-  await assert.rejects(calendar.createApprovedAppointment({ ...appointment, deposit: 60000 }), isCode('CALENDAR_CONFLICT'));
+  await assert.rejects(calendar.createApprovedAppointment({ ...appointment, agreedPrice: 165000 }), isCode('CALENDAR_CONFLICT'));
   stored.status = 'cancelled';
   await assert.rejects(calendar.createApprovedAppointment(appointment), isCode('CALENDAR_CONFLICT'));
 });

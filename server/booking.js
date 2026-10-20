@@ -122,6 +122,13 @@ export function parseRupiah(value, maxAmount = BOOKING_DEFAULTS.maxAmount) {
   return Number.isSafeInteger(amount) && amount <= maxAmount ? amount : null;
 }
 
+/** Derive the fixed 10% DP, rounding fractional rupiah up to the next Rp1. */
+export function calculateDeposit(value, maxAmount = BOOKING_DEFAULTS.maxAmount) {
+  const amount = parseRupiah(value, maxAmount);
+  if (amount === null || amount <= 0) return null;
+  return Math.floor(amount / 10) + (amount % 10 ? 1 : 0);
+}
+
 /** Return operating hours for a valid YYYY-MM-DD date, or null. */
 export function getOperatingHours(date) {
   const day = calendarDay(date);
@@ -133,7 +140,7 @@ export function getOperatingHours(date) {
     weekend,
     opens: '08:00',
     closes: weekend ? '12:00' : '17:00',
-    lastStart: weekend ? '10:00' : '15:00',
+    lastStart: weekend ? '10:00' : '14:00',
     durationMinutes: BOOKING_DEFAULTS.durationMinutes,
     timeZone: BOOKING_DEFAULTS.timeZone,
   };
@@ -166,7 +173,8 @@ export function listBookingSlots(date, options = {}) {
 }
 
 /**
- * Validate exactly the six customer fields. A valid result is a declared
+ * Validate the five editable customer fields and derive DP from the total.
+ * Legacy/customer-supplied deposit values are ignored. A valid result is a declared
  * booking preview only. The future API must validate again and verify quote,
  * availability and provider payment separately before confirming a booking.
  */
@@ -179,10 +187,8 @@ export function validateBooking(input, options = {}) {
   const whatsapp = normalizeWhatsApp(source.whatsapp);
   if (whatsapp === null) errors.whatsapp = 'Isi nomor WhatsApp Indonesia, misalnya 081234567890.';
   const agreedPrice = parseRupiah(source.agreedPrice, config.maxAmount);
-  const deposit = parseRupiah(source.deposit, config.maxAmount);
+  const deposit = calculateDeposit(source.agreedPrice, config.maxAmount);
   if (agreedPrice === null || agreedPrice <= 0) errors.agreedPrice = `Isi harga dalam angka Rupiah, maksimal ${config.maxAmount} (batas teknis formulir).`;
-  if (deposit === null || deposit <= 0) errors.deposit = 'Isi DP lebih dari Rp0 dalam angka Rupiah.';
-  else if (agreedPrice !== null && deposit > agreedPrice) errors.deposit = 'DP tidak boleh melebihi harga yang diisi.';
   const day = calendarDay(source.date);
   if (day === null) errors.date = 'Pilih tanggal yang valid.';
   else if (day < config.minDay || day > config.maxDay) errors.date = `Pilih tanggal antara ${config.minDate} dan ${config.maxDate}.`;

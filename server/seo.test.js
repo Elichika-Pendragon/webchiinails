@@ -17,7 +17,7 @@ test('structured data uses actual weekday/weekend opening times, separate from b
   const business = data['@graph'].find(item => item['@type'] === 'NailSalon');
   assert.equal(business.openingHoursSpecification[0].closes, '17:00');
   assert.equal(business.openingHoursSpecification[1].closes, '12:00');
-  assert.match(business.description, /15.00/);
+  assert.match(business.description, /Last book: Senin–Jumat 14:00/);
   assert.match(business.description, /10.00/);
   assert.equal(business.address.addressLocality, 'Palembang');
   assert.equal(business.hasMap, salon.maps);

@@ -1,4 +1,4 @@
-import { getBookingDateBounds, listBookingSlots, validateBooking } from '../../server/booking.js';
+import { calculateDeposit, getBookingDateBounds, listBookingSlots, validateBooking } from '../../server/booking.js';
 
 const form = document.querySelector('#booking-form');
 if (form) {
@@ -9,6 +9,10 @@ if (form) {
   const reviewButton = document.querySelector('#booking-review');
   const formatMoney = value => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
   const formatDate = value => new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }).format(new Date(value));
+  const updateDeposit = () => {
+    const deposit = calculateDeposit(input('agreedPrice').value);
+    input('deposit').value = deposit === null ? '' : String(deposit);
+  };
   const setBounds = () => {
     const bounds = getBookingDateBounds({ now: Date.now() });
     input('date').min = bounds.minDate;
@@ -44,6 +48,7 @@ if (form) {
   };
   form.addEventListener('submit', event => {
     event.preventDefault();
+    updateDeposit();
     const values = {};
     fields.forEach(name => { values[name] = input(name).value; });
     const result = validateBooking(values, { now: Date.now() });
@@ -54,7 +59,7 @@ if (form) {
     const dateLabel = formatDate(preview.startISO);
     const display = { name: value.name, whatsapp: `+${value.whatsapp}`, date: dateLabel, time: preview.label, agreedPrice: formatMoney(value.agreedPrice), deposit: formatMoney(value.deposit), remainingBalance: formatMoney(preview.remainingBalance) };
     Object.keys(display).forEach(name => { review.querySelector(`[data-booking-value="${name}"]`).textContent = display[name]; });
-    const message = `Halo Jessica, saya ingin mengajukan booking setelah konsultasi.\n\nNama: ${value.name}\nWhatsApp: +${value.whatsapp}\nHarga total sesuai konsultasi: ${display.agreedPrice}\nDP sesuai konsultasi: ${display.deposit}\nTanggal: ${dateLabel}\nWaktu: ${preview.label}\n\nMohon periksa ketersediaan jadwal dan konfirmasi detail transfer e-wallet. Saya akan mengirim bukti transfer di percakapan ini. Booking menunggu konfirmasi Jessica.`;
+    const message = `Halo Chii, saya ingin mengajukan booking setelah konsultasi.\n\nNama: ${value.name}\nWhatsApp: +${value.whatsapp}\nHarga total sesuai konsultasi: ${display.agreedPrice}\nDP 10%: ${display.deposit}\nTanggal: ${dateLabel}\nWaktu: ${preview.label}\n\nMohon periksa ketersediaan jadwal dan konfirmasi petunjuk pembayaran melalui transfer atau QRIS. Saya akan mengirim bukti pembayaran di percakapan ini. Booking menunggu konfirmasi Chii.`;
     const destination = new URL(form.dataset.whatsapp);
     destination.searchParams.set('text', message);
     document.querySelector('#booking-whatsapp-link').href = destination.href;
@@ -62,12 +67,14 @@ if (form) {
     document.querySelector('#booking-review-title').focus();
   });
   document.querySelector('#booking-edit').addEventListener('click', () => {
-    review.hidden = true; form.hidden = false; fillTimes();
+    review.hidden = true; form.hidden = false; fillTimes(); updateDeposit();
     document.querySelector('#booking-form-title').focus();
   });
   input('date').addEventListener('change', fillTimes);
-  window.addEventListener('pageshow', fillTimes);
-  setBounds(); fillTimes();
+  input('agreedPrice').addEventListener('input', updateDeposit);
+  input('agreedPrice').addEventListener('change', updateDeposit);
+  window.addEventListener('pageshow', () => { fillTimes(); updateDeposit(); });
+  setBounds(); fillTimes(); updateDeposit();
   form.querySelectorAll('fieldset').forEach(fieldset => { fieldset.disabled = false; });
   reviewButton.disabled = false;
 }

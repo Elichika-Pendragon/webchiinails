@@ -28,6 +28,10 @@ for (const page of [...seoPages, bookingPage]) {
   }
 }
 const bookingHtml = await readFile(new URL(bookingPage.file, root), 'utf8');
+const depositInput = bookingHtml.match(/<input\b[^>]*id="booking-deposit"[^>]*>/)?.[0] || '';
+assert.match(depositInput, /\sreadonly(?:\s|=|>|\/)/, 'DP is calculated, never customer-editable');
+assert.ok(bookingHtml.includes('DP 10%') && bookingHtml.includes('transfer atau QRIS'), 'Current deposit and payment copy');
+assert.ok(!bookingHtml.includes('Jessica') && !bookingHtml.includes('Mulai terakhir'), 'Customer-facing booking copy uses Chii and Last book');
 const bookingIds = [...bookingHtml.matchAll(/\sid="([^"]+)"/g)].map(match => match[1]);
 assert.equal(new Set(bookingIds).size, bookingIds.length, 'Booking IDs are unique so labels and action links target the correct control');
 assert.match(bookingHtml, /<meta name="robots" content="noindex, nofollow"/);

@@ -206,14 +206,15 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     let checked;
     try {
       // Past starts permit reconciliation of a prior write only, never insertion.
-      checked = validateBooking({ name: appointment.name, whatsapp: appointment.whatsapp, agreedPrice: amount(appointment.agreedPrice), deposit: amount(appointment.deposit), date: appointment.date, time: appointment.time }, { now: Math.min(current, requestedStart - 1) });
+      // Recompute the canonical 10% DP; legacy/customer deposit input is ignored.
+      checked = validateBooking({ name: appointment.name, whatsapp: appointment.whatsapp, agreedPrice: amount(appointment.agreedPrice), date: appointment.date, time: appointment.time }, { now: Math.min(current, requestedStart - 1) });
     } catch { throw failure('CALENDAR_INPUT'); }
     if (!checked.valid) throw failure('CALENDAR_INPUT');
     const value = checked.value;
     const { startISO, endISO } = checked.preview;
     const eventId = `chii${await sha256(`chiinails:booking:v1:${bookingId}`)}`;
     const summary = `Chii Nails · ${value.name}`;
-    const description = `Booking: ${bookingId}\nNama: ${value.name}\nWhatsApp: +${value.whatsapp}\nHarga disepakati: Rp${value.agreedPrice}\nDP disepakati: Rp${value.deposit}\nNominal dan pembayaran diperiksa terpisah oleh operator.`;
+    const description = `Booking: ${bookingId}\nNama: ${value.name}\nWhatsApp: +${value.whatsapp}\nHarga disepakati: Rp${value.agreedPrice}\nDP 10%: Rp${value.deposit}\nNominal dan pembayaran diperiksa terpisah oleh operator.`;
     const fingerprint = await sha256(JSON.stringify({ version: 1, calendarId, bookingId, summary, description, startISO, endISO }));
     const body = {
       id: eventId, summary, description,

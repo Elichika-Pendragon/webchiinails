@@ -1,0 +1,153 @@
+{
+  "commit": "f41ca3e77c3da59012364bdef38bdc75f5ac6407",
+  "checks": [
+    {
+      "fields": [
+        {
+          "height": 50,
+          "name": "name"
+        },
+        {
+          "height": 50,
+          "name": "whatsapp"
+        },
+        {
+          "height": 50,
+          "name": "agreedPrice"
+        },
+        {
+          "height": 50,
+          "name": "deposit"
+        },
+        {
+          "height": 50,
+          "name": "date"
+        },
+        {
+          "height": 50,
+          "name": "time"
+        }
+      ],
+      "headerLinks": [
+        {
+          "href": "/",
+          "label": ""
+        },
+        {
+          "href": "/#services",
+          "label": "Services"
+        },
+        {
+          "href": "/#gallery",
+          "label": "Custom sets"
+        },
+        {
+          "href": "/services",
+          "label": "Services"
+        },
+        {
+          "href": "/custom-sets",
+          "label": "Custom sets & prices"
+        },
+        {
+          "href": "/about",
+          "label": "About & rules"
+        },
+        {
+          "href": "/#visit",
+          "label": "Visit us"
+        },
+        {
+          "href": "/visit",
+          "label": "Visit us"
+        },
+        {
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "label": "Kirim desain inspirasimu ↗"
+        },
+        {
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "label": "Kirim desain inspirasimu"
+        }
+      ],
+      "iframeCount": 0,
+      "scrollWidth": 1265,
+      "width": 1265
+    },
+    {
+      "fields": [
+        {
+          "height": 50,
+          "name": "name"
+        },
+        {
+          "height": 50,
+          "name": "whatsapp"
+        },
+        {
+          "height": 50,
+          "name": "agreedPrice"
+        },
+        {
+          "height": 50,
+          "name": "deposit"
+        },
+        {
+          "height": 50,
+          "name": "date"
+        },
+        {
+          "height": 50,
+          "name": "time"
+        }
+      ],
+      "headerLinks": [
+        {
+          "href": "/",
+          "label": ""
+        },
+        {
+          "href": "/#services",
+          "label": "Services"
+        },
+        {
+          "href": "/#gallery",
+          "label": "Custom sets"
+        },
+        {
+          "href": "/services",
+          "label": "Services"
+        },
+        {
+          "href": "/custom-sets",
+          "label": "Custom sets & prices"
+        },
+        {
+          "href": "/about",
+          "label": "About & rules"
+        },
+        {
+          "href": "/#visit",
+          "label": "Visit us"
+        },
+        {
+          "href": "/visit",
+          "label": "Visit us"
+        },
+        {
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "label": "Kirim desain inspirasimu ↗"
+        },
+        {
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "label": "Kirim desain inspirasimu"
+        }
+      ],
+      "iframeCount": 0,
+      "scrollWidth": 375,
+      "width": 375
+    }
+  ],
+  "mobileMenuChecked": true,
+  "messageSent": false
+}

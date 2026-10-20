@@ -2,3 +2,4 @@
 @media(max-width:960px){.booking-layout{gap:36px;grid-template-columns:minmax(0,1.25fr) minmax(250px,.85fr)}.booking-guidance{padding:24px}}
 @media(max-width:720px){.booking-page{padding-top:24px}.booking-back{margin-bottom:16px}.booking-intro h1{font-size:42px}.booking-intro>p{font-size:15px}.booking-preview-note{padding:16px;margin-bottom:30px}.booking-layout{grid-template-columns:1fr;gap:38px}.booking-layout h2{font-size:32px}.booking-guidance{padding:24px}.booking-page legend{font-size:16px}.booking-amounts{gap:14px}.booking-field label{font-size:13px}.booking-hours p{font-size:14px}.booking-hours small{font-size:12px}}
 @media(max-width:360px){.booking-amounts{grid-template-columns:1fr;gap:18px}.booking-summary>div{gap:12px}}
+.booking-field input[readonly]{background:var(--blush);font-weight:600;cursor:default}

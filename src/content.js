@@ -9,14 +9,14 @@ export const salon = {
   directions: 'https://www.google.com/maps/dir/?api=1&destination=-2.9707861%2C104.7923294',
   mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.4563633447087!2d104.7923294!3d-2.9707861!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b771aec94583f%3A0xb54138e0c6781c6f!2sChii.Nails%20Art%20%26%20Dewi%20Salon!5e0!3m2!1sen!2sid!4v1792434072193!5m2!1sen!2sid',
   hours: 'Senin–Jumat 08.00–17.00 · Sabtu–Minggu 08.00–12.00 WIB',
-  lastBooking: 'Last booking: Senin–Jumat 15.00 · Sabtu–Minggu 10.00 WIB',
+  lastBooking: 'Last book: Senin–Jumat 14:00 · Sabtu–Minggu 10:00 WIB',
   address: 'SMA N 5 · Jl. Serda KKO Usman Ali, Sei Buah, Ilir Timur II, Palembang, Sumatera Selatan 30116',
   postalAddress: {
     streetAddress: 'Jl. Serda KKO Usman Ali, Sei Buah, Ilir Timur II, dekat SMA N 5',
     addressLocality: 'Palembang', addressRegion: 'Sumatera Selatan', postalCode: '30116', addressCountry: 'ID',
   },
   openingHours: [
-    { label: 'Senin–Jumat', days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '08:00', closes: '17:00', lastBooking: '15:00' },
+    { label: 'Senin–Jumat', days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '08:00', closes: '17:00', lastBooking: '14:00' },
     { label: 'Sabtu–Minggu', days: ['Saturday', 'Sunday'], opens: '08:00', closes: '12:00', lastBooking: '10:00' },
   ],
 };
@@ -76,8 +76,8 @@ export const pressOnPricing = {
 
 export const bookingRules = [
   { title: 'Isi data booking terlebih dahulu', body: 'Wajib booking sebelum datang. Kirim nama, nomor telepon, tanggal, jam, dan DP booking melalui WhatsApp agar jadwal tidak bertabrakan dengan pelanggan lain.' },
-  { title: 'Booking wajib DP; pembatalan membuat DP hangus', body: 'Booking sekarang memerlukan DP. Konfirmasikan nominal dan cara pembayaran langsung melalui WhatsApp. Setelah booking, pembatalan tidak diperbolehkan; jika tetap dibatalkan, DP hangus.' },
-  { title: 'Jam layanan & batas booking terakhir', body: 'Booking only, tanpa walk-in. Senin–Jumat buka 08.00–17.00 WIB, dengan booking terakhir pukul 15.00. Sabtu–Minggu buka 08.00–12.00 WIB, dengan booking terakhir pukul 10.00. Konfirmasikan ketersediaan jadwal melalui WhatsApp sebelum datang.' },
+  { title: 'Booking wajib DP; pembatalan membuat DP hangus', body: 'Booking memerlukan DP sebesar 10% dari harga yang disepakati. Konfirmasikan cara pembayaran melalui transfer atau QRIS langsung melalui WhatsApp. Setelah booking, pembatalan tidak diperbolehkan; jika tetap dibatalkan, DP hangus.' },
+  { title: 'Jam layanan & Last book', body: 'Booking only, tanpa walk-in. Senin–Jumat buka 08.00–17.00 WIB, dengan Last book pukul 14:00. Sabtu–Minggu buka 08.00–12.00 WIB, dengan Last book pukul 10:00. Konfirmasikan ketersediaan jadwal melalui WhatsApp sebelum datang.' },
   { title: 'Tidak tersedia home service', body: 'Layanan dilakukan di studio. Kami belum dapat menerima home service karena keterbatasan kendaraan dan untuk menjaga jadwal booking tetap teratur.' },
   { title: 'Jadwal booking tidak bisa diganti', body: 'Pastikan kamu memiliki waktu luang pada hari dan jam yang dipilih. Jadwal tidak dapat diganti karena kami sudah menolak booking pelanggan lain pada slot tersebut.' },
   { title: 'Denda keterlambatan Rp10.000 per 10 menit', body: 'Datang tepat waktu sesuai jam booking. Keterlambatan dari jadwal booking dikenakan denda Rp10.000 per 10 menit.' },

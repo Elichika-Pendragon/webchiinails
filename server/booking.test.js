@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import { salon } from '../src/content.js';
 import {
   BOOKING_DEFAULTS, getOperatingHours, getBookingDateBounds,
-  listBookingSlots, normalizeWhatsApp, parseRupiah, validateBooking,
+  listBookingSlots, normalizeWhatsApp, parseRupiah, calculateDeposit, validateBooking,
 } from './booking.js';
 
 const now = Date.parse('2026-10-19T17:30:00Z'); // 20 Oct, 00.30 WIB.
 const options = { now };
-const form = overrides => ({ name: 'Jesika Aydilla', whatsapp: '081234567890', agreedPrice: '155000', deposit: '50000', date: '2026-10-20', time: '08:00', ...overrides });
+const form = overrides => ({ name: 'Jesika Aydilla', whatsapp: '081234567890', agreedPrice: '155000', date: '2026-10-20', time: '08:00', ...overrides });
 
 test('hours match the published content for every weekday and weekend', () => {
   for (const date of ['2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25']) {
@@ -22,12 +22,15 @@ test('hours match the published content for every weekday and weekend', () => {
   }
 });
 
-test('weekday starts include 08.00 through 15.00, with a two-hour last appointment', () => {
+test('weekday starts include 08.00 through 14.00, ending by 16.00 while the studio closes at 17.00', () => {
   const slots = listBookingSlots('2026-10-20', options);
-  assert.equal(slots.length, 15);
+  assert.equal(slots.length, 13);
   assert.equal(slots[0].time, '08:00');
-  assert.equal(slots.at(-1).time, '15:00');
-  assert.equal(slots.at(-1).endISO, '2026-10-20T17:00:00+07:00');
+  assert.equal(slots.at(-1).time, '14:00');
+  assert.equal(slots.at(-1).endISO, '2026-10-20T16:00:00+07:00');
+  assert.equal(getOperatingHours('2026-10-20').closes, '17:00');
+  assert.equal(validateBooking(form({ time: '14:00' }), options).valid, true);
+  for (const time of ['14:30', '15:00']) assert.ok(validateBooking(form({ time }), options).errors.time);
   assert.equal(slots[0].label, '08.00–10.00 WIB');
   assert.equal(slots[0].start, Date.parse('2026-10-20T01:00:00Z'));
   assert.equal(slots[0].end - slots[0].start, 120 * 60000);
@@ -54,7 +57,8 @@ test('starts must be strictly in the future, including exact start equality', ()
   const starts = listBookingSlots('2026-10-20', { now: '2026-10-20T08:00:00+07:00' });
   assert.equal(starts[0].time, '08:30');
   assert.ok(validateBooking(form(), { now: '2026-10-20T08:00:00+07:00' }).errors.time);
-  assert.deepEqual(listBookingSlots('2026-10-20', { now: '2026-10-20T15:00:00+07:00' }), []);
+  assert.deepEqual(listBookingSlots('2026-10-20', { now: '2026-10-20T14:00:00+07:00' }), []);
+  assert.ok(validateBooking(form({ time: '14:00' }), { now: '2026-10-20T14:00:00+07:00' }).errors.time);
 });
 
 test('calendar dates reject rollovers, malformed input and invalid leap days', () => {
@@ -83,13 +87,13 @@ test('half-hour interval is configurable and anchored at opening time', () => {
   assert.equal(validateBooking(form({ time: '08:15' }), { now, stepMinutes: 15 }).valid, true);
   assert.deepEqual(listBookingSlots('2026-10-24', { now, stepMinutes: 60 }).map(slot => slot.time), ['08:00', '09:00', '10:00']);
   assert.equal(BOOKING_DEFAULTS.stepMinutes, 30);
-  for (const time of ['8:00', '08:60', '24:00', '07:30', '15:30', '08:00:00', '', null, {}, '<script>']) assert.ok(validateBooking(form({ time }), options).errors.time, String(time));
+  for (const time of ['8:00', '08:60', '24:00', '07:30', '14:30', '15:00', '15:30', '08:00:00', '', null, {}, '<script>']) assert.ok(validateBooking(form({ time }), options).errors.time, String(time));
 });
 
 test('busy and hold intervals exclude any overlap, but touching boundaries are allowed', () => {
   const busyIntervals = [{ start: '2026-10-20T10:00:00+07:00', end: '2026-10-20T12:00:00+07:00' }];
-  const holdIntervals = [{ start: Date.parse('2026-10-20T14:00:00+07:00'), end: Date.parse('2026-10-20T15:00:00+07:00') }];
-  assert.deepEqual(listBookingSlots('2026-10-20', { now, busyIntervals, holdIntervals }).map(slot => slot.time), ['08:00', '12:00', '15:00']);
+  const holdIntervals = [{ start: Date.parse('2026-10-20T12:00:00+07:00'), end: Date.parse('2026-10-20T14:00:00+07:00') }];
+  assert.deepEqual(listBookingSlots('2026-10-20', { now, busyIntervals, holdIntervals }).map(slot => slot.time), ['08:00', '14:00']);
   assert.equal(validateBooking(form({ time: '08:00' }), { now, busyIntervals }).valid, true);
   assert.ok(validateBooking(form({ time: '08:30' }), { now, busyIntervals }).errors.time);
   assert.equal(validateBooking(form({ time: '12:00' }), { now, busyIntervals }).valid, true);
@@ -125,12 +129,25 @@ test('rupiah accepts digit strings only and never coerces malformed values', () 
   assert.equal(parseRupiah('10000001', 20000000), 10000001);
 });
 
+test('DP is 10% of a strict positive rupiah total, rounded up to whole rupiah', () => {
+  for (const [total, deposit] of [['155000', 15500], ['200000', 20000], ['155001', 15501], ['11', 2], ['10', 1], ['1', 1], ['000001', 1], ['10000000', 1000000]]) {
+    assert.equal(calculateDeposit(total), deposit, total);
+  }
+  for (const total of ['0', '000', '10000001', '1e5', '-50000', '+50000', '50000.0', '50.000', '50,000', ' 50000 ', '50000\n', '', 'Infinity', '0xFFFF', '50000<script>', null, {}, [], 50000]) {
+    assert.equal(calculateDeposit(total), null, String(total));
+  }
+  assert.equal(calculateDeposit('10000001', 20000000), 1000001);
+  assert.equal(calculateDeposit('9007199254740991', Number.MAX_SAFE_INTEGER), 900719925474100);
+  assert.equal(calculateDeposit('9007199254740992', Number.MAX_SAFE_INTEGER), null);
+  for (const maxAmount of [0, -1, '10000000', Infinity]) assert.throws(() => calculateDeposit('100000', maxAmount), RangeError);
+});
+
 test('validation returns normalized declared values and an explicitly unverified preview', () => {
   const result = validateBooking(form({ name: '  Jesika Aydilla  ' }), options);
   assert.equal(result.valid, true);
   assert.deepEqual(result.errors, {});
-  assert.deepEqual(result.value, { name: 'Jesika Aydilla', whatsapp: '6281234567890', agreedPrice: 155000, deposit: 50000, date: '2026-10-20', time: '08:00', quoteStatus: 'customer-declared' });
-  assert.equal(result.preview.remainingBalance, 105000);
+  assert.deepEqual(result.value, { name: 'Jesika Aydilla', whatsapp: '6281234567890', agreedPrice: 155000, deposit: 15500, date: '2026-10-20', time: '08:00', quoteStatus: 'customer-declared' });
+  assert.equal(result.preview.remainingBalance, 139500);
   assert.equal(result.preview.startISO, '2026-10-20T08:00:00+07:00');
   assert.equal(result.preview.endISO, '2026-10-20T10:00:00+07:00');
   assert.equal(result.preview.timeZone, 'Asia/Jakarta');
@@ -139,22 +156,37 @@ test('validation returns normalized declared values and an explicitly unverified
   assert.equal(result.preview.availabilityVerified, false);
 });
 
-test('DP must be positive and no greater than declared price; full DP is valid', () => {
-  assert.ok(validateBooking(form({ deposit: '0' }), options).errors.deposit);
+test('DP and remaining balance recalculate from every changed total', () => {
+  for (const [agreedPrice, deposit, remainingBalance] of [['155000', 15500, 139500], ['200000', 20000, 180000], ['155001', 15501, 139500], ['1', 1, 0]]) {
+    const result = validateBooking(form({ agreedPrice }), options);
+    assert.equal(result.valid, true);
+    assert.equal(result.value.deposit, deposit);
+    assert.equal(result.preview.remainingBalance, remainingBalance);
+  }
   assert.ok(validateBooking(form({ agreedPrice: '0' }), options).errors.agreedPrice);
-  assert.ok(validateBooking(form({ deposit: '155001' }), options).errors.deposit);
-  const full = validateBooking(form({ deposit: '155000' }), options);
-  assert.equal(full.valid, true);
-  assert.equal(full.preview.remainingBalance, 0);
   assert.ok(validateBooking(form({ agreedPrice: '10000001' }), options).errors.agreedPrice);
-  assert.equal(validateBooking(form({ agreedPrice: '10000001' }), { now, maxAmount: 20000000 }).valid, true);
+  const extended = validateBooking(form({ agreedPrice: '10000001' }), { now, maxAmount: 20000000 });
+  assert.equal(extended.valid, true);
+  assert.equal(extended.value.deposit, 1000001);
+});
+
+test('missing, malformed and forged legacy deposit input cannot change the canonical DP', () => {
+  const expected = validateBooking(form(), options);
+  for (const deposit of [undefined, null, '0', '-1', '50000', '155000', '155001', '1e5', '<script>', {}, [], 0, 1]) {
+    assert.deepEqual(validateBooking(form({ deposit }), options), expected);
+  }
+  const unread = Object.defineProperty(form(), 'deposit', { get() { throw new Error('must not read customer deposit'); } });
+  assert.deepEqual(validateBooking(unread, options), expected);
+  const invalidPrice = validateBooking(form({ agreedPrice: 'invalid', deposit: '50000' }), options);
+  assert.ok(invalidPrice.errors.agreedPrice);
+  assert.equal('deposit' in invalidPrice.errors, false);
 });
 
 test('malformed forms report field errors without returning partial trusted output', () => {
   for (const value of [null, [], 'bad', {}]) {
     const result = validateBooking(value, options);
     assert.equal(result.valid, false);
-    assert.deepEqual(Object.keys(result.errors), ['name', 'whatsapp', 'agreedPrice', 'deposit', 'date', 'time']);
+    assert.deepEqual(Object.keys(result.errors), ['name', 'whatsapp', 'agreedPrice', 'date', 'time']);
     assert.equal(result.value, null);
     assert.equal(result.preview, null);
   }

@@ -27,13 +27,13 @@ const fields = [
       <div class="booking-intro">
         <a class="text-link booking-back" href="/">← Kembali ke Chii Nails</a>
         <h1>Siapkan nail date-mu.</h1>
-        <p>Sudah konsultasi dengan Jessica? Isi detail sesuai kesepakatan, lalu kirim ringkasannya melalui WhatsApp.</p>
+        <p>Sudah konsultasi dengan Chii? Isi detail sesuai kesepakatan, lalu kirim ringkasannya melalui WhatsApp.</p>
       </div>
       <div class="booking-preview-note"><strong>Pratinjau alur booking</strong><p>Jadwal belum terhubung ke kalender. Mengisi formulir ini belum memesan waktu atau mengonfirmasi pembayaran.</p></div>
       <div class="booking-layout">
         <section aria-labelledby="booking-form-title">
           <h2 id="booking-form-title" tabindex="-1">Detail booking</h2>
-          <noscript><p class="booking-noscript">Aktifkan JavaScript untuk mengisi formulir, atau <a class="text-link" href={salon.whatsapp} target="_blank" rel="noopener noreferrer">hubungi Jessica melalui WhatsApp</a>.</p></noscript>
+          <noscript><p class="booking-noscript">Aktifkan JavaScript untuk mengisi formulir, atau <a class="text-link" href={salon.whatsapp} target="_blank" rel="noopener noreferrer">hubungi Chii melalui WhatsApp</a>.</p></noscript>
           <form id="booking-form" action="/book" method="post" novalidate data-whatsapp={salon.whatsapp}>
             <div id="booking-errors" class="booking-error-summary" role="alert" tabindex="-1" hidden><strong>Periksa detail berikut.</strong><ul></ul></div>
             <fieldset disabled>
@@ -47,15 +47,15 @@ const fields = [
             </fieldset>
             <fieldset disabled>
               <legend>Nominal sesuai konsultasi</legend>
-              <p class="booking-fieldset-hint">Isi angka Rupiah tanpa titik atau koma. DP mengikuti kesepakatan dengan Jessica.</p>
+              <p class="booking-fieldset-hint">Isi harga total dalam Rupiah tanpa titik atau koma. DP dihitung otomatis sebesar 10%.</p>
               <div class="booking-amounts">
                 <div class="booking-field"><label for="booking-agreedPrice">Harga total</label><div class="booking-currency"><span aria-hidden="true">Rp</span><input id="booking-agreedPrice" name="agreedPrice" type="text" inputmode="numeric" maxlength="8" required aria-describedby="error-agreedPrice" /></div><p id="error-agreedPrice" class="booking-field-error" hidden></p></div>
-                <div class="booking-field"><label for="booking-deposit">DP yang disepakati</label><div class="booking-currency"><span aria-hidden="true">Rp</span><input id="booking-deposit" name="deposit" type="text" inputmode="numeric" maxlength="8" required aria-describedby="error-deposit" /></div><p id="error-deposit" class="booking-field-error" hidden></p></div>
+                <div class="booking-field"><label for="booking-deposit">DP 10% · otomatis</label><div class="booking-currency"><span aria-hidden="true">Rp</span><input id="booking-deposit" name="deposit" type="text" readonly aria-describedby="hint-deposit error-deposit" /></div><small id="hint-deposit">Dihitung dari harga total. Pecahan Rupiah dibulatkan ke atas.</small><p id="error-deposit" class="booking-field-error" hidden></p></div>
               </div>
             </fieldset>
             <fieldset disabled>
               <legend>Permintaan jadwal</legend>
-              <p class="booking-fieldset-hint">Durasi 2 jam · waktu Palembang (WIB). Jessica akan memeriksa ketersediaannya.</p>
+              <p class="booking-fieldset-hint">Durasi 2 jam · waktu Palembang (WIB). Chii akan memeriksa ketersediaannya.</p>
               <div class="booking-field"><label for="booking-date">Tanggal</label><input id="booking-date" name="date" type="date" required aria-describedby="error-date" /><p id="error-date" class="booking-field-error" hidden></p></div>
               <div class="booking-field"><label for="booking-time">Jam mulai</label><select id="booking-time" name="time" required aria-describedby="hint-time error-time"><option value="">Pilih tanggal terlebih dahulu</option></select><small id="hint-time">Pilihan mengikuti jam studio; belum menunjukkan slot yang kosong.</small><p id="error-time" class="booking-field-error" hidden></p></div>
             </fieldset>
@@ -64,20 +64,20 @@ const fields = [
           </form>
           <section id="booking-review-panel" class="booking-review-panel" aria-labelledby="booking-review-title" hidden>
             <h2 id="booking-review-title" tabindex="-1">Periksa sekali lagi.</h2>
-            <p>Ringkasan ini adalah permintaan booking. Jessica perlu memeriksa jadwal, nominal, dan DP terlebih dahulu.</p>
+            <p>Ringkasan ini adalah permintaan booking. Chii perlu memeriksa jadwal, nominal, dan DP terlebih dahulu.</p>
             <dl class="booking-summary">
-              <div><dt>Nama</dt><dd data-booking-value="name"></dd></div><div><dt>WhatsApp</dt><dd data-booking-value="whatsapp"></dd></div><div><dt>Tanggal</dt><dd data-booking-value="date"></dd></div><div><dt>Waktu · 2 jam</dt><dd data-booking-value="time"></dd></div><div><dt>Harga total</dt><dd data-booking-value="agreedPrice"></dd></div><div><dt>DP sesuai konsultasi</dt><dd data-booking-value="deposit"></dd></div><div class="booking-balance"><dt>Sisa setelah DP diterima</dt><dd data-booking-value="remainingBalance"></dd></div>
+              <div><dt>Nama</dt><dd data-booking-value="name"></dd></div><div><dt>WhatsApp</dt><dd data-booking-value="whatsapp"></dd></div><div><dt>Tanggal</dt><dd data-booking-value="date"></dd></div><div><dt>Waktu · 2 jam</dt><dd data-booking-value="time"></dd></div><div><dt>Harga total</dt><dd data-booking-value="agreedPrice"></dd></div><div><dt>DP 10%</dt><dd data-booking-value="deposit"></dd></div><div class="booking-balance"><dt>Sisa setelah DP diterima</dt><dd data-booking-value="remainingBalance"></dd></div>
             </dl>
-            <p class="booking-transfer-note">Transfer DP ke e-wallet sesuai petunjuk Jessica di WhatsApp. Kirim bukti transfer di percakapan yang sama untuk diperiksa.</p>
+            <p class="booking-transfer-note">Bayar DP melalui transfer atau QRIS sesuai petunjuk Chii di WhatsApp. Kirim bukti pembayaran di percakapan yang sama untuk diperiksa.</p>
             <a id="booking-whatsapp-link" class="button" target="_blank" rel="noopener noreferrer">Buka ringkasan di WhatsApp</a>
             <button id="booking-edit" class="booking-edit text-link" type="button">Ubah detail</button>
-            <p class="booking-privacy">Booking belum dikonfirmasi sampai Jessica menyetujui jadwal dan memeriksa DP. Kalender belum diperbarui otomatis pada pratinjau ini.</p>
+            <p class="booking-privacy">Booking belum dikonfirmasi sampai Chii menyetujui jadwal dan memeriksa DP. Kalender belum diperbarui otomatis pada pratinjau ini.</p>
           </section>
         </section>
         <aside class="booking-guidance" aria-labelledby="booking-guidance-title">
           <h2 id="booking-guidance-title">Dari obrolan ke nail date.</h2>
-          <ol><li><strong>Konsultasi dulu.</strong><p>Sepakati desain, harga total dan DP langsung dengan Jessica.</p></li><li><strong>Lengkapi detailmu.</strong><p>Pilih permintaan tanggal dan waktu untuk sesi dua jam.</p></li><li><strong>Konfirmasi melalui WhatsApp.</strong><p>Jessica memeriksa transfer e-wallet dan jadwal sebelum mengonfirmasi booking.</p></li></ol>
-          <div class="booking-hours"><strong>Jam studio · WIB</strong>{salon.openingHours.map(day => <p>{day.label}<span>{day.opens.replace(':', '.')}–{day.closes.replace(':', '.')}<small>Mulai terakhir {day.lastBooking.replace(':', '.')}</small></span></p>)}</div>
+          <ol><li><strong>Konsultasi dulu.</strong><p>Sepakati desain dan harga total dengan Chii. DP 10% dihitung otomatis.</p></li><li><strong>Lengkapi detailmu.</strong><p>Pilih permintaan tanggal dan waktu untuk sesi dua jam.</p></li><li><strong>Konfirmasi melalui WhatsApp.</strong><p>Chii memeriksa pembayaran melalui transfer atau QRIS dan jadwal sebelum mengonfirmasi booking.</p></li></ol>
+          <div class="booking-hours"><strong>Jam studio · WIB</strong>{salon.openingHours.map(day => <p>{day.label}<span>{day.opens.replace(':', '.')}–{day.closes.replace(':', '.')}<small>Last book {day.lastBooking}</small></span></p>)}</div>
           <a class="text-link" href="/about#booking-rules">Baca aturan booking →</a>
         </aside>
       </div>
