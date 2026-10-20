@@ -1,0 +1,896 @@
+{
+  "checkedAt": "2026-10-20T10:47:55.122Z",
+  "origin": "https://chiinails.pages.dev",
+  "browser": "Chrome 156.0.8078.12",
+  "conditions": {
+    "viewport": "390x844",
+    "cpuSlowdown": 6,
+    "latencyMs": 150,
+    "downloadMbps": 1.6,
+    "uploadKbps": 750,
+    "cacheDisabled": true,
+    "samplesPerRoute": 3,
+    "thirdPartyRequests": "blocked; first-party startup only",
+    "realDevice": false,
+    "note": "Synthetic constrained-4G scenario, not measured Indonesian carrier coverage or a physical older Android."
+  },
+  "summary": [
+    {
+      "route": "/",
+      "medianFcpMs": 932,
+      "medianLcpMs": 1068,
+      "maximumCls": 0,
+      "medianLongTasks": 1
+    },
+    {
+      "route": "/services",
+      "medianFcpMs": 872,
+      "medianLcpMs": 872,
+      "maximumCls": 0,
+      "medianLongTasks": 1
+    },
+    {
+      "route": "/custom-sets",
+      "medianFcpMs": 956,
+      "medianLcpMs": 1236,
+      "maximumCls": 0,
+      "medianLongTasks": 1
+    },
+    {
+      "route": "/visit",
+      "medianFcpMs": 952,
+      "medianLcpMs": 1904,
+      "maximumCls": 0,
+      "medianLongTasks": 1
+    },
+    {
+      "route": "/about",
+      "medianFcpMs": 804,
+      "medianLcpMs": 1252,
+      "maximumCls": 0,
+      "medianLongTasks": 1
+    }
+  ],
+  "results": [
+    {
+      "route": "/",
+      "run": 1,
+      "lcp": 1060,
+      "cls": 0,
+      "longTasks": 2,
+      "fcp": 912,
+      "domContentLoaded": 1216.6000000089407,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/french.avif",
+          "transferSize": 42260,
+          "encodedBodySize": 41960
+        },
+        {
+          "name": "/images/prev.svg",
+          "transferSize": 523,
+          "encodedBodySize": 223
+        },
+        {
+          "name": "/images/next.svg",
+          "transferSize": 522,
+          "encodedBodySize": 222
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "run": 2,
+      "lcp": 1548,
+      "cls": 0,
+      "longTasks": 1,
+      "fcp": 1396,
+      "domContentLoaded": 1682.3999999910593,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/french.avif",
+          "transferSize": 42260,
+          "encodedBodySize": 41960
+        },
+        {
+          "name": "/images/prev.svg",
+          "transferSize": 523,
+          "encodedBodySize": 223
+        },
+        {
+          "name": "/images/next.svg",
+          "transferSize": 522,
+          "encodedBodySize": 222
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "run": 3,
+      "lcp": 1068,
+      "cls": 0,
+      "longTasks": 1,
+      "fcp": 932,
+      "domContentLoaded": 1190.800000011921,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/french.avif",
+          "transferSize": 42260,
+          "encodedBodySize": 41960
+        },
+        {
+          "name": "/images/prev.svg",
+          "transferSize": 523,
+          "encodedBodySize": 223
+        },
+        {
+          "name": "/images/next.svg",
+          "transferSize": 522,
+          "encodedBodySize": 222
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/services",
+      "run": 1,
+      "lcp": 900,
+      "cls": 0,
+      "longTasks": 1,
+      "fcp": 900,
+      "domContentLoaded": 1003.1999999880791,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/services",
+      "run": 2,
+      "lcp": 872,
+      "cls": 0,
+      "longTasks": 1,
+      "fcp": 872,
+      "domContentLoaded": 983.2999999970198,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/services",
+      "run": 3,
+      "lcp": 864,
+      "cls": 0,
+      "longTasks": 1,
+      "fcp": 864,
+      "domContentLoaded": 969.7000000029802,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/custom-sets",
+      "run": 1,
+      "lcp": 1136,
+      "cls": 0,
+      "longTasks": 2,
+      "fcp": 972,
+      "domContentLoaded": 1280.5,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/maroon.webp",
+          "transferSize": 59630,
+          "encodedBodySize": 59330
+        },
+        {
+          "name": "/images/prev.svg",
+          "transferSize": 523,
+          "encodedBodySize": 223
+        },
+        {
+          "name": "/images/next.svg",
+          "transferSize": 522,
+          "encodedBodySize": 222
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/french.webp",
+          "transferSize": 57410,
+          "encodedBodySize": 57110
+        },
+        {
+          "name": "/images/totoro.webp",
+          "transferSize": 75564,
+          "encodedBodySize": 75264
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/custom-sets",
+      "run": 2,
+      "lcp": 1308,
+      "cls": 0,
+      "longTasks": 1,
+      "fcp": 956,
+      "domContentLoaded": 1237.0999999940395,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/maroon.webp",
+          "transferSize": 59630,
+          "encodedBodySize": 59330
+        },
+        {
+          "name": "/images/prev.svg",
+          "transferSize": 523,
+          "encodedBodySize": 223
+        },
+        {
+          "name": "/images/next.svg",
+          "transferSize": 522,
+          "encodedBodySize": 222
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/french.webp",
+          "transferSize": 57410,
+          "encodedBodySize": 57110
+        },
+        {
+          "name": "/images/totoro.webp",
+          "transferSize": 75564,
+          "encodedBodySize": 75264
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/custom-sets",
+      "run": 3,
+      "lcp": 1236,
+      "cls": 0,
+      "longTasks": 1,
+      "fcp": 888,
+      "domContentLoaded": 1177.5999999940395,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/maroon.webp",
+          "transferSize": 59630,
+          "encodedBodySize": 59330
+        },
+        {
+          "name": "/images/prev.svg",
+          "transferSize": 523,
+          "encodedBodySize": 223
+        },
+        {
+          "name": "/images/next.svg",
+          "transferSize": 522,
+          "encodedBodySize": 222
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/french.webp",
+          "transferSize": 57410,
+          "encodedBodySize": 57110
+        },
+        {
+          "name": "/images/totoro.webp",
+          "transferSize": 75564,
+          "encodedBodySize": 75264
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/visit",
+      "run": 1,
+      "lcp": 1920,
+      "cls": 0,
+      "longTasks": 1,
+      "fcp": 952,
+      "domContentLoaded": 1094.5,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/studio-clean.webp",
+          "transferSize": 119280,
+          "encodedBodySize": 118980
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/visit",
+      "run": 2,
+      "lcp": 1832,
+      "cls": 0,
+      "longTasks": 1,
+      "fcp": 964,
+      "domContentLoaded": 1138.7000000029802,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/studio-clean.webp",
+          "transferSize": 119280,
+          "encodedBodySize": 118980
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/visit",
+      "run": 3,
+      "lcp": 1904,
+      "cls": 0,
+      "longTasks": 1,
+      "fcp": 840,
+      "domContentLoaded": 902.5,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/studio-clean.webp",
+          "transferSize": 119280,
+          "encodedBodySize": 118980
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/about",
+      "run": 1,
+      "lcp": 1252,
+      "cls": 0,
+      "longTasks": 1,
+      "fcp": 804,
+      "domContentLoaded": 983.5999999940395,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/naykilla.webp",
+          "transferSize": 52580,
+          "encodedBodySize": 52280
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/about",
+      "run": 2,
+      "lcp": 1240,
+      "cls": 0,
+      "longTasks": 1,
+      "fcp": 772,
+      "domContentLoaded": 917,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/naykilla.webp",
+          "transferSize": 52580,
+          "encodedBodySize": 52280
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    },
+    {
+      "route": "/about",
+      "run": 3,
+      "lcp": 1372,
+      "cls": 0,
+      "longTasks": 2,
+      "fcp": 872,
+      "domContentLoaded": 1016,
+      "resources": [
+        {
+          "name": "/fonts/cormorant-garamond-latin-500.woff2",
+          "transferSize": 20480,
+          "encodedBodySize": 20180
+        },
+        {
+          "name": "/fonts/dm-sans-latin-variable.woff2",
+          "transferSize": 22208,
+          "encodedBodySize": 21908
+        },
+        {
+          "name": "/images/logo.webp",
+          "transferSize": 3318,
+          "encodedBodySize": 3018
+        },
+        {
+          "name": "/images/whatsapp.svg",
+          "transferSize": 969,
+          "encodedBodySize": 669
+        },
+        {
+          "name": "/images/instagram.svg",
+          "transferSize": 1314,
+          "encodedBodySize": 1014
+        },
+        {
+          "name": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+          "transferSize": 5249,
+          "encodedBodySize": 4949
+        },
+        {
+          "name": "/images/naykilla.webp",
+          "transferSize": 52580,
+          "encodedBodySize": 52280
+        },
+        {
+          "name": "/images/logo.jpg",
+          "transferSize": 60174,
+          "encodedBodySize": 59874
+        }
+      ]
+    }
+  ]
+}

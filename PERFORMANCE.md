@@ -30,7 +30,7 @@ Every measured first paint is below one second. Every desktop LCP is below one s
 
 The latest accessibility measurements are 100 on all five routes. About originally measured 95 because its small booking-note eyebrow had insufficient contrast; after correction its new report measured 100, with mobile FCP/LCP 0.8/1.4 seconds versus 0.9/1.2 seconds in the older sample. Both samples are retained to show normal timing variance. Best Practices measured 100 on Services/About and 96 on Home/Custom Sets/Visit; read the reports rather than treating all categories as perfect. Unconfigured Instagram and external media can generate console failures. No ranking or accessibility certification follows from a Lighthouse score.
 
-The final controller is 11,829 bytes raw / 4,806 gzip, one file with no React hydration. Four reports precede the first map-loading-hint correction; About uses its later contrast remeasurement. All five Lighthouse reports precede the final loading-cover fix in 164954e; that fix was checked with tests, live bundle verification and an owner desktop check, not relabeled as a fresh Lighthouse measurement. Source snapshots are retained instead of relabeling an old report as a new measurement.
+That earlier controller is 11,829 bytes raw / 4,806 gzip, one file with no React hydration. Four reports precede the first map-loading-hint correction; About uses its later contrast remeasurement. All five Lighthouse reports precede the final loading-cover fix in 164954e; that fix was checked with tests, live bundle verification and an owner desktop check, not relabeled as a fresh Lighthouse measurement. Source snapshots are retained instead of relabeling an old report as a new measurement.
 
 ## How transfer and startup work
 
@@ -57,3 +57,27 @@ No Apple device or Safari browser is connected, so real iPhone/iPad/Mac timing a
 - [ResizeObserver](https://webkit.org/blog/10247/new-webkit-features-in-safari-13-1/)
 
 Actual successful Instagram embeds/API renewal still require Meta authorization and live configuration; iframe creation alone is not proof of successful cross-origin rendering.
+
+## Lightweight UI refinement — 20 October 2026, 17:47–17:49 WIB
+
+Release `cc912de542356b26146d912e23457967b897ddc9` adds shared corner radii and touch/keyboard refinements without a new image, font, library or network request. Static Astro still ships no React hydration. Browser JS grows from 11,829 / 4,806 gzip bytes to 12,126 / 4,879 gzip bytes. Inline CSS grows from 23,421 / 5,461 gzip bytes to 26,091 / 5,920 gzip bytes. Together the compressed CSS/JS delta is **532 bytes**. Gzip is a deterministic comparison; Cloudflare may use different transfer compression.
+
+The public five-route build, CSS and JS bytes, sitemap, robots and ownership file were verified after deployment. The UI checks pass 30 local combinations and 15 public combinations, including 320px mobile targets, short viewport chat, disclosures, menu/chat/Escape/focus and reduced motion. No new first-party browser exceptions were observed. Noninteractive price-card movement was removed and hover styling is limited to fine hover-capable pointers. Native scrolling and asynchronous near-viewport Maps/Instagram behavior remain.
+
+### Synthetic constrained-4G comparison
+
+Headless Chrome 156.0.8078.12, 390×844 viewport, touch/mobile emulation, **6× CPU slowdown**, 150ms network latency, 1.6Mbps download and 750Kbps upload. Browser cache disabled; three new browser contexts per route, medians below. Third-party requests are blocked to isolate first-party startup; Google/Instagram completion is excluded. This is a scenario for a modest phone, not a physical Android model, an Indonesian carrier measurement or a Lighthouse score. Desktop and tablet layout checks are separate from this mobile timing run.
+
+| Route | Before FCP / LCP | Live refinement FCP / LCP |
+| --- | --- | --- |
+| `/` | 1.740 / 1.908 s | 0.932 / 1.068 s |
+| `/services` | 1.648 / 1.648 s | 0.872 / 0.872 s |
+| `/custom-sets` | 1.732 / 1.868 s | 0.956 / 1.236 s |
+| `/visit` | 1.424 / 2.528 s | 0.952 / 1.904 s |
+| `/about` | 1.672 / 2.436 s | 0.804 / 1.252 s |
+
+Maximum observed CLS is 0 on every route in both batches. Latest first paint is below one second on all five routes; latest LCP is below one second only on Services. **The all-route mobile LCP target remains unmet.**
+
+The timing difference is not a causal speedup claim: the baseline overlapped local build/QA activity, while the follow-up ran after it, and public edge/network/process conditions vary. No percentage improvement is attributed to rounded corners or to the 532-byte change. The new results show a small transfer budget and usable startup in this particular constrained scenario; actual older-phone CPU/GPU, memory pressure, carrier coverage and third-party content can be slower. No Safari/iPhone/iPad/Mac timing is claimed.
+
+Raw data: [before](docs/evidence/ui-polish-performance-before-2026-10-20.json), [after](docs/evidence/ui-polish-performance-after-2026-10-20.json), [before asset sizes](docs/evidence/ui-polish-baseline-assets-2026-10-20.json), [live matching build/SEO](docs/evidence/ui-polish-live-verification-2026-10-20.json). Interaction and visual conventions are preserved in [DESIGN.md](DESIGN.md); Figma remains deferred.
