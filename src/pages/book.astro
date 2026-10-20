@@ -62,10 +62,19 @@ const fields = [
             </fieldset>
             <fieldset disabled>
               <legend>Desain & jadwal</legend>
-              <p class="booking-fieldset-hint">Pilih kategori dan durasi yang sudah disepakati dengan Chii. Semua waktu menggunakan WIB.</p>
-              <div class="booking-amounts booking-design-options">
-                <div class="booking-field"><label for="booking-designType">Kategori desain</label><select id="booking-designType" name="designType" required aria-describedby="hint-designType error-designType"><option value="plain">Plain / Nail gel / Removal · 1 jam</option><option value="simple" selected>Simple art · 1–2 jam</option><option value="full-art">Full art · 3–5 jam</option></select><small id="hint-designType">Kategori ini menentukan durasi, bukan harga layanan.</small><p id="error-designType" class="booking-field-error" hidden></p></div>
-                <div class="booking-field"><label for="booking-durationMinutes">Durasi sesuai konsultasi</label><select id="booking-durationMinutes" name="durationMinutes" required aria-describedby="hint-durationMinutes error-durationMinutes"><option value="60">1 jam</option><option value="120" selected>2 jam</option></select><small id="hint-durationMinutes">Pilih durasi yang sudah disepakati.</small><p id="error-durationMinutes" class="booking-field-error" hidden></p></div>
+              <p class="booking-fieldset-hint">Pilih layanan dan durasi sesuai konsultasi dengan Chii. Semua waktu menggunakan WIB.</p>
+              <div class="booking-field booking-design-options">
+                <label for="booking-serviceDuration">Layanan & durasi</label>
+                <select id="booking-serviceDuration" name="serviceDuration" required aria-describedby="hint-serviceDuration error-serviceDuration">
+                  <option value="plain:60">Plain, gel, removal · 1 jam</option>
+                  <option value="simple:60">Simple art · 1 jam</option>
+                  <option value="simple:120" selected>Simple art · 2 jam</option>
+                  <option value="full-art:180">Full art · 3 jam</option>
+                  <option value="full-art:240">Full art · 4 jam</option>
+                  <option value="full-art:300">Full art · 5 jam</option>
+                </select>
+                <small id="hint-serviceDuration">Pilih durasi yang sudah disepakati. Pilihan ini menentukan waktu, bukan harga layanan.</small>
+                <p id="error-serviceDuration" class="booking-field-error" hidden></p>
               </div>
               <div class="booking-field">
                 <label id="booking-date-label" for="booking-date">Tanggal</label>
@@ -86,7 +95,7 @@ const fields = [
                 <small id="booking-calendar-help">Pilih tanggal permintaanmu. Ketersediaan tetap dikonfirmasi oleh Chii.</small>
                 <p id="error-date" class="booking-field-error" hidden></p>
               </div>
-              <div class="booking-field"><label id="booking-time-label" for="booking-time">Jam mulai</label><select id="booking-time" name="time" required aria-describedby="hint-time error-time"><option value="">Pilih tanggal terlebih dahulu</option></select><div id="booking-slots" class="booking-slots" role="group" aria-labelledby="booking-time-label" aria-describedby="hint-time error-time" tabindex="-1" hidden></div><small id="hint-time">Pilih kategori, durasi, dan tanggal untuk melihat jam yang tersedia.</small><p id="booking-slot-status" class="booking-slot-status" role="status" aria-live="polite" aria-atomic="true"></p><button id="booking-slot-retry" class="booking-status-retry text-link" type="button" hidden>Periksa jadwal lagi</button><p id="error-time" class="booking-field-error" hidden></p></div>
+              <div class="booking-field"><label id="booking-time-label" for="booking-time">Jam mulai</label><select id="booking-time" name="time" required aria-describedby="hint-time booking-slot-status error-time"><option value="">Pilih tanggal terlebih dahulu</option></select><small id="hint-time">Jam menyesuaikan layanan, durasi, dan tanggal pilihanmu.</small><p id="booking-slot-status" class="booking-slot-status" role="status" aria-live="polite" aria-atomic="true"></p><button id="booking-slot-retry" class="booking-status-retry text-link" type="button" hidden>Periksa jadwal lagi</button><p id="error-time" class="booking-field-error" hidden></p></div>
             </fieldset>
             <fieldset disabled>
               <legend>Bukti pembayaran</legend>

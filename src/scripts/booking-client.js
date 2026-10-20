@@ -1,10 +1,10 @@
-import { BOOKING_DESIGNS, calculatePayment, getBookingDateBounds, listBookingSlots, normalizeBookingDesign, validateBooking } from '../../server/booking.js';
+import { calculatePayment, getBookingDateBounds, listBookingSlots, normalizeBookingDesign, validateBooking } from '../../server/booking.js';
 import { createBookingCalendar } from './booking-calendar.js';
 import { PaymentProofError, preparePaymentProof } from './booking-proof.js';
 
 const form = document.querySelector('#booking-form');
 if (form) {
-  const fields = ['name', 'whatsapp', 'agreedPrice', 'paymentMode', 'deposit', 'designType', 'durationMinutes', 'date', 'time'];
+  const fields = ['name', 'whatsapp', 'agreedPrice', 'paymentMode', 'deposit', 'serviceDuration', 'date', 'time'];
   const editable = fields.filter(name => name !== 'deposit');
   const input = name => form.elements.namedItem(name);
   const review = document.querySelector('#booking-review-panel');
@@ -16,7 +16,6 @@ if (form) {
   const modeDescription = document.querySelector('#booking-mode-description');
   const submitPrivacy = document.querySelector('#booking-submit-privacy');
   const paymentAmountLabel = document.querySelector('#booking-payment-amount-label');
-  const slotGrid = document.querySelector('#booking-slots');
   const slotStatus = document.querySelector('#booking-slot-status');
   const slotRetry = document.querySelector('#booking-slot-retry');
   const proofInput = document.querySelector('#booking-paymentProof');
@@ -46,8 +45,12 @@ if (form) {
   let proofController = null;
   let refreshTimer = null;
   const designLabels = { plain: 'Plain / Nail gel / Removal', simple: 'Simple art', 'full-art': 'Full art' };
-  const selectedDesign = () => normalizeBookingDesign(input('designType').value, Number(input('durationMinutes').value));
-  const currentSlotKey = () => JSON.stringify([input('date').value, input('designType').value, Number(input('durationMinutes').value)]);
+  const selectedDesign = () => {
+    const value = input('serviceDuration').value;
+    const match = /^(plain|simple|full-art):(60|120|180|240|300)$/.exec(value);
+    return match && match[0] === value ? normalizeBookingDesign(match[1], match[2]) : null;
+  };
+  const currentSlotKey = () => JSON.stringify([input('date').value, selectedDesign()]);
   const stopRefresh = () => {
     if (refreshTimer !== null) window.clearInterval(refreshTimer);
     refreshTimer = null;
@@ -57,7 +60,7 @@ if (form) {
     slotController?.abort();
     slotController = null;
     if (availability === 'loading') availability = 'idle';
-    slotGrid.setAttribute('aria-busy', 'false');
+    input('time').setAttribute('aria-busy', 'false');
   };
   const startRefresh = () => {
     if (refreshTimer !== null || !active || document.visibilityState !== 'visible' || form.hidden || service !== 'enabled' || submitting || proofState === 'processing') return;
@@ -68,9 +71,17 @@ if (form) {
   };
   const formatMoney = value => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
   const formatDate = value => new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }).format(new Date(value));
-  const readValues = () => Object.fromEntries(fields.map(name => [name, input(name).value]));
+  const readValues = () => {
+    const design = selectedDesign();
+    return { ...Object.fromEntries(fields.filter(name => name !== 'serviceDuration').map(name => [name, input(name).value])), designType: design?.designType || '', durationMinutes: design ? String(design.durationMinutes) : '' };
+  };
   const validation = () => {
     const result = validateBooking(readValues(), { now: Date.now() });
+    if (!selectedDesign()) {
+      delete result.errors.designType;
+      delete result.errors.durationMinutes;
+      result.errors.serviceDuration = 'Pilih layanan dan durasi yang sudah disepakati dengan Chii.';
+    }
     if (result.valid && proofState !== 'ready') return { valid: false, errors: { paymentProof: proofState === 'processing' ? 'Tunggu sampai bukti pembayaran selesai disiapkan.' : 'Unggah bukti pembayaran yang valid.' }, value: null, preview: null };
     if (result.valid && service === 'enabled' && (availability !== 'ready' || availabilityKey !== currentSlotKey() || !availableTimes.has(result.value.time))) {
       return { valid: false, errors: { time: 'Pilih jam yang tersedia setelah pemeriksaan jadwal selesai.' }, value: null, preview: null };
@@ -107,52 +118,29 @@ if (form) {
     input('date').min = bounds.minDate;
     input('date').max = bounds.maxDate;
   };
-  const fillDurations = () => {
-    const definition = BOOKING_DESIGNS[input('designType').value];
-    const previous = Number(input('durationMinutes').value);
-    input('durationMinutes').replaceChildren();
-    if (definition) {
-      definition.durations.forEach(minutes => input('durationMinutes').add(new Option(`${minutes / 60} jam`, String(minutes))));
-      input('durationMinutes').value = String(definition.durations.includes(previous) ? previous : definition.defaultDurationMinutes);
-    }
-    document.querySelector('#hint-durationMinutes').textContent = input('designType').value === 'full-art'
-      ? 'Full art memiliki Last book 12:00, menyesuaikan jam tutup dan durasi yang disepakati.'
-      : 'Pilih durasi yang sudah disepakati dengan Chii.';
+  const updateServiceHint = () => {
+    const design = selectedDesign();
+    document.querySelector('#hint-serviceDuration').textContent = !design
+      ? 'Pilih layanan dan durasi yang sudah disepakati dengan Chii.'
+      : design.designType === 'full-art'
+        ? 'Full art memiliki Last book 12:00. Pilihan jam menyesuaikan durasi dan jam tutup studio.'
+        : design.designType === 'plain'
+          ? 'Plain, nail gel, atau removal menggunakan slot 1 jam. Pilihan ini tidak menentukan harga.'
+          : `Simple art menggunakan slot ${design.durationMinutes / 60} jam sesuai konsultasi. Pilihan ini tidak menentukan harga.`;
   };
-  const selectTime = time => {
-    if (submitting || !availableTimes.has(time)) return;
-    input('time').value = time;
-    lastSelectedTime = time;
-    slotGrid.querySelectorAll('button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.time === time)));
-    updateButton();
-    if (touched.has('time')) {
-      const result = validation();
-      showErrors(Object.fromEntries(Object.entries(result.errors).filter(([name]) => touched.has(name))));
-    }
-  };
-  const renderSlots = (slots, selected, preserveButtons = false) => {
+  const renderSlots = (slots, selected, preserveOptions = false) => {
     availableTimes = new Set(slots.filter(slot => slot.available).map(slot => slot.time));
-    input('time').replaceChildren(new Option(slots.length ? 'Pilih jam mulai' : 'Tidak ada jam untuk pilihan ini', ''));
-    const previousButtons = new Map([...slotGrid.querySelectorAll('button')].map(button => [button.dataset.time, button]));
-    const reuseButtons = preserveButtons && previousButtons.size === slots.length && slots.every(slot => previousButtons.has(slot.time));
-    if (!reuseButtons) slotGrid.replaceChildren();
+    const previousOptions = new Map([...input('time').options].filter(option => option.value).map(option => [option.value, option]));
+    const reuseOptions = preserveOptions && previousOptions.size === slots.length && slots.every(slot => previousOptions.has(slot.time));
+    if (!reuseOptions) input('time').replaceChildren(new Option(slots.length ? 'Pilih jam mulai' : 'Tidak ada jam untuk pilihan ini', ''));
     slots.forEach(slot => {
-      if (slot.available) input('time').add(new Option(slot.label, slot.time));
-      const button = reuseButtons ? previousButtons.get(slot.time) : document.createElement('button');
-      button.type = 'button';
-      button.dataset.time = slot.time;
-      button.textContent = slot.time.replace(':', '.');
-      button.disabled = !slot.available;
-      button.setAttribute('aria-label', `${slot.label}, ${slot.available ? 'tersedia' : 'tidak tersedia'}`);
-      button.setAttribute('aria-pressed', String(slot.available && slot.time === selected));
-      if (!reuseButtons) {
-        button.addEventListener('click', () => selectTime(slot.time));
-        slotGrid.append(button);
-      }
+      const option = reuseOptions ? previousOptions.get(slot.time) : new Option('', slot.time);
+      option.text = `${slot.label}${slot.available ? '' : ' · tidak tersedia'}`;
+      option.disabled = !slot.available;
+      if (!reuseOptions) input('time').add(option);
     });
-    if (availableTimes.has(selected)) input('time').value = selected;
-    slotGrid.hidden = slots.length === 0;
-    input('time').hidden = slots.length > 0;
+    input('time').value = availableTimes.has(selected) ? selected : '';
+    input('time').hidden = false;
   };
   const fillTimes = async ({ quiet = false } = {}) => {
     const quietUpdate = quiet && service === 'enabled' && availability === 'ready' && availabilityKey === currentSlotKey();
@@ -174,8 +162,9 @@ if (form) {
     slotStatus.dataset.tone = 'normal';
     if (!design || !date || date < input('date').min || date > input('date').max) {
       renderSlots([], '');
-      slotStatus.textContent = 'Pilih kategori, durasi, dan tanggal terlebih dahulu.';
-      slotGrid.setAttribute('aria-busy', 'false');
+      input('time').options[0].text = !design ? 'Pilih layanan terlebih dahulu' : date ? 'Pilih tanggal yang valid' : 'Pilih tanggal terlebih dahulu';
+      slotStatus.textContent = 'Pilih layanan, durasi, dan tanggal terlebih dahulu.';
+      input('time').setAttribute('aria-busy', 'false');
       updateButton();
       return;
     }
@@ -184,8 +173,8 @@ if (form) {
       renderSlots(candidates.map(slot => ({ ...slot, available: slot.start > Date.now() })), selected);
       availability = 'preview';
       document.querySelector('#hint-time').textContent = 'Pratinjau jam studio; ketersediaan tetap diperiksa langsung oleh Chii.';
-      slotStatus.textContent = candidates.length ? 'Pilih jam mulai. Jam gelap tidak tersedia.' : 'Durasi ini tidak muat dalam jam studio. Pilih tanggal atau durasi lain sesuai konsultasi.';
-      slotGrid.setAttribute('aria-busy', 'false');
+      slotStatus.textContent = candidates.length ? 'Pilih jam mulai. Pilihan tidak tersedia tidak dapat dipilih.' : 'Durasi ini tidak muat dalam jam studio. Pilih tanggal atau durasi lain sesuai konsultasi.';
+      input('time').setAttribute('aria-busy', 'false');
       updateButton();
       return;
     }
@@ -194,8 +183,8 @@ if (form) {
       renderSlots(candidates.map(slot => ({ ...slot, available: false })), '');
       slotStatus.textContent = 'Memeriksa jadwal…';
     }
-    slotGrid.setAttribute('aria-busy', 'true');
-    document.querySelector('#hint-time').textContent = 'Jam gelap tidak tersedia. Jadwal diperiksa kembali saat Chii menerima booking.';
+    input('time').setAttribute('aria-busy', 'true');
+    document.querySelector('#hint-time').textContent = 'Jam menyesuaikan layanan, durasi, dan ketersediaan. Jadwal diperiksa kembali saat Chii menerima booking.';
     updateButton();
     const controller = new AbortController();
     slotController = controller;
@@ -212,13 +201,13 @@ if (form) {
         return { ...candidate, available: slot.available && candidate.start > Date.now() };
       });
       availability = 'ready';
-      availabilityKey = JSON.stringify([date, design.designType, design.durationMinutes]);
+      availabilityKey = JSON.stringify([date, design]);
       const latestSelected = quietUpdate ? input('time').value : selected;
       renderSlots(slots, latestSelected, quietUpdate);
       lastSelectedTime = input('time').value;
       const message = quietUpdate && latestSelected && !availableTimes.has(latestSelected)
         ? 'Jam yang dipilih tidak lagi tersedia. Pilih jam lain.'
-        : !slots.length ? 'Durasi ini tidak muat dalam jam studio. Pilih tanggal atau durasi lain sesuai konsultasi.' : availableTimes.size ? 'Pilih jam mulai. Jam gelap sudah terisi atau tidak tersedia.' : 'Semua jam pada tanggal ini tidak tersedia. Pilih tanggal lain.';
+        : !slots.length ? 'Durasi ini tidak muat dalam jam studio. Pilih tanggal atau durasi lain sesuai konsultasi.' : availableTimes.size ? 'Pilih jam mulai. Jam bertanda tidak tersedia tidak dapat dipilih.' : 'Semua jam pada tanggal ini tidak tersedia. Pilih tanggal lain.';
       if (slotStatus.textContent !== message) slotStatus.textContent = message;
     } catch {
       if (!active || sequence !== slotSequence) return;
@@ -228,7 +217,7 @@ if (form) {
       slotRetry.hidden = false;
     } finally {
       if (active && sequence === slotSequence) {
-        slotGrid.setAttribute('aria-busy', 'false');
+        input('time').setAttribute('aria-busy', 'false');
         slotController = null;
         updateButton();
         startRefresh();
@@ -253,7 +242,6 @@ if (form) {
         link.addEventListener('click', event => {
           event.preventDefault();
           if (name === 'date' && calendar) calendar.focus();
-          else if (name === 'time' && !slotGrid.hidden) (slotGrid.querySelector('button:not(:disabled)') || slotGrid).focus();
           else input(name).focus();
         });
         item.append(link);
@@ -433,11 +421,9 @@ if (form) {
     document.querySelector('#booking-form-title').focus();
   });
   input('date').addEventListener('change', fillTimes);
-  input('designType').addEventListener('change', () => { fillDurations(); fillTimes(); });
-  input('durationMinutes').addEventListener('change', fillTimes);
+  input('serviceDuration').addEventListener('change', () => { updateServiceHint(); fillTimes(); });
   input('time').addEventListener('change', () => {
     lastSelectedTime = input('time').value;
-    slotGrid.querySelectorAll('button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.time === input('time').value)));
     updateButton();
   });
   const onValueChange = event => {
@@ -570,7 +556,7 @@ if (form) {
     startRefresh();
   });
   setBounds();
-  fillDurations();
+  updateServiceHint();
   calendar = createBookingCalendar(document.querySelector('#booking-calendar'), input('date'));
   fillTimes();
   updateDeposit();

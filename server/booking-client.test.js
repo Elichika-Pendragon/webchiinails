@@ -30,15 +30,14 @@ function element() {
 function harness(options = {}) {
   const config = { enabled: true, statusFailure: false, requestFailures: 0, hold: false, availabilityFailures: 0, blockedTimes: [], holdAvailability: false, clipboardFailure: false, proofFailure: false, holdProof: false, ...options };
   const nodes = Object.fromEntries([...source.matchAll(/querySelector\('([^']+)'\)/g)].map(match => [match[1], element()]));
-  const inputs = Object.fromEntries(['name', 'whatsapp', 'agreedPrice', 'paymentMode', 'deposit', 'designType', 'durationMinutes', 'date', 'time', 'paymentProof'].map(name => {
+  const inputs = Object.fromEntries(['name', 'whatsapp', 'agreedPrice', 'paymentMode', 'deposit', 'serviceDuration', 'date', 'time', 'paymentProof'].map(name => {
     const node = element(); node.name = name; return [name, node];
   }));
   nodes['#booking-paymentProof'] = inputs.paymentProof;
   inputs.paymentProof.files = [];
   inputs.paymentMode.value = 'deposit';
   inputs.paymentMode.options = [{ value: 'deposit', disabled: false }, { value: 'full', disabled: false }];
-  inputs.designType.value = 'simple';
-  inputs.durationMinutes.value = '120';
+  inputs.serviceDuration.value = 'simple:120';
   const form = nodes['#booking-form'];
   form.hidden = false;
   form.dataset.whatsapp = 'https://wa.me/6281234567890';
@@ -109,7 +108,7 @@ function harness(options = {}) {
     };
     return { ok: true, status: 201, json: async () => data };
   };
-  const Option = function (text, value) { return { text, value }; };
+  const Option = function (text, value) { return { text, value, disabled: false }; };
   const calendar = { refresh() {}, setInvalid() {}, focus() {} };
   const preparePaymentProof = async (file, { signal }) => {
     if (config.holdProof) await new Promise(resolve => proofReleases.push(resolve));
@@ -134,7 +133,7 @@ function harness(options = {}) {
       form.listeners.input({ target: inputs[name] });
     },
     async fill() {
-      for (const [name, value] of Object.entries({ name: 'Synthetic Customer', whatsapp: '081234567890', agreedPrice: '100000', paymentMode: 'deposit', designType: 'simple', durationMinutes: '120', date: '2026-10-21' })) this.change(name, value);
+      for (const [name, value] of Object.entries({ name: 'Synthetic Customer', whatsapp: '081234567890', agreedPrice: '100000', paymentMode: 'deposit', serviceDuration: 'simple:120', date: '2026-10-21' })) this.change(name, value);
       await settle();
       this.change('time', '14:00');
       await this.uploadProof();
@@ -148,10 +147,12 @@ function harness(options = {}) {
 test('Book requires every editable value and derives rather than trusts DP', async () => {
   const page = harness(); await settle();
   assert.equal(page.nodes['#booking-review'].disabled, true);
+  assert.equal(page.inputs.time.options[0].text, 'Pilih tanggal terlebih dahulu');
+  assert.equal(page.inputs.time.hidden, false);
   await page.fill();
   assert.equal(page.nodes['#booking-review'].disabled, false);
   assert.equal(page.inputs.deposit.value, '20000');
-  for (const name of ['name', 'whatsapp', 'agreedPrice', 'date', 'time']) {
+  for (const name of ['name', 'whatsapp', 'agreedPrice', 'serviceDuration', 'date', 'time']) {
     await page.fill(); page.change(name, '');
     assert.equal(page.nodes['#booking-review'].disabled, true, `${name} is required`);
   }
@@ -331,50 +332,109 @@ test('low totals cap payment at the total and normalize full, while a later high
   }
 });
 
-test('each agreed design duration reaches the request and WhatsApp with the actual interval', async () => {
+test('each combined service choice reaches the unchanged API and WhatsApp with its actual interval', async () => {
   for (const [designType, durationMinutes] of [['plain', 60], ['simple', 60], ['simple', 120], ['full-art', 180], ['full-art', 240], ['full-art', 300]]) {
     const page = harness(); await settle(); await page.fill();
-    page.change('designType', designType);
-    page.change('durationMinutes', String(durationMinutes));
+    page.change('serviceDuration', `${designType}:${durationMinutes}`);
     await settle();
     const time = designType === 'full-art' ? '12:00' : '14:00';
-    const button = page.nodes['#booking-slots'].children.find(node => node.dataset.time === time);
-    assert.equal(button.disabled, false);
-    button.listeners.click();
-    assert.equal(button.attrs['aria-pressed'], 'true');
-    assert.equal(page.inputs.time.hidden, true);
+    const option = page.inputs.time.options.find(node => node.value === time);
+    assert.equal(option.disabled, false);
+    assert.match(option.text, /WIB/);
+    page.change('time', time);
+    assert.equal(page.inputs.time.value, time);
+    assert.equal(page.inputs.time.hidden, false);
     await page.submit();
     assert.equal(page.posts()[0].designType, designType);
     assert.equal(page.posts()[0].durationMinutes, String(durationMinutes));
+    assert.equal(Object.hasOwn(page.posts()[0], 'serviceDuration'), false);
+    const availability = JSON.parse(page.calls.filter(call => call.path === '/api/booking/availability').at(-1).request.body);
+    assert.equal(availability.designType, designType);
+    assert.equal(availability.durationMinutes, String(durationMinutes));
+    assert.equal(Object.hasOwn(availability, 'serviceDuration'), false);
     assert.match(new URL(page.redirects[0]).searchParams.get('text'), new RegExp(`Durasi: ${durationMinutes / 60} jam`));
     assert.equal(page.nodes['#booking-duration-summary-label'].textContent, `Waktu · ${durationMinutes / 60} jam`);
   }
 });
 
+test('invalid combined choices cannot fall back to a default design, check availability or submit', async () => {
+  const page = harness(); await settle(); await page.fill();
+  for (const choice of ['', 'simple:180', 'plain:120', 'plain:60:extra', 'full-art:3', 'full-art:180.0', 'constructor:120', 'simple:120\n']) {
+    const checks = page.calls.filter(call => call.path === '/api/booking/availability').length;
+    page.change('serviceDuration', choice); await settle();
+    assert.equal(page.nodes['#booking-review'].disabled, true, choice);
+    assert.equal(page.inputs.time.value, '');
+    assert.equal(page.inputs.time.options[0].text, 'Pilih layanan terlebih dahulu');
+    assert.equal(page.calls.filter(call => call.path === '/api/booking/availability').length, checks, choice);
+    await page.submit();
+    assert.equal(page.nodes['#error-serviceDuration'].hidden, false, choice);
+    assert.equal(page.inputs.serviceDuration.attrs['aria-invalid'], 'true', choice);
+    assert.equal(page.posts().length, 0, choice);
+    assert.equal(page.redirects.length, 0, choice);
+  }
+  const errorLink = page.nodes['#booking-errors'].querySelector().children.find(item => item.children[0]?.href === '#booking-serviceDuration').children[0];
+  errorLink.listeners.click({ preventDefault() {} });
+  assert.equal(page.inputs.serviceDuration.focused, true);
+});
+
+test('service changes update the duration hint and remove a start that no longer fits', async () => {
+  const page = harness(); await settle(); await page.fill();
+  page.change('serviceDuration', 'full-art:300');
+  assert.equal(page.nodes['#booking-review'].disabled, true);
+  await settle();
+  assert.equal(page.inputs.time.value, '');
+  assert.equal(page.inputs.time.options.some(option => option.value === '14:00'), false);
+  assert.match(page.inputs.time.options.find(option => option.value === '12:00').text, /12\.00–17\.00 WIB/);
+  assert.match(page.nodes['#hint-serviceDuration'].textContent, /Last book 12:00/);
+  page.change('serviceDuration', 'plain:60'); await settle();
+  assert.match(page.nodes['#hint-serviceDuration'].textContent, /nail gel.*removal.*1 jam/);
+  page.change('serviceDuration', 'simple:60'); await settle();
+  assert.match(page.nodes['#hint-serviceDuration'].textContent, /slot 1 jam/);
+});
+
+test('rapid combined service changes abort the old duration check before enabling the latest choice', async () => {
+  const page = harness(); await settle(); await page.fill(); page.config.holdAvailability = true;
+  page.change('serviceDuration', 'full-art:300'); await settle();
+  page.change('serviceDuration', 'plain:60'); await settle();
+  const checks = page.calls.filter(call => call.path === '/api/booking/availability');
+  assert.equal(checks.at(-2).request.signal.aborted, true);
+  assert.deepEqual(JSON.parse(checks.at(-1).request.body), { date: '2026-10-21', designType: 'plain', durationMinutes: '60' });
+  page.availabilityReleases[0](); await settle();
+  assert.equal(page.nodes['#booking-review'].disabled, true);
+  page.availabilityReleases[1](); await settle();
+  assert.equal(page.inputs.serviceDuration.value, 'plain:60');
+  assert.equal(page.inputs.time.value, '14:00');
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+  assert.match(page.inputs.time.options.find(option => option.value === '14:00').text, /14\.00–15\.00 WIB/);
+});
+
 test('weekend full-art windows honor closing at noon for three, four and five hours', async () => {
   for (const [duration, last] of [[180, '09:00'], [240, '08:00'], [300, null]]) {
     const page = harness(); await settle(); await page.fill();
-    page.change('designType', 'full-art'); page.change('durationMinutes', String(duration)); page.change('date', '2026-10-24');
+    page.change('serviceDuration', `full-art:${duration}`); page.change('date', '2026-10-24');
     await settle();
-    const available = page.nodes['#booking-slots'].children.filter(button => !button.disabled);
-    assert.equal(available.at(-1)?.dataset.time || null, last);
+    const available = page.inputs.time.options.filter(option => option.value && !option.disabled);
+    assert.equal(available.at(-1)?.value || null, last);
     if (last === null) {
       assert.equal(page.nodes['#booking-review'].disabled, true);
+      assert.equal(page.inputs.time.options[0].text, 'Tidak ada jam untuk pilihan ini');
       assert.match(page.nodes['#booking-slot-status'].textContent, /tidak muat/);
     }
   }
 });
 
-test('busy starts remain visible as disabled labelled buttons while the chosen start stays selected', async () => {
+test('busy starts remain visible as disabled labelled options and forged selections cannot submit', async () => {
   const page = harness({ blockedTimes: ['10:00', '10:30'] }); await settle(); await page.fill();
-  const blocked = page.nodes['#booking-slots'].children.find(button => button.dataset.time === '10:00');
+  const blocked = page.inputs.time.options.find(option => option.value === '10:00');
   assert.equal(blocked.disabled, true);
-  assert.match(blocked.attrs['aria-label'], /tidak tersedia/);
-  blocked.listeners.click();
+  assert.match(blocked.text, /tidak tersedia/);
   assert.equal(page.inputs.time.value, '14:00');
-  const selected = page.nodes['#booking-slots'].children.find(button => button.dataset.time === '14:00');
-  assert.equal(selected.attrs['aria-pressed'], 'true');
   assert.equal(page.nodes['#booking-review'].disabled, false);
+  page.change('time', '10:00');
+  assert.equal(page.nodes['#booking-review'].disabled, true);
+  await page.submit();
+  assert.equal(page.posts().length, 0);
+  assert.equal(page.redirects.length, 0);
 });
 
 test('availability loading or failure blocks Book and an explicit retry restores the retained choice', async () => {
@@ -382,7 +442,7 @@ test('availability loading or failure blocks Book and an explicit retry restores
   page.config.holdAvailability = true; page.config.availabilityFailures = 1;
   page.change('date', '2026-10-22'); await settle();
   assert.equal(page.nodes['#booking-review'].disabled, true);
-  assert.equal(page.nodes['#booking-slots'].attrs['aria-busy'], 'true');
+  assert.equal(page.inputs.time.attrs['aria-busy'], 'true');
   page.availabilityReleases[0](); await settle();
   assert.equal(page.nodes['#booking-slot-retry'].hidden, false);
   assert.equal(page.nodes['#booking-review'].disabled, true);
@@ -421,7 +481,7 @@ test('history restoration rechecks availability without sending another request 
 
 test('changing the agreed design creates a fresh request identity and one-hour plain snapshot', async () => {
   const page = harness({ requestFailures: 1 }); await settle(); await page.fill(); await page.submit();
-  page.change('designType', 'plain'); await settle(); page.change('time', '14:00'); await page.submit();
+  page.change('serviceDuration', 'plain:60'); await settle(); page.change('time', '14:00'); await page.submit();
   assert.notEqual(page.posts()[0].idempotencyKey, page.posts()[1].idempotencyKey);
   assert.equal(page.posts()[1].designType, 'plain');
   assert.equal(page.posts()[1].durationMinutes, '60');
@@ -493,7 +553,7 @@ test('fresh slot conflict refreshes availability, asks for another time, and kee
   page.config.blockedTimes = ['14:00']; await page.submit();
   assert.match(page.nodes['#booking-submit-status'].textContent, /Pilih tanggal atau jam lain/);
   assert.equal(page.inputs.time.value, '');
-  assert.equal(page.nodes['#booking-slots'].children.find(button => button.dataset.time === '14:00').disabled, true);
+  assert.equal(page.inputs.time.options.find(option => option.value === '14:00').disabled, true);
   assert.equal(page.nodes['#booking-proof-preview'].hidden, false);
   assert.equal(page.nodes['#booking-review'].disabled, true);
 });
@@ -526,21 +586,21 @@ test('availability checks use same-origin JSON POST rather than a mutating GET',
   }
 });
 
-test('visible refresh frees cancelled slots calmly while preserving current selection and button focus', async () => {
+test('visible refresh frees cancelled slots while preserving selection, options and native control focus', async () => {
   const page = harness({ blockedTimes: ['10:00'] }); await settle(); await page.fill();
   assert.equal(page.intervals.size, 1);
   assert.equal([...page.intervals.values()][0].milliseconds, 45000);
-  const selected = page.nodes['#booking-slots'].children.find(button => button.dataset.time === '14:00');
-  const released = page.nodes['#booking-slots'].children.find(button => button.dataset.time === '10:00');
-  selected.focus();
+  const selected = page.inputs.time.options.find(option => option.value === '14:00');
+  const released = page.inputs.time.options.find(option => option.value === '10:00');
+  page.inputs.time.focus();
   assert.equal(released.disabled, true);
   page.config.blockedTimes = [];
   page.tickRefresh();
   assert.equal(page.inputs.time.value, '14:00');
   assert.equal(page.nodes['#booking-review'].disabled, false);
   await settle();
-  assert.equal(page.nodes['#booking-slots'].children.find(button => button.dataset.time === '14:00'), selected);
-  assert.equal(selected.focused, true);
+  assert.equal(page.inputs.time.options.find(option => option.value === '14:00'), selected);
+  assert.equal(page.inputs.time.focused, true);
   assert.equal(released.disabled, false);
   assert.equal(page.inputs.time.value, '14:00');
   assert.equal(page.intervals.size, 1);
@@ -554,7 +614,7 @@ test('refresh clears a newly unavailable selected time without automatically cho
   assert.match(page.nodes['#booking-slot-status'].textContent, /tidak lagi tersedia/);
   page.config.blockedTimes = []; page.tickRefresh(); await settle();
   assert.equal(page.inputs.time.value, '');
-  assert.equal(page.nodes['#booking-slots'].children.find(button => button.dataset.time === '14:00').disabled, false);
+  assert.equal(page.inputs.time.options.find(option => option.value === '14:00').disabled, false);
 });
 
 test('hidden page stops refresh and becoming visible checks again without duplicating its timer', async () => {
