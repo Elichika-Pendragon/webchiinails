@@ -1,0 +1,89 @@
+{
+  "commit": "387e4a6b9432e055c8519446442cb491eb113685",
+  "checkedAt": "2026-10-20T13:57:04.843Z",
+  "desktop": {
+    "deposit": "10000",
+    "documentWidth": 1265,
+    "noBookingHeaderLink": true,
+    "options": [
+      {
+        "text": "Pilih jam mulai",
+        "value": ""
+      },
+      {
+        "text": "08.00–10.00 WIB",
+        "value": "08:00"
+      },
+      {
+        "text": "08.30–10.30 WIB",
+        "value": "08:30"
+      },
+      {
+        "text": "09.00–11.00 WIB",
+        "value": "09:00"
+      },
+      {
+        "text": "09.30–11.30 WIB",
+        "value": "09:30"
+      },
+      {
+        "text": "10.00–12.00 WIB",
+        "value": "10:00"
+      },
+      {
+        "text": "10.30–12.30 WIB",
+        "value": "10:30"
+      },
+      {
+        "text": "11.00–13.00 WIB",
+        "value": "11:00"
+      },
+      {
+        "text": "11.30–13.30 WIB",
+        "value": "11:30"
+      },
+      {
+        "text": "12.00–14.00 WIB",
+        "value": "12:00"
+      },
+      {
+        "text": "12.30–14.30 WIB",
+        "value": "12:30"
+      },
+      {
+        "text": "13.00–15.00 WIB",
+        "value": "13:00"
+      },
+      {
+        "text": "13.30–15.30 WIB",
+        "value": "13:30"
+      },
+      {
+        "text": "14.00–16.00 WIB",
+        "value": "14:00"
+      }
+    ],
+    "readonly": true,
+    "scrollWidth": 1265,
+    "width": 1280
+  },
+  "mobile": {
+    "documentWidth": 390,
+    "iframes": 0,
+    "reviewVisible": true,
+    "scrollWidth": 390,
+    "width": 390
+  },
+  "review": {
+    "text": "Periksa sekali lagi.\n\nRingkasan ini adalah permintaan booking. Chii perlu memeriksa jadwal, nominal, dan DP terlebih dahulu.\n\nNama\nUji Booking\nWhatsApp\n+6281234567890\nTanggal\nRabu, 21 Oktober 2026\nWaktu · 2 jam\n14.00–16.00 WIB\nHarga total\nRp 100.000\nDP 10%\nRp 10.000\nSisa setelah DP diterima\nRp 90.000\n\nBayar DP melalui transfer atau QRIS sesuai petunjuk Chii di WhatsApp. Kirim bukti pembayaran di percakapan yang sama untuk diperiksa.\n\nBuka ringkasan di WhatsAppUbah detail\n\nBooking belum dikonfirmasi sampai Chii menyetujui jadwal dan memeriksa DP. Kalender belum diperbarui otomatis pada pratinjau ini.",
+    "whatsappHref": "https://wa.me/6285111028211?text=Halo+Chii%2C+saya+ingin+mengajukan+booking+setelah+konsultasi.%0A%0ANama%3A+Uji+Booking%0AWhatsApp%3A+%2B6281234567890%0AHarga+total+sesuai+konsultasi%3A+Rp%C2%A0100.000%0ADP+10%25%3A+Rp%C2%A010.000%0ATanggal%3A+Rabu%2C+21+Oktober+2026%0AWaktu%3A+14.00%E2%80%9316.00+WIB%0A%0AMohon+periksa+ketersediaan+jadwal+dan+konfirmasi+petunjuk+pembayaran+melalui+transfer+atau+QRIS.+Saya+akan+mengirim+bukti+pembayaran+di+percakapan+ini.+Booking+menunggu+konfirmasi+Chii."
+  },
+  "edit": {
+    "deposit": "25000",
+    "lastSlot": "10.00–12.00 WIB",
+    "namePreserved": true
+  },
+  "errors": [],
+  "messageSent": false,
+  "calendarWrite": false
+}

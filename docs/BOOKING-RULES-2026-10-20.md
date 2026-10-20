@@ -1,6 +1,6 @@
 # Booking corrections — 20 October 2026
 
-The owner requested these corrections after the first static preview was published at `f41ca3e` (Cloudflare `02097797`). This report records the prepared correction source and its local verification; live publication must be checked separately against the pushed commit.
+The owner requested these corrections after the first static preview was published at `f41ca3e` (Cloudflare `02097797`). Correction commit **`387e4a6b9432e055c8519446442cb491eb113685`** is pushed to GitHub main and confirmed live in successful Cloudflare deployment **`9b08261a-1c32-49df-8caf-668a82e3a800`** at **20:54 WIB**. Deployment duration was 47 seconds; this is build/deployment time, not visitor loading time.
 
 ## Result
 
@@ -20,3 +20,11 @@ Desktop 1280px and mobile 390/320px were inspected together. No horizontal overf
 The build emits four browser-JS files totaling **20,428 bytes raw / 8,465 bytes gzip estimate** across all routes. This correction adds 157 raw / 44 gzip bytes compared with the first pushed preview. No dependency, image, font, iframe or framework hydration was added. These are asset-size estimates, not a new loading-time benchmark; the sub-one-second mobile LCP target remains unverified for `/book`.
 
 Figma synchronization and Meta authorization remain deferred. No billing, credentials, Calendar access grants or real payment/Calendar API calls were introduced.
+
+## Live confirmation
+
+All six production routes returned HTTP 200 with the exact prepared inline CSS and JavaScript bytes. Five public pages retain production canonicals/index directives, the five-URL sitemap, robots rules and the Google ownership file. The booking preview remains noindex and absent from the sitemap/header. Old Last booking/Mulai terakhir/15:00 cutoff copy is absent from generated pages. [HTTP/assets/SEO evidence](evidence/booking-rules/live-verification.json).
+
+Live Chrome DOM interaction at 1280px confirmed read-only DP Rp10.000 for total Rp100.000 and a final weekday start of 14:00. Review shows the two-hour interval, Rp90.000 balance and an encoded WhatsApp message addressed to Chii with manual transfer/QRIS instructions. At 390px there was no horizontal overflow, no iframe and no console error. Editing preserves the name, recalculates DP Rp25.000 for Rp250.000, and the weekend selector ends at 10.00–12.00. No WhatsApp message was sent. [Interaction evidence](evidence/booking-rules/live-browser.json), [live desktop proof](evidence/booking-rules/live-desktop.png).
+
+The mobile visual proof remains the inspected local 390/320px captures above. A live mobile screenshot capture returned an older desktop frame and was discarded; it is not used as mobile evidence. The live mobile checks reported here are DOM/interaction measurements. No physical-device or loading-time result is inferred from them.
