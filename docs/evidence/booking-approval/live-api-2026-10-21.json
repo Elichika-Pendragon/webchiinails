@@ -1,0 +1,92 @@
+{
+  "checkedAt": "2026-10-20T17:32:23.489Z",
+  "origin": "https://chiinails.pages.dev",
+  "expectedCommit": "31e7ade018089ee24ef6f84a9c27da269cfab7f1",
+  "purpose": "Four bounded public availability POSTs, max parallelism two; anonymous receipt denial. No customer request, payment or Calendar event write.",
+  "customerRecordsCreated": 0,
+  "calendarEventWritesRequested": 0,
+  "availability": [
+    {
+      "input": {
+        "date": "2026-10-22",
+        "designType": "simple",
+        "durationMinutes": "120"
+      },
+      "status": 200,
+      "canonicalKeysAndTypes": true,
+      "canonicalTimes": true,
+      "expectedLatestStart": "14:00",
+      "observedLatestStart": "14:00",
+      "candidateCount": 13,
+      "availableCount": 13,
+      "fitsClosing": true,
+      "privateNoStore": true,
+      "noPrivateFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-22",
+        "designType": "full-art",
+        "durationMinutes": "300"
+      },
+      "status": 200,
+      "canonicalKeysAndTypes": true,
+      "canonicalTimes": true,
+      "expectedLatestStart": "12:00",
+      "observedLatestStart": "12:00",
+      "candidateCount": 9,
+      "availableCount": 7,
+      "fitsClosing": true,
+      "privateNoStore": true,
+      "noPrivateFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-24",
+        "designType": "full-art",
+        "durationMinutes": "180"
+      },
+      "status": 200,
+      "canonicalKeysAndTypes": true,
+      "canonicalTimes": true,
+      "expectedLatestStart": "09:00",
+      "observedLatestStart": "09:00",
+      "candidateCount": 3,
+      "availableCount": 3,
+      "fitsClosing": true,
+      "privateNoStore": true,
+      "noPrivateFields": true,
+      "passed": true
+    },
+    {
+      "input": {
+        "date": "2026-10-24",
+        "designType": "full-art",
+        "durationMinutes": "300"
+      },
+      "status": 200,
+      "canonicalKeysAndTypes": true,
+      "canonicalTimes": true,
+      "expectedLatestStart": null,
+      "observedLatestStart": null,
+      "candidateCount": 0,
+      "availableCount": 0,
+      "fitsClosing": true,
+      "privateNoStore": true,
+      "noPrivateFields": true,
+      "passed": true
+    }
+  ],
+  "anonymousProof": {
+    "status": 401,
+    "code": "AUTH_REQUIRED",
+    "authenticationBeforeTokenParsing": true
+  },
+  "passed": true,
+  "limitations": [
+    "Availability is a snapshot, not a reservation.",
+    "No receipt upload, authenticated acceptance, Calendar insertion or loading-time measurement was performed."
+  ]
+}
