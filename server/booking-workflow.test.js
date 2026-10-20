@@ -140,7 +140,7 @@ test('real adapter and ledger couple pending/read-only review to one private ack
 test('overlap is rejected after fresh Calendar synchronization without another insert; expired GET remains read-only', async () => {
   const f = fixture();
   const one = await createBookingRequest(f.env, input(), { now: f.now, calendar: f.calendar });
-  const two = await createBookingRequest(f.env, input({ time: '13:30', idempotencyKey: 'synthetic_workflow_request_002' }), { now: f.now, calendar: f.calendar });
+  const two = await createBookingRequest(f.env, input({ designType: 'full-art', durationMinutes: '240', time: '12:00', idempotencyKey: 'synthetic_workflow_request_002' }), { now: f.now, calendar: f.calendar });
   await decideBookingRequest(f.env, tokenOf(one), 'accept', { owner, now: f.now, calendar: f.calendar });
   await assert.rejects(decideBookingRequest(f.env, tokenOf(two), 'accept', { owner, now: f.now, calendar: f.calendar }), error => error instanceof BookingRequestError && error.code === 'SLOT_CONFLICT' && error.status === 409);
   const callCount = f.calls.length;
@@ -215,19 +215,19 @@ test('legacy uncertain request reconciles its original 10% event fingerprint aft
 
 test('five-hour full-art flows through real free/busy and Calendar with ten claims and no false adjacent availability', async () => {
   const f = fixture();
-  const created = await createBookingRequest(f.env, input({ designType: 'full-art', durationMinutes: '300', time: '12:00' }), { now: f.now, calendar: f.calendar });
-  assert.equal(created.booking.endISO, '2026-10-21T17:00:00+07:00');
+  const created = await createBookingRequest(f.env, input({ designType: 'full-art', durationMinutes: '300', time: '08:00' }), { now: f.now, calendar: f.calendar });
+  assert.equal(created.booking.endISO, '2026-10-21T13:00:00+07:00');
   const accepted = await decideBookingRequest(f.env, tokenOf(created), 'accept', { owner, now: f.now, calendar: f.calendar });
   assert.equal(accepted.status, 'accepted');
   assert.equal(accepted.durationMinutes, 300);
   assert.equal(f.db.count('booking_slot_claims'), 10);
   const event = [...f.events.values()][0];
-  assert.equal(event.end.dateTime, '2026-10-21T17:00:00+07:00');
+  assert.equal(event.end.dateTime, '2026-10-21T13:00:00+07:00');
   assert.match(event.description, /Durasi: 300 menit/);
   assert.match(event.description, /WhatsApp: https:\/\/wa.me\/6281234567890\n/);
   const occupancy = await getBookingAvailability(f.env, { date: '2026-10-21', designType: 'plain', durationMinutes: 60 }, { now: f.now, calendar: f.calendar });
-  assert.equal(occupancy.slots.find(slot => slot.time === '11:00').available, true);
-  assert.equal(occupancy.slots.find(slot => slot.time === '14:00').available, false);
+  assert.equal(occupancy.slots.find(slot => slot.time === '12:00').available, false);
+  assert.equal(occupancy.slots.find(slot => slot.time === '13:00').available, true);
   assert.equal(f.insertCount(), 1);
 });
 
@@ -252,13 +252,13 @@ test('ordinary all-day Busy in Google Calendar blacks out every candidate and re
 test('real adapter confirms deleted or cancelled Google events before releasing all long-duration claims', async () => {
   for (const outcome of ['404', '410', 'cancelled']) {
     const f = fixture();
-    const one = await createBookingRequest(f.env, input({ designType: 'full-art', durationMinutes: '300', time: '12:00' }), { now: f.now, calendar: f.calendar });
+    const one = await createBookingRequest(f.env, input({ designType: 'full-art', durationMinutes: '300', time: '08:00' }), { now: f.now, calendar: f.calendar });
     await decideBookingRequest(f.env, tokenOf(one), 'accept', { owner, now: f.now, calendar: f.calendar });
     const event = [...f.events.values()][0];
     if (outcome === 'cancelled') event.status = 'cancelled';
     else { f.events.delete(event.id); if (outcome === '410') f.state.goneEvents.add(event.id); }
     const result = await getBookingAvailability(f.env, { date: '2026-10-21', designType: 'plain', durationMinutes: 60 }, { now: f.now, calendar: f.calendar });
-    assert.equal(result.slots.find(slot => slot.time === '14:00').available, true);
+    assert.equal(result.slots.find(slot => slot.time === '12:00').available, true);
     assert.equal(f.db.count('booking_slot_claims'), 0);
     const brief = await getBookingRequest(f.env, tokenOf(one), { owner, now: f.now });
     assert.equal(brief.status, 'cancelled');

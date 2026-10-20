@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { salon } from '../src/content.js';
 import {
-  BOOKING_DEFAULTS, getOperatingHours, getBookingDateBounds,
+  getOperatingHours, getBookingDateBounds,
   listBookingSlots, normalizeWhatsApp, parseRupiah, calculateDeposit, calculatePayment, validateBooking, normalizeBookingDesign, BOOKING_DESIGNS,
 } from './booking.js';
 
@@ -24,7 +24,7 @@ test('hours match the published content for every weekday and weekend', () => {
 
 test('weekday starts include 08.00 through 14.00, ending by 16.00 while the studio closes at 17.00', () => {
   const slots = listBookingSlots('2026-10-20', options);
-  assert.equal(slots.length, 13);
+  assert.deepEqual(slots.map(slot => slot.time), ['08:00', '10:00', '12:00', '14:00']);
   assert.equal(slots[0].time, '08:00');
   assert.equal(slots.at(-1).time, '14:00');
   assert.equal(slots.at(-1).endISO, '2026-10-20T16:00:00+07:00');
@@ -39,7 +39,7 @@ test('weekday starts include 08.00 through 14.00, ending by 16.00 while the stud
 test('both weekend days stop at 10.00 for a noon finish', () => {
   for (const date of ['2026-10-24', '2026-10-25']) {
     const slots = listBookingSlots(date, options);
-    assert.deepEqual(slots.map(slot => slot.time), ['08:00', '08:30', '09:00', '09:30', '10:00']);
+    assert.deepEqual(slots.map(slot => slot.time), ['08:00', '10:00']);
     assert.equal(slots.at(-1).endISO, `${date}T12:00:00+07:00`);
     assert.ok(validateBooking(form({ date, time: '10:30' }), options).errors.time);
   }
@@ -55,7 +55,7 @@ test('now is explicit, fixed-offset and independent of a local calendar day', ()
 
 test('starts must be strictly in the future, including exact start equality', () => {
   const starts = listBookingSlots('2026-10-20', { now: '2026-10-20T08:00:00+07:00' });
-  assert.equal(starts[0].time, '08:30');
+  assert.equal(starts[0].time, '10:00');
   assert.ok(validateBooking(form(), { now: '2026-10-20T08:00:00+07:00' }).errors.time);
   assert.deepEqual(listBookingSlots('2026-10-20', { now: '2026-10-20T14:00:00+07:00' }), []);
   assert.ok(validateBooking(form({ time: '14:00' }), { now: '2026-10-20T14:00:00+07:00' }).errors.time);
@@ -82,11 +82,12 @@ test('horizon uses inclusive WIB dates and rejects outside dates', () => {
   assert.equal(listBookingSlots('2026-10-21', { now, horizonDays: 0 }).length, 0);
 });
 
-test('half-hour interval is configurable and anchored at opening time', () => {
+test('new starts follow the selected duration while trusted historical validation can retain its old cadence', () => {
   assert.ok(validateBooking(form({ time: '08:15' }), options).errors.time);
   assert.equal(validateBooking(form({ time: '08:15' }), { now, stepMinutes: 15 }).valid, true);
   assert.deepEqual(listBookingSlots('2026-10-24', { now, stepMinutes: 60 }).map(slot => slot.time), ['08:00', '09:00', '10:00']);
-  assert.equal(BOOKING_DEFAULTS.stepMinutes, 30);
+  assert.ok(validateBooking(form({ time: '08:30' }), options).errors.time);
+  assert.equal(validateBooking(form({ time: '08:30' }), { now, stepMinutes: 30 }).valid, true);
   for (const time of ['8:00', '08:60', '24:00', '07:30', '14:30', '15:00', '15:30', '08:00:00', '', null, {}, '<script>']) assert.ok(validateBooking(form({ time }), options).errors.time, String(time));
 });
 
@@ -105,7 +106,7 @@ test('overlap uses exact milliseconds, not just visible start labels', () => {
   const times = listBookingSlots('2026-10-20', { now, busyIntervals }).map(slot => slot.time);
   assert.equal(times.includes('08:00'), false);
   assert.equal(times.includes('10:00'), false);
-  assert.equal(times.includes('10:30'), true);
+  assert.equal(times.includes('12:00'), true);
 });
 
 test('malformed supplied availability fails closed instead of silently allowing slots', () => {
@@ -246,18 +247,24 @@ test('design selection permits only agreed exact durations and defaults cached c
   }
 });
 
-test('full-art caps starts at noon on weekdays while weekend closing constrains every exact duration', () => {
-  for (const durationMinutes of [180, 240, 300]) {
-    const weekday = listBookingSlots('2026-10-21', { now, designType: 'full-art', durationMinutes });
-    assert.equal(weekday.at(-1).time, '12:00');
+test('all service durations advance from opening without crossing cutoffs or closing', () => {
+  const cases = [
+    ['plain', 60, ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00'], ['08:00', '09:00', '10:00']],
+    ['simple', 60, ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00'], ['08:00', '09:00', '10:00']],
+    ['simple', 120, ['08:00', '10:00', '12:00', '14:00'], ['08:00', '10:00']],
+    ['full-art', 180, ['08:00', '11:00'], ['08:00']],
+    ['full-art', 240, ['08:00', '12:00'], ['08:00']],
+    ['full-art', 300, ['08:00'], []],
+  ];
+  for (const [designType, durationMinutes, weekdayStarts, weekendStarts] of cases) {
+    const weekday = listBookingSlots('2026-10-21', { now, designType, durationMinutes });
+    assert.deepEqual(weekday.map(slot => slot.time), weekdayStarts);
     assert.ok(weekday.every(slot => slot.end <= Date.parse('2026-10-21T17:00:00+07:00')));
+    for (const date of ['2026-10-24', '2026-10-25']) assert.deepEqual(listBookingSlots(date, { now, designType, durationMinutes }).map(slot => slot.time), weekendStarts);
+    for (const time of weekdayStarts) assert.equal(validateBooking(form({ date: '2026-10-21', designType, durationMinutes: String(durationMinutes), time }), { now }).valid, true);
   }
-  for (const date of ['2026-10-24', '2026-10-25']) {
-    assert.equal(listBookingSlots(date, { now, designType: 'full-art', durationMinutes: 180 }).at(-1).time, '09:00');
-    assert.deepEqual(listBookingSlots(date, { now, designType: 'full-art', durationMinutes: 240 }).map(slot => slot.time), ['08:00']);
-    assert.deepEqual(listBookingSlots(date, { now, designType: 'full-art', durationMinutes: 300 }), []);
-    assert.equal(listBookingSlots(date, { now, designType: 'plain', durationMinutes: 60 }).at(-1).time, '10:00');
-  }
+  assert.equal(validateBooking(form({ date: '2026-10-21', designType: 'full-art', durationMinutes: '240', time: '11:00' }), { now }).valid, false);
+  assert.equal(validateBooking(form({ date: '2026-10-21', designType: 'full-art', durationMinutes: '300', time: '12:00' }), { now }).valid, false);
   assert.equal(validateBooking(form({ date: '2026-10-24', designType: 'full-art', durationMinutes: '180', time: '09:30' }), { now }).valid, false);
   assert.equal(validateBooking(form({ designType: 'full-art', durationMinutes: '180', time: '12:30' }), { now }).valid, false);
 });
@@ -266,7 +273,7 @@ test('elapsed starts are displayable but never validate as a new booking', () =>
   const afterOpening = Date.parse('2026-10-20T09:15:00+07:00');
   const shown = listBookingSlots('2026-10-20', { now: afterOpening, includeElapsed: true, designType: 'plain', durationMinutes: 60 });
   assert.equal(shown[0].time, '08:00');
-  assert.equal(listBookingSlots('2026-10-20', { now: afterOpening, designType: 'plain', durationMinutes: 60 })[0].time, '09:30');
+  assert.equal(listBookingSlots('2026-10-20', { now: afterOpening, designType: 'plain', durationMinutes: 60 })[0].time, '10:00');
   assert.equal(validateBooking(form({ designType: 'plain', durationMinutes: '60', time: '08:00' }), { now: afterOpening, includeElapsed: true }).valid, false);
 });
 
@@ -283,7 +290,7 @@ test('malformed forms report field errors without returning partial trusted outp
 });
 
 test('bad configuration is rejected separately from customer input', () => {
-  for (const stepMinutes of [0, -1, 0.5, 121, '30']) assert.throws(() => listBookingSlots('2026-10-20', { now, stepMinutes }), RangeError);
+  for (const stepMinutes of [0, -1, 0.5, 301, '30']) assert.throws(() => listBookingSlots('2026-10-20', { now, stepMinutes }), RangeError);
   for (const horizonDays of [-1, 0.5, '90']) assert.throws(() => getBookingDateBounds({ now, horizonDays }), RangeError);
   for (const maxAmount of [0, -1, '10000000', Infinity]) assert.throws(() => validateBooking(form(), { now, maxAmount }), RangeError);
 });

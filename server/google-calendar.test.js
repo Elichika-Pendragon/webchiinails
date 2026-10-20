@@ -247,6 +247,34 @@ test('weekday 14.00 last-book boundary creates a two-hour event ending at 16.00'
   assert.deepEqual(body.end, { dateTime: '2026-10-20T16:00:00+07:00', timeZone: 'Asia/Jakarta' });
 });
 
+test('trusted historical half-hour starts retain all Calendar fingerprints and support lookup-only recovery', async () => {
+  // Golden hashes captured from the previous deployed adapter for these exact
+  // synthetic snapshots. Cadence changes must never alter event identity.
+  const cases = [
+    [{ ...appointment, time: '08:30' }, 'chiinails-booking-v1', '57a45e4e1ef0af149dd425272b14a887a2741aaad6ce94af340ad9b57fe889ea'],
+    [{ ...appointment, time: '08:30', paymentMode: 'full', paymentAmount: 155000 }, 'chiinails-booking-v2', '09261d78e64aef9c6ea6c9632fcb8ed6400e2044ecf5f9f4c6d2f9e521ab12b5'],
+    [{ ...appointment, time: '08:30', designType: 'simple', durationMinutes: 120, paymentMode: 'deposit', paymentAmount: 20000 }, 'chiinails-booking-v3', '2c0f36c5df03040c7e6ed776a48837f4ab5390dc9fc0f7e876a49bbc9b1e3c22'],
+  ];
+  for (const [snapshot, source, fingerprint] of cases) {
+    let stored;
+    let posts = 0;
+    let gets = 0;
+    const calendar = provider(async (url, init) => {
+      if (url.includes('oauth2')) return token();
+      if (init.method === 'POST') { posts++; stored = JSON.parse(init.body); return json(stored); }
+      gets++;
+      return json(stored);
+    });
+    const created = await calendar.createApprovedAppointment(snapshot);
+    assert.equal(stored.start.dateTime, '2026-10-20T08:30:00+07:00');
+    assert.equal(stored.end.dateTime, '2026-10-20T10:30:00+07:00');
+    assert.deepEqual(stored.extendedProperties.private, { source, bookingId: snapshot.bookingId, fingerprint });
+    assert.deepEqual(await calendar.reconcileApprovedAppointment(snapshot), { found: true, ...created, reconciled: true });
+    assert.equal(posts, 1);
+    assert.equal(gets, 1);
+  }
+});
+
 test('invalid and customer-flag-only appointments cannot create events', async () => {
   let calls = 0;
   const calendar = provider(async () => { calls++; return token(); });

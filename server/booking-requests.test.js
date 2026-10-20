@@ -305,7 +305,7 @@ test('accepted request has exactly four claims and one acknowledged, idempotent 
 test('overlapping approvals compete atomically and the losing transaction leaves no partial claims', async () => {
   const { env, db, calendar, calls } = setup();
   const one = await createBookingRequest(env, customer(), { now: initial });
-  const two = await createBookingRequest(env, customer({ time: '13:30', idempotencyKey: 'synthetic_second_request_02' }), { now: initial });
+  const two = await createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '240', time: '12:00', idempotencyKey: 'synthetic_second_request_02' }), { now: initial });
   const results = await Promise.allSettled([
     decideBookingRequest(env, tokenOf(one), 'accept', { owner, calendar, now: initial }),
     decideBookingRequest(env, tokenOf(two), 'accept', { owner, calendar, now: initial }),
@@ -314,7 +314,7 @@ test('overlapping approvals compete atomically and the losing transaction leaves
   const rejected = results.find(result => result.status === 'rejected');
   assert.equal(rejected.reason.code, 'SLOT_CONFLICT');
   assert.deepEqual(db.rows().map(row => row.status).sort(), ['accepted', 'pending']);
-  assert.equal(db.rows('SELECT * FROM booking_slot_claims').length, 4);
+  assert.equal(db.rows('SELECT * FROM booking_slot_claims').length, results.find(result => result.status === 'fulfilled').value.durationMinutes / 30);
   assert.equal(calls.insert, 1);
 });
 
@@ -525,7 +525,7 @@ test('an incomplete claim set fails closed before any Calendar I/O on resume', a
 });
 
 test('actual duration drives the owner brief, fresh Calendar bounds and complete atomic claim count', async () => {
-  for (const [designType, durationMinutes, time] of [['plain', 60, '14:00'], ['simple', 60, '14:00'], ['simple', 120, '14:00'], ['full-art', 180, '12:00'], ['full-art', 240, '12:00'], ['full-art', 300, '12:00']]) {
+  for (const [designType, durationMinutes, time] of [['plain', 60, '14:00'], ['simple', 60, '14:00'], ['simple', 120, '14:00'], ['full-art', 180, '11:00'], ['full-art', 240, '12:00'], ['full-art', 300, '08:00']]) {
     const { env, db, calendar } = setup();
     let checkedBounds;
     calendar.availability = async bounds => { checkedBounds = bounds; return { busyIntervals: [] }; };
@@ -556,6 +556,69 @@ test('design and duration are immutable request identity, including old payment-
   await assert.rejects(createBookingRequest(env, customer({ designType: 'simple', durationMinutes: '60' }), { now: initial }), isCode('IDEMPOTENCY_CONFLICT', 409));
 });
 
+test('persisted half-hour requests retain exact retries, owner review and acceptance after the cadence changes', async () => {
+  const { env, db, calendar, calls } = setup();
+  const original = await createBookingRequest(env, customer({ time: '08:00' }), { now: initial });
+  // Reproduce the immutable record written by the previous half-hour UI.
+  const oldInput = customer({ time: '08:30' });
+  const proofDigest = db.rows('SELECT sha256 FROM booking_payment_proofs')[0].sha256;
+  const previousPayload = { name: 'Client Test', whatsapp: '6281234567890', agreedPrice: 100001, date: '2026-10-21', time: '08:30', paymentMode: 'deposit', paymentAmount: 20000, paymentPolicy: 'min20k-v2', designType: 'simple', durationMinutes: 120, proofDigest };
+  const payloadHash = Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(previousPayload)))).toString('hex');
+  const startISO = '2026-10-21T08:30:00+07:00';
+  const endISO = '2026-10-21T10:30:00+07:00';
+  const start = Date.parse(startISO);
+  db.sqlite.prepare('UPDATE booking_requests SET time=?,start_ms=?,end_ms=?,start_iso=?,end_iso=?,expires_at=?,payload_hash=? WHERE id=?').run('08:30', start, Date.parse(endISO), startISO, endISO, start, payloadHash, original.requestId);
+  db.sqlite.prepare('UPDATE booking_payment_proofs SET expires_at=? WHERE request_id=?').run(Date.parse(endISO) + PAYMENT_PROOF_RETENTION_MS, original.requestId);
+  const before = { ...calls };
+  const repeated = await createBookingRequest(env, oldInput, { now: initial });
+  assert.equal(repeated.requestId, original.requestId);
+  assert.equal(repeated.reviewUrl, original.reviewUrl);
+  assert.equal(repeated.booking.time, '08:30');
+  assert.equal(repeated.booking.endISO, endISO);
+  assert.deepEqual(calls, before);
+  await assert.rejects(createBookingRequest(env, { ...oldInput, agreedPrice: '150000' }, { now: initial }), isCode('IDEMPOTENCY_CONFLICT', 409));
+  await assert.rejects(createBookingRequest(env, { ...oldInput, idempotencyKey: 'synthetic_new_off_grid_start' }, { now: initial }), error => isCode('BOOKING_INPUT', 400)(error) && Boolean(error.fields.time));
+  assert.deepEqual(calls, before);
+  assert.equal(db.rows().length, 1);
+  assert.equal((await getBookingRequest(env, tokenOf(original), { owner, now: initial })).time, '08:30');
+  const accepted = await decideBookingRequest(env, tokenOf(original), 'accept', { owner, calendar, now: initial });
+  assert.equal(accepted.status, 'accepted');
+  assert.equal(accepted.startISO, startISO);
+  assert.equal(db.rows('SELECT * FROM booking_slot_claims').length, 4);
+  const afterAccept = { ...calls };
+  assert.equal((await createBookingRequest(env, oldInput, { now: initial })).booking.status, 'accepted');
+  assert.deepEqual(await decideBookingRequest(env, tokenOf(original), 'accept', { owner, calendar, now: initial }), accepted);
+  assert.deepEqual(calls, afterAccept);
+});
+
+test('new off-cadence starts are rejected for every exact service before Calendar I/O or storage writes', async () => {
+  const { env, db, calls } = setup();
+  for (const [designType, durationMinutes, time] of [['plain', '60', '08:30'], ['simple', '60', '08:30'], ['simple', '120', '09:00'], ['full-art', '180', '09:00'], ['full-art', '240', '10:00'], ['full-art', '300', '12:00']]) {
+    await assert.rejects(createBookingRequest(env, customer({ designType, durationMinutes, time }), { now: initial }), error => isCode('BOOKING_INPUT', 400)(error) && Boolean(error.fields.time));
+  }
+  assert.deepEqual(calls, { availability: 0, insert: 0, lookup: 0 });
+  assert.equal(db.rows().length, 0);
+  assert.equal(db.rows('SELECT * FROM booking_payment_proofs').length, 0);
+  assert.equal(db.rows('SELECT * FROM booking_slot_claims').length, 0);
+});
+
+test('public availability uses each exact duration from opening and respects weekend fit and full-art cutoff', async () => {
+  const { env, calendar } = setup();
+  for (const [designType, durationMinutes, weekday, weekend] of [
+    ['plain', 60, ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00'], ['08:00', '09:00', '10:00']],
+    ['simple', 60, ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00'], ['08:00', '09:00', '10:00']],
+    ['simple', 120, ['08:00', '10:00', '12:00', '14:00'], ['08:00', '10:00']],
+    ['full-art', 180, ['08:00', '11:00'], ['08:00']],
+    ['full-art', 240, ['08:00', '12:00'], ['08:00']],
+    ['full-art', 300, ['08:00'], []],
+  ]) {
+    for (const [date, expected] of [['2026-10-21', weekday], ['2026-10-24', weekend]]) {
+      const result = await getBookingAvailability(env, { date, designType, durationMinutes }, { now: initial, calendar });
+      assert.deepEqual(result.slots, expected.map(time => ({ time, available: true })));
+    }
+  }
+});
+
 test('additive duration migration preserves prior payment metadata, original end fields and slot claims', async () => {
   const { env, db } = setup();
   const created = await createBookingRequest(env, customer({ paymentMode: 'full' }), { now: initial });
@@ -584,16 +647,16 @@ test('additive duration migration preserves prior payment metadata, original end
 
 test('public availability exposes booleans only, keeps pending free and blocks the entire confirmed actual duration', async () => {
   const { env, db, calendar, calls } = setup();
-  const created = await createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '300', time: '12:00' }), { now: initial });
+  const created = await createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '300', time: '08:00' }), { now: initial });
   const selection = { date: '2026-10-21', designType: 'plain', durationMinutes: '60' };
   const before = await getBookingAvailability(env, selection, { now: initial, calendar });
-  assert.equal(before.slots.find(slot => slot.time === '14:00').available, true);
+  assert.equal(before.slots.find(slot => slot.time === '12:00').available, true);
   await decideBookingRequest(env, tokenOf(created), 'accept', { owner, now: initial, calendar });
   const changesBeforeRead = db.sqlite.prepare('SELECT total_changes() AS changes').get().changes;
   const result = await getBookingAvailability(env, selection, { now: initial, calendar });
-  assert.equal(result.slots.find(slot => slot.time === '11:00').available, true);
-  assert.equal(result.slots.find(slot => slot.time === '11:30').available, false);
-  assert.equal(result.slots.find(slot => slot.time === '14:00').available, false);
+  assert.equal(result.slots.find(slot => slot.time === '10:00').available, false);
+  assert.equal(result.slots.find(slot => slot.time === '12:00').available, false);
+  assert.equal(result.slots.find(slot => slot.time === '13:00').available, true);
   assert.deepEqual(Object.keys(result).sort(), ['date', 'designType', 'durationMinutes', 'timeZone', 'slots'].sort());
   assert.ok(result.slots.every(slot => Object.keys(slot).sort().join(',') === 'available,time'));
   for (const privateValue of ['Client Test', '6281234567890', created.requestId, tokenOf(created), 'paymentAmount', 'calendarId']) assert.equal(JSON.stringify(result).includes(privateValue), false);
@@ -603,14 +666,15 @@ test('public availability exposes booleans only, keeps pending free and blocks t
 
 test('public availability blocks ambiguous claims and external busy intervals without revealing their sources', async () => {
   const { env, calendar } = setup();
-  const created = await createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '180', time: '12:00' }), { now: initial });
+  const created = await createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '180', time: '11:00' }), { now: initial });
   calendar.createApprovedAppointment = async () => { throw new Error('Synthetic uncertain insert'); };
   await assert.rejects(decideBookingRequest(env, tokenOf(created), 'accept', { owner, now: initial, calendar }), isCode('CALENDAR_RECONCILE'));
   calendar.availability = async () => ({ busyIntervals: [{ start: Date.parse('2026-10-21T09:00:00+07:00'), end: Date.parse('2026-10-21T10:00:00+07:00') }] });
   const result = await getBookingAvailability(env, { date: '2026-10-21', designType: 'plain', durationMinutes: 60 }, { now: initial, calendar });
-  assert.equal(result.slots.find(slot => slot.time === '08:30').available, false);
+  assert.equal(result.slots.find(slot => slot.time === '09:00').available, false);
   assert.equal(result.slots.find(slot => slot.time === '10:00').available, true);
-  assert.equal(result.slots.find(slot => slot.time === '14:00').available, false);
+  assert.equal(result.slots.find(slot => slot.time === '11:00').available, false);
+  assert.equal(result.slots.find(slot => slot.time === '14:00').available, true);
 });
 
 test('availability fails closed on malformed dates, upstream errors or storage failure, with no false free slots', async () => {
@@ -638,13 +702,13 @@ test('elapsed candidates are disabled while infeasible weekend full-art returns 
 test('new submission checks its actual interval and rejects Busy all-day or partial overlap before any ledger write', async () => {
   for (const busy of [
     { start: Date.parse('2026-10-21T00:00:00+07:00'), end: Date.parse('2026-10-22T00:00:00+07:00') },
-    { start: Date.parse('2026-10-21T16:30:00+07:00'), end: Date.parse('2026-10-21T17:00:00+07:00') },
+    { start: Date.parse('2026-10-21T12:30:00+07:00'), end: Date.parse('2026-10-21T13:00:00+07:00') },
   ]) {
     const { env, db, calendar, calls } = setup();
     let bounds;
     calendar.availability = async input => { calls.availability++; bounds = input; return { busyIntervals: [busy] }; };
-    await assert.rejects(createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '300', time: '12:00' }), { now: initial }), isCode('SLOT_CONFLICT', 409));
-    assert.deepEqual(bounds, { timeMin: '2026-10-21T12:00:00+07:00', timeMax: '2026-10-21T17:00:00+07:00' });
+    await assert.rejects(createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '300', time: '08:00' }), { now: initial }), isCode('SLOT_CONFLICT', 409));
+    assert.deepEqual(bounds, { timeMin: '2026-10-21T08:00:00+07:00', timeMax: '2026-10-21T13:00:00+07:00' });
     assert.equal(db.rows().length, 0);
     assert.equal(db.rows('SELECT * FROM booking_payment_proofs').length, 0);
     assert.equal(db.rows('SELECT * FROM booking_slot_claims').length, 0);
@@ -681,19 +745,19 @@ test('matching creation retry returns the original pending request while a new r
 
 test('new submission checks dynamic confirmed claims beyond the original two-hour storage end', async () => {
   const { env, db, calendar } = setup();
-  const full = await createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '300', time: '12:00' }), { now: initial });
+  const full = await createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '300', time: '08:00' }), { now: initial });
   await decideBookingRequest(env, tokenOf(full), 'accept', { owner, calendar, now: initial });
   // The fake Calendar deliberately returns no busy intervals. D1 must still
   // prevent a one-hour request beginning at the original two-hour endpoint.
-  await assert.rejects(createBookingRequest(env, customer({ designType: 'plain', durationMinutes: '60', time: '14:00', idempotencyKey: 'synthetic_claims_after_old_end' }), { now: initial }), isCode('SLOT_CONFLICT', 409));
+  await assert.rejects(createBookingRequest(env, customer({ designType: 'plain', durationMinutes: '60', time: '10:00', idempotencyKey: 'synthetic_claims_after_old_end' }), { now: initial }), isCode('SLOT_CONFLICT', 409));
   assert.equal(db.rows().length, 1);
   assert.equal(db.rows('SELECT * FROM booking_slot_claims').length, 10);
 });
 
 test('concurrent different-duration approvals leave one winner, complete claims and a single Calendar event', async () => {
   const { env, db, calendar, calls } = setup();
-  const one = await createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '300', time: '12:00' }), { now: initial });
-  const two = await createBookingRequest(env, customer({ designType: 'plain', durationMinutes: '60', time: '14:00', idempotencyKey: 'synthetic_concurrent_plain_1' }), { now: initial });
+  const one = await createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '300', time: '08:00' }), { now: initial });
+  const two = await createBookingRequest(env, customer({ designType: 'plain', durationMinutes: '60', time: '10:00', idempotencyKey: 'synthetic_concurrent_plain_1' }), { now: initial });
   const results = await Promise.allSettled([one, two].map(value => decideBookingRequest(env, tokenOf(value), 'accept', { owner, calendar, now: initial })));
   assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
   assert.equal(results.filter(result => result.status === 'rejected' && result.reason.code === 'SLOT_CONFLICT').length, 1);
@@ -747,7 +811,7 @@ test('owner-only proof reads are immutable, expiry denies bytes, and legacy requ
 
 test('daily cleanup deletes only expired receipts using the index and preserves booking metadata, claims and future images', async () => {
   const { env, db, calendar } = setup();
-  const old = await createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '300', time: '12:00' }), { now: initial });
+  const old = await createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '300', time: '08:00' }), { now: initial });
   const future = await createBookingRequest(env, customer({ date: '2026-11-21', time: '10:00', idempotencyKey: 'synthetic_future_receipt_1' }), { now: initial });
   await decideBookingRequest(env, tokenOf(old), 'accept', { owner, calendar, now: initial });
   const expiry = Date.parse(old.booking.endISO) + PAYMENT_PROOF_RETENTION_MS;
@@ -798,7 +862,7 @@ test('private proof reads fail closed on malformed stored JPEG or D1 read failur
 
 test('confirmed Calendar deletion releases the entire actual duration, retains history and never recreates an acknowledged event', async () => {
   const { env, db, calendar, events, calls } = setup();
-  const one = await createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '300', time: '12:00' }), { now: initial });
+  const one = await createBookingRequest(env, customer({ designType: 'full-art', durationMinutes: '300', time: '08:00' }), { now: initial });
   const accepted = await decideBookingRequest(env, tokenOf(one), 'accept', { owner, calendar, now: initial });
   const eventId = db.rows()[0].calendar_event_id;
   assert.equal(db.rows('SELECT * FROM booking_slot_claims').length, 10);

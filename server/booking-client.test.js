@@ -162,7 +162,7 @@ test('Book requires every editable value and derives rather than trusts DP', asy
 
 test('invalid phone, price and unavailable time cannot enable Book', async () => {
   const page = harness(); await settle();
-  for (const [name, value] of [['whatsapp', 'abc'], ['agreedPrice', '1e5'], ['time', '15:00'], ['paymentMode', 'invalid']]) {
+  for (const [name, value] of [['whatsapp', 'abc'], ['agreedPrice', '1e5'], ['time', '15:00'], ['time', '09:00'], ['paymentMode', 'invalid']]) {
     await page.fill(); page.change(name, value);
     assert.equal(page.nodes['#booking-review'].disabled, true);
   }
@@ -333,11 +333,19 @@ test('low totals cap payment at the total and normalize full, while a later high
 });
 
 test('each combined service choice reaches the unchanged API and WhatsApp with its actual interval', async () => {
-  for (const [designType, durationMinutes] of [['plain', 60], ['simple', 60], ['simple', 120], ['full-art', 180], ['full-art', 240], ['full-art', 300]]) {
+  for (const [designType, durationMinutes, starts] of [
+    ['plain', 60, ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00']],
+    ['simple', 60, ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00']],
+    ['simple', 120, ['08:00', '10:00', '12:00', '14:00']],
+    ['full-art', 180, ['08:00', '11:00']],
+    ['full-art', 240, ['08:00', '12:00']],
+    ['full-art', 300, ['08:00']],
+  ]) {
     const page = harness(); await settle(); await page.fill();
     page.change('serviceDuration', `${designType}:${durationMinutes}`);
     await settle();
-    const time = designType === 'full-art' ? '12:00' : '14:00';
+    assert.deepEqual(page.inputs.time.options.filter(option => option.value).map(option => option.value), starts);
+    const time = starts.at(-1);
     const option = page.inputs.time.options.find(node => node.value === time);
     assert.equal(option.disabled, false);
     assert.match(option.text, /WIB/);
@@ -384,7 +392,8 @@ test('service changes update the duration hint and remove a start that no longer
   await settle();
   assert.equal(page.inputs.time.value, '');
   assert.equal(page.inputs.time.options.some(option => option.value === '14:00'), false);
-  assert.match(page.inputs.time.options.find(option => option.value === '12:00').text, /12\.00–17\.00 WIB/);
+  assert.deepEqual(page.inputs.time.options.filter(option => option.value).map(option => option.value), ['08:00']);
+  assert.match(page.inputs.time.options.find(option => option.value === '08:00').text, /08\.00–13\.00 WIB/);
   assert.match(page.nodes['#hint-serviceDuration'].textContent, /Last book 12:00/);
   page.change('serviceDuration', 'plain:60'); await settle();
   assert.match(page.nodes['#hint-serviceDuration'].textContent, /nail gel.*removal.*1 jam/);
@@ -408,14 +417,21 @@ test('rapid combined service changes abort the old duration check before enablin
   assert.match(page.inputs.time.options.find(option => option.value === '14:00').text, /14\.00–15\.00 WIB/);
 });
 
-test('weekend full-art windows honor closing at noon for three, four and five hours', async () => {
-  for (const [duration, last] of [[180, '09:00'], [240, '08:00'], [300, null]]) {
+test('weekend native choices follow each agreed duration and finish before noon', async () => {
+  for (const [designType, duration, starts] of [
+    ['plain', 60, ['08:00', '09:00', '10:00']],
+    ['simple', 60, ['08:00', '09:00', '10:00']],
+    ['simple', 120, ['08:00', '10:00']],
+    ['full-art', 180, ['08:00']],
+    ['full-art', 240, ['08:00']],
+    ['full-art', 300, []],
+  ]) {
     const page = harness(); await settle(); await page.fill();
-    page.change('serviceDuration', `full-art:${duration}`); page.change('date', '2026-10-24');
+    page.change('serviceDuration', `${designType}:${duration}`); page.change('date', '2026-10-24');
     await settle();
     const available = page.inputs.time.options.filter(option => option.value && !option.disabled);
-    assert.equal(available.at(-1)?.value || null, last);
-    if (last === null) {
+    assert.deepEqual(available.map(option => option.value), starts);
+    if (starts.length === 0) {
       assert.equal(page.nodes['#booking-review'].disabled, true);
       assert.equal(page.inputs.time.options[0].text, 'Tidak ada jam untuk pilihan ini');
       assert.match(page.nodes['#booking-slot-status'].textContent, /tidak muat/);
@@ -424,10 +440,11 @@ test('weekend full-art windows honor closing at noon for three, four and five ho
 });
 
 test('busy starts remain visible as disabled labelled options and forged selections cannot submit', async () => {
-  const page = harness({ blockedTimes: ['10:00', '10:30'] }); await settle(); await page.fill();
+  const page = harness({ blockedTimes: ['10:00'] }); await settle(); await page.fill();
   const blocked = page.inputs.time.options.find(option => option.value === '10:00');
   assert.equal(blocked.disabled, true);
   assert.match(blocked.text, /tidak tersedia/);
+  assert.equal(page.inputs.time.options.find(option => option.value === '12:00').disabled, false, 'a start at the end of the blocked 10:00–12:00 interval remains available');
   assert.equal(page.inputs.time.value, '14:00');
   assert.equal(page.nodes['#booking-review'].disabled, false);
   page.change('time', '10:00');

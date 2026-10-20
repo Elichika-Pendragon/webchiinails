@@ -216,7 +216,9 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
       // Past starts permit reconciliation of a prior write only, never insertion.
       // This is a trusted server snapshot, never a customer's approval/payment
       // flag. Omitted mode preserves the original adapter's v1 fingerprint.
-      checked = validateBooking({ name: appointment.name, whatsapp: appointment.whatsapp, agreedPrice: amount(appointment.agreedPrice), date: appointment.date, time: appointment.time, paymentMode: appointment.paymentMode === 'legacy' ? 'deposit' : appointment.paymentMode, ...design }, { now: Math.min(current, requestedStart - 1) });
+      // Persisted snapshots keep their original half-hour starts when accepted
+      // or reconciled; the public creation path enforces today's duration step.
+      checked = validateBooking({ name: appointment.name, whatsapp: appointment.whatsapp, agreedPrice: amount(appointment.agreedPrice), date: appointment.date, time: appointment.time, paymentMode: appointment.paymentMode === 'legacy' ? 'deposit' : appointment.paymentMode, ...design }, { now: Math.min(current, requestedStart - 1), stepMinutes: 30 });
     } catch { throw failure('CALENDAR_INPUT'); }
     if (!checked.valid) throw failure('CALENDAR_INPUT');
     const value = checked.value;

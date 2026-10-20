@@ -1,5 +1,7 @@
 # Booking dropdown simplification — 21 October 2026
 
+Subsequent confirmed scheduling rule: [Duration-based starts](BOOKING-DURATION-SLOTS-2026-10-21.md) supersedes the half-hour candidate spacing in this release snapshot. The combined dropdown is retained.
+
 The booking form combines the previous design-category and duration fields into one required **Layanan & durasi** dropdown. Its six choices are Plain/gel/removal (1 hour), Simple art (1 or 2 hours), and Full art (3, 4 or 5 hours). Simple art / 2 hours remains the default; customers choose the duration agreed during consultation.
 
 **Jam mulai** is a native dropdown. Each option shows its complete start–end interval in WIB. The choices update when service, duration or date changes and use the existing live availability API. Occupied and elapsed candidates remain visible, disabled and labelled **tidak tersedia**. Missing dates have a date prompt; impossible durations have a separate no-fitting-time message. Full Art retains its 12:00 latest-start cap and must finish before closing, including the earlier weekend closing time.

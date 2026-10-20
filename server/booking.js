@@ -8,7 +8,6 @@
  */
 export const BOOKING_DEFAULTS = Object.freeze({
   durationMinutes: 120,
-  stepMinutes: 30, // Proposed interface interval; not a confirmed studio policy.
   horizonDays: 90,
   maxAmount: 10000000, // Technical input limit, not a salon price or deposit rule.
   timeZone: 'Asia/Jakarta',
@@ -69,12 +68,14 @@ function epoch(value) {
 function settings(options = {}) {
   const now = epoch(options.now);
   if (now === null) throw new TypeError('Supply a valid now timestamp with an explicit time zone.');
-  const stepMinutes = options.stepMinutes ?? BOOKING_DEFAULTS.stepMinutes;
   const horizonDays = options.horizonDays ?? BOOKING_DEFAULTS.horizonDays;
   const maxAmount = options.maxAmount ?? BOOKING_DEFAULTS.maxAmount;
   const design = normalizeBookingDesign(options.designType, options.durationMinutes);
   if (!design || (options.includeElapsed !== undefined && typeof options.includeElapsed !== 'boolean')) throw new RangeError('Choose a supported design and exact duration.');
-  if (!Number.isInteger(stepMinutes) || stepMinutes < 1 || stepMinutes > BOOKING_DEFAULTS.durationMinutes) throw new RangeError('stepMinutes must be an integer from 1 to 120.');
+  // New starts advance by the selected duration, anchored at studio opening.
+  // Only trusted historical-snapshot callers override this for old bookings.
+  const stepMinutes = options.stepMinutes ?? design.durationMinutes;
+  if (!Number.isInteger(stepMinutes) || stepMinutes < 1 || stepMinutes > 300) throw new RangeError('stepMinutes must be an integer from 1 to 300.');
   if (!Number.isInteger(horizonDays) || horizonDays < 0 || horizonDays > 3650) throw new RangeError('horizonDays must be an integer from 0 to 3650.');
   if (!Number.isSafeInteger(maxAmount) || maxAmount < 1) throw new RangeError('maxAmount must be a positive safe integer rupiah limit.');
   const minDate = new Date(now + OFFSET).toISOString().slice(0, 10);
@@ -187,7 +188,7 @@ export function getBookingDateBounds(options) {
 }
 
 /**
- * List future starts within hours, excluding only the supplied busy/hold data.
+ * List duration-spaced starts from opening, excluding supplied busy/hold data.
  * With no intervals this is an hours-only preview, not live availability.
  */
 export function listBookingSlots(date, options = {}) {

@@ -147,7 +147,9 @@ export async function createBookingRequest(env, input, { now, calendar } = {}) {
   const current = clock();
   if (!object(input) || typeof input.idempotencyKey !== 'string' || !/^[A-Za-z0-9_-]{16,128}$/.test(input.idempotencyKey)) throw failure('BOOKING_INPUT', 400);
   let checked;
-  try { checked = validateBooking(input, { now: current }); } catch { throw failure('BOOKING_INPUT', 400); }
+  // Normalize against the historical half-hour cadence only to identify an
+  // immutable existing request. New requests must pass today's cadence below.
+  try { checked = validateBooking(input, { now: current, stepMinutes: 30 }); } catch { throw failure('BOOKING_INPUT', 400); }
   if (!checked.valid) throw failure('BOOKING_INPUT', 400, checked.errors);
   const value = checked.value;
   const basePayload = { name: value.name, whatsapp: value.whatsapp, agreedPrice: value.agreedPrice, date: value.date, time: value.time };
@@ -167,6 +169,8 @@ export async function createBookingRequest(env, input, { now, calendar } = {}) {
     if (!samePayload(prior)) throw failure('IDEMPOTENCY_CONFLICT', 409);
     return created(config, prior, current);
   }
+  try { checked = validateBooking(input, { now: current }); } catch { throw failure('BOOKING_INPUT', 400); }
+  if (!checked.valid) throw failure('BOOKING_INPUT', 400, checked.errors);
   if (!proof) throw failure('BOOKING_INPUT', 400, { proof: true });
   // Submission checks availability again. This creates no hold or Calendar
   // event; owner acceptance must still recheck and claim atomically later.

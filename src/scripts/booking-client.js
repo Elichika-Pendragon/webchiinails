@@ -184,7 +184,7 @@ if (form) {
       slotStatus.textContent = 'Memeriksa jadwal…';
     }
     input('time').setAttribute('aria-busy', 'true');
-    document.querySelector('#hint-time').textContent = 'Jam menyesuaikan layanan, durasi, dan ketersediaan. Jadwal diperiksa kembali saat Chii menerima booking.';
+    document.querySelector('#hint-time').textContent = `Jam mulai berjarak ${design.durationMinutes / 60} jam dari 08.00, mengikuti ketersediaan dan jam studio. Jadwal diperiksa kembali saat Chii menerima booking.`;
     updateButton();
     const controller = new AbortController();
     slotController = controller;
