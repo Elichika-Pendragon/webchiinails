@@ -110,15 +110,10 @@ if (heroSlideshow) {
     const bounds = slot.link.getBoundingClientRect();
     return slot.base && bounds.width > 0 && bounds.height > 0;
   });
-  const controls = document.querySelector('[data-hero-controls]');
-  const previousPhoto = document.querySelector('[data-hero-direction="-1"]');
-  const nextPhoto = document.querySelector('[data-hero-direction="1"]');
-  const autoplayPhoto = document.querySelector('[data-hero-autoplay]');
-  const photoPosition = document.querySelector('[data-hero-position]');
   const photoMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let panelCursor = 0, poolCursor = 0, pendingPhoto = null;
   let photoTimer = null, fadeTimer = null, loadTimer = null, photoGeneration = 0;
-  let photoVisible = false, photoHovered = false, photoActive = true, photoAuto = !photoMotion.matches;
+  let photoVisible = !('IntersectionObserver' in window), photoActive = true;
   const stopPhotoTimer = () => { if (photoTimer !== null) clearInterval(photoTimer); photoTimer = null; };
   const cancelPhoto = () => {
     photoGeneration++;
@@ -127,11 +122,9 @@ if (heroSlideshow) {
   };
   const syncPhotoAuto = () => {
     stopPhotoTimer();
-    autoplayPhoto.textContent = photoAuto ? 'Jeda' : 'Putar';
-    autoplayPhoto.setAttribute('aria-label', photoAuto ? 'Jeda pergantian foto' : 'Putar foto secara otomatis');
-    if (!photoAuto || !photoVisible || photoHovered || !photoActive || document.hidden || pendingPhoto || !visiblePhotoSlots().length) return;
+    if (!photoVisible || !photoActive || document.hidden || pendingPhoto || !visiblePhotoSlots().length) return;
     photoTimer = setInterval(() => {
-      if (photoVisible && !photoHovered && photoActive && !document.hidden) advancePhoto(1);
+      if (photoVisible && photoActive && !document.hidden) advancePhoto(1);
     }, 8000);
   };
   const advancePhoto = direction => {
@@ -163,7 +156,6 @@ if (heroSlideshow) {
       slot.base = next; slot.index = index; pendingPhoto = null; poolCursor = index; panelCursor++;
       clearTimeout(loadTimer); clearTimeout(fadeTimer); loadTimer = null; fadeTimer = null;
       next.onload = null; next.onerror = null;
-      photoPosition.textContent = `${index + 1} / ${studioPhotos.length}`;
       syncPhotoAuto();
     };
     let decoding = false;
@@ -185,18 +177,7 @@ if (heroSlideshow) {
     next.src = `/images/${photo.name}-720.webp`;
     if (next.complete && next.naturalWidth) next.onload();
   };
-  const pausePhotos = () => { photoAuto = false; syncPhotoAuto(); };
-  if (photoSlots.length && controls && previousPhoto && nextPhoto && autoplayPhoto && photoPosition) {
-    controls.hidden = false; photoPosition.textContent = `1 / ${studioPhotos.length}`;
-    previousPhoto.addEventListener('click', () => { pausePhotos(); advancePhoto(-1); });
-    nextPhoto.addEventListener('click', () => { pausePhotos(); advancePhoto(1); });
-    autoplayPhoto.addEventListener('click', () => { photoAuto = !photoAuto; syncPhotoAuto(); });
-    for (const slot of photoSlots) {
-      slot.link.addEventListener('pointerdown', pausePhotos, { passive: true });
-      slot.link.addEventListener('focusin', pausePhotos);
-    }
-    heroSlideshow.addEventListener('mouseenter', () => { photoHovered = true; syncPhotoAuto(); });
-    heroSlideshow.addEventListener('mouseleave', () => { photoHovered = false; syncPhotoAuto(); });
+  if (photoSlots.length) {
     document.addEventListener('visibilitychange', () => { if (document.hidden) cancelPhoto(); syncPhotoAuto(); });
     addEventListener('pagehide', () => { photoActive = false; stopPhotoTimer(); cancelPhoto(); });
     addEventListener('pageshow', () => { photoActive = true; syncPhotoAuto(); });
@@ -204,8 +185,8 @@ if (heroSlideshow) {
       photoVisible = entry.isIntersecting;
       if (!photoVisible) cancelPhoto();
       syncPhotoAuto();
-    }, { threshold: .25 }).observe(heroSlideshow);
-    const motionChanged = () => { if (photoMotion.matches) { pausePhotos(); cancelPhoto(); } };
+    }, { threshold: 0 }).observe(heroSlideshow);
+    const motionChanged = () => { cancelPhoto(); syncPhotoAuto(); };
     if (photoMotion.addEventListener) photoMotion.addEventListener('change', motionChanged);
     else photoMotion.addListener?.(motionChanged);
     syncPhotoAuto();

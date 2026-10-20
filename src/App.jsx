@@ -52,7 +52,7 @@ function Hero() {
       <div className="mosaic-feature"><HeroPhoto post={media[0]} priority /></div>
       <div className="mosaic-support"><HeroPhoto post={media[1]} /><div className="mosaic-pair"><HeroPhoto post={media[2]} compact /><HeroPhoto post={media[3]} compact /></div></div>
     </section>
-    <div className="mosaic-caption container"><div><h2>Your nails. Your little joy.</h2><p>Bawa inspirasimu. Kita wujudkan.</p></div><div className="hero-actions"><LinkButton>Kirim desain inspirasimu</LinkButton><div className="hero-photo-controls" data-hero-controls hidden><span data-hero-position>1 / {studioPhotos.length}</span><button className="hero-autoplay" data-hero-autoplay aria-controls="hero-photo">Jeda</button><button className="circle-button" data-hero-direction="-1" aria-label="Foto hero sebelumnya" aria-controls="hero-photo"><img src="/images/prev.svg" width="20" height="20" alt="" /></button><button className="circle-button" data-hero-direction="1" aria-label="Foto hero berikutnya" aria-controls="hero-photo"><img src="/images/next.svg" width="20" height="20" alt="" /></button></div></div></div>
+    <div className="mosaic-caption container"><div><h2>Your nails. Your little joy.</h2><p>Bawa inspirasimu. Kita wujudkan.</p></div><LinkButton className="button hero-mobile-contact">Kirim desain inspirasimu</LinkButton></div>
     <div className="care-strip"><div className="container"><span>✧ Custom request, always</span><span>✧ Basic manicure & vitamin oil</span><span>✧ Booking via WhatsApp</span></div></div>
   </>;
 }

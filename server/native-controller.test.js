@@ -74,7 +74,7 @@ function harness({ hero = true, curatedHero = false, gallery = true, heroSlide =
     for (const post of posts) { const card = make('article', 'instagram-slide', track); const preview = make('div', 'post-placeholder', card); make('img', 'photo', preview).src = `/images/${post.image}.webp`; make('p', '', preview).textContent = 'Instagram post'; const link = make('a', 'post-original', card); link.href = post.url; link.append(document.createTextNode(`${post.title} `), make('span', '', null)); }
     const previous = make('button', '', section); previous.setAttribute('aria-label', 'Postingan sebelumnya'); const next = make('button', '', section); next.setAttribute('aria-label', 'Postingan berikutnya'); make('span', '', section).setAttribute('aria-live', 'polite');
   }
-  let heroFeature, slideLink, slideLinks = [], slideControls, previousPhoto, nextPhoto, autoplayPhoto, photoPosition;
+  let heroFeature, slideLink, slideLinks = [];
   if (heroSlide) {
     heroFeature = make('section', 'mosaic'); heroFeature.setAttribute('data-hero-slideshow', '');
     for (let index = 0; index < 4; index++) {
@@ -86,12 +86,6 @@ function harness({ hero = true, curatedHero = false, gallery = true, heroSlide =
       slideLinks.push(link);
     }
     slideLink = slideLinks[0];
-    const caption = make('div', 'mosaic-caption');
-    slideControls = make('div', '', caption); slideControls.setAttribute('data-hero-controls', ''); slideControls.hidden = true;
-    previousPhoto = make('button', '', slideControls); previousPhoto.setAttribute('data-hero-direction', '-1');
-    nextPhoto = make('button', '', slideControls); nextPhoto.setAttribute('data-hero-direction', '1');
-    autoplayPhoto = make('button', '', slideControls); autoplayPhoto.setAttribute('data-hero-autoplay', '');
-    photoPosition = make('span', '', slideControls); photoPosition.setAttribute('data-hero-position', '');
   }
   let menu, trigger, panel, close;
   if (controls) {
@@ -108,7 +102,7 @@ function harness({ hero = true, curatedHero = false, gallery = true, heroSlide =
   const events = {}, timers = new Map(), intervals = [], fetches = [], observers = [], idleCallbacks = [];
   let timerId = 0;
   class Observer { constructor(callback, options) { this.callback = callback; this.options = options; observers.push(this); } observe(node) { this.node = node; } disconnect() { this.disconnected = true; } }
-  const photoMotion = { matches: photoReduced };
+  const photoMotion = { matches: photoReduced, addEventListener(type, handler) { (this.events ||= {})[type] = handler; }, emit(matches) { this.matches = matches; this.events?.change?.(); } };
   const context = { document, posts, salon, normalizeFeed, selectHeroMedia, studioPhotos, photoSourceSet, URL, AbortController, Promise, getComputedStyle: () => ({ visibility: 'visible' }), matchMedia: query => query === '(prefers-reduced-motion: reduce)' ? photoMotion : { matches: true }, innerHeight: 800,
     setTimeout: (fn, delay) => { const id = ++timerId; timers.set(id, { fn, delay }); return id; }, clearTimeout: id => timers.delete(id), setInterval: (fn, delay) => { intervals.push({ fn, delay, active: true }); return intervals.length; }, clearInterval: id => { if (intervals[id - 1]) intervals[id - 1].active = false; },
     addEventListener: (type, handler) => { (events[type] ||= []).push(handler); }, removeEventListener: (type, handler) => { events[type] = (events[type] || []).filter(item => item !== handler); }, IntersectionObserver: Observer, ResizeObserver: Observer, MutationObserver: Observer,
@@ -118,18 +112,22 @@ function harness({ hero = true, curatedHero = false, gallery = true, heroSlide =
   if (!intersection) delete context.IntersectionObserver;
   context.window = context;
   vm.runInNewContext(`${controller}\nglobalThis.qa={updateHero,updateGallery,states,setMenu,setChat};`, context, { timeout: 1000 });
-  return { ...context.qa, window: context, document, heroes, track, heroFeature, slideLink, slideLinks, slideControls, previousPhoto, nextPhoto, autoplayPhoto, photoPosition, menu, trigger, panel, close, mapAreas, events, timers, intervals, fetches, observers, idleCallbacks, fire: (type, event) => { for (const fn of events[type] || []) fn(event); } };
+  return { ...context.qa, window: context, document, heroes, track, heroFeature, slideLink, slideLinks, photoMotion, menu, trigger, panel, close, mapAreas, events, timers, intervals, fetches, observers, idleCallbacks, fire: (type, event) => { for (const fn of events[type] || []) fn(event); } };
 }
 // make(..., null) is used for detached nodes just like document.createElement.
 const settle = () => new Promise(resolve => setImmediate(resolve));
+const photoTimers = app => app.intervals.filter(timer => timer.active && timer.delay === 8000);
+const exposePhotos = app => app.observers.find(observer => observer.node === app.heroFeature)?.callback([{ isIntersecting: true }]);
+const tickPhoto = app => { const active = photoTimers(app); assert.equal(active.length, 1); active[0].fn(); return active[0].fn; };
 
 test('desktop mosaic changes one tile at a time in round-robin order without duplicate designs', async () => {
   const app = harness({ hero: false, gallery: false, heroSlide: true, photoReduced: false });
+  exposePhotos(app);
   const expectedPhotos = [4, 5, 0, 1, 2, 3];
   for (let tick = 0; tick < expectedPhotos.length; tick++) {
     const panel = tick % 4, before = app.slideLinks.map(link => link.querySelector('img'));
-    app.nextPhoto.emit('click'); app.nextPhoto.emit('click');
-    assert.equal(app.heroFeature.querySelectorAll('img').length, 5, 'Only one next image is requested, including repeated clicks');
+    const deliverTick = tickPhoto(app); deliverTick();
+    assert.equal(app.heroFeature.querySelectorAll('img').length, 5, 'Only one next image is requested, including repeated timer delivery');
     const next = app.slideLinks[panel].querySelectorAll('img')[1];
     assert.equal(next.src, `/images/${studioPhotos[expectedPhotos[tick]].name}-720.webp`);
     assert.equal(next.sizes, before[panel].getAttribute('sizes') || before[panel].sizes);
@@ -145,9 +143,10 @@ test('desktop mosaic changes one tile at a time in round-robin order without dup
 
 test('mobile rotates all six photos in the visible tile without loading hidden supporting tiles', async () => {
   const app = harness({ hero: false, gallery: false, heroSlide: true, heroSlideMobile: true });
+  exposePhotos(app);
   const supporting = app.slideLinks.slice(1).map(link => link.querySelector('img'));
   for (const index of [1, 2, 3, 4, 5, 0]) {
-    app.nextPhoto.emit('click'); const next = app.slideLink.querySelectorAll('img')[1];
+    tickPhoto(app); const next = app.slideLink.querySelectorAll('img')[1];
     assert.equal(next.src, `/images/${studioPhotos[index].name}-720.webp`);
     for (let panel = 1; panel < 4; panel++) {
       assert.equal(app.slideLinks[panel].querySelectorAll('img').length, 1);
@@ -162,8 +161,8 @@ test('hero rotates one decoded photograph every eight visible seconds with a cov
   const active = () => app.intervals.filter(timer => timer.active);
   const visibility = app.observers.find(observer => observer.node === app.heroFeature);
   const initial = app.slideLink.querySelector('img');
-  assert.equal(app.heroFeature.contains(app.slideControls), false, 'Controls live in the separate hero caption');
-  assert.equal(app.slideControls.hidden, false); assert.equal(app.photoPosition.textContent, '1 / 6');
+  assert.equal(app.document.querySelector('[data-hero-controls]'), null, 'Autoplay needs no manual control markup');
+  assert.equal(visibility.options.threshold, 0, 'A partly visible tall mosaic starts without a quarter-height threshold');
   assert.equal(app.slideLink.querySelectorAll('img').length, 1); assert.equal(active().length, 0);
   visibility.callback([{ isIntersecting: true }]); assert.equal(active().length, 1); assert.equal(active()[0].delay, 8000);
   active()[0].fn(); const next = app.slideLink.querySelectorAll('img')[1];
@@ -176,7 +175,7 @@ test('hero rotates one decoded photograph every eight visible seconds with a cov
   assert.equal(next.classList.contains('is-visible'), true); assert.equal(initial.parentNode, app.slideLink);
   const fade = [...app.timers.values()].find(timer => timer.delay === 650); assert.ok(fade); fade.fn();
   assert.equal(initial.parentNode, null); assert.equal(app.slideLink.querySelector('img'), next); assert.equal(next.className, 'photo');
-  assert.equal(next.getAttribute('aria-hidden'), null); assert.equal(next.alt, studioPhotos[1].alt); assert.equal(app.photoPosition.textContent, '2 / 6');
+  assert.equal(next.getAttribute('aria-hidden'), null); assert.equal(next.alt, studioPhotos[1].alt);
   assert.equal(active().length, 1);
   visibility.callback([{ isIntersecting: false }]); assert.equal(active().length, 0);
   app.document.hidden = true; visibility.callback([{ isIntersecting: true }]); assert.equal(active().length, 0);
@@ -184,48 +183,67 @@ test('hero rotates one decoded photograph every eight visible seconds with a cov
   app.document.hidden = true; app.document.emit('visibilitychange'); assert.equal(active().length, 0);
 });
 
-test('hero pause and manual navigation preserve user control without moving Instagram', async () => {
+test('hover, focus and pointer interactions cannot stop automatic photos or move Instagram', async () => {
   const app = harness({ hero: false, heroSlide: true, heroSlideMobile: true, photoReduced: false });
   const active = () => app.intervals.filter(timer => timer.active && timer.delay === 8000);
   const instagramPosition = app.track.scrollLeft;
-  app.observers.find(observer => observer.node === app.heroFeature).callback([{ isIntersecting: true }]);
-  app.autoplayPhoto.emit('click'); assert.equal(active().length, 0); assert.equal(app.autoplayPhoto.textContent, 'Putar');
-  app.autoplayPhoto.emit('click'); app.heroFeature.emit('mouseenter'); assert.equal(active().length, 0);
-  app.heroFeature.emit('mouseleave'); assert.equal(active().length, 1);
-  app.slideLink.emit('pointerdown'); assert.equal(active().length, 0);
-  app.autoplayPhoto.emit('click'); app.slideLink.emit('focusin'); assert.equal(active().length, 0);
-  app.autoplayPhoto.emit('click'); app.nextPhoto.emit('click'); assert.equal(active().length, 0);
+  exposePhotos(app);
+  for (const [node, event] of [[app.heroFeature, 'mouseenter'], [app.slideLink, 'pointerdown'], [app.slideLink, 'focusin'], [app.heroFeature, 'mouseleave']]) {
+    node.emit(event); assert.equal(active().length, 1);
+  }
+  tickPhoto(app); assert.equal(active().length, 0);
   const next = app.slideLink.querySelectorAll('img')[1]; await next.onload();
   [...app.timers.values()].find(timer => timer.delay === 650).fn();
-  assert.equal(app.photoPosition.textContent, '2 / 6'); assert.equal(active().length, 0); assert.equal(app.track.scrollLeft, instagramPosition);
-  app.previousPhoto.emit('click'); const previous = app.slideLink.querySelectorAll('img')[1];
-  assert.equal(previous.src, '/images/jessica-french-gold-720.webp');
+  assert.equal(active().length, 1); assert.equal(app.track.scrollLeft, instagramPosition);
+  tickPhoto(app); const following = app.slideLink.querySelectorAll('img')[1];
+  assert.equal(following.src, `/images/${studioPhotos[2].name}-720.webp`);
 });
 
-test('reduced motion starts the hero paused and manual previous wraps without a fade', async () => {
+test('reduced motion automatically replaces photos without a fade or manual controls', async () => {
   const app = harness({ hero: false, gallery: false, heroSlide: true, heroSlideMobile: true });
-  app.observers.find(observer => observer.node === app.heroFeature).callback([{ isIntersecting: true }]);
-  assert.equal(app.autoplayPhoto.textContent, 'Putar'); assert.equal(app.intervals.filter(timer => timer.active).length, 0);
-  app.previousPhoto.emit('click'); const next = app.slideLink.querySelectorAll('img')[1];
-  assert.equal(next.src, '/images/jessica-press-on-collection-720.webp'); await next.onload();
-  assert.equal(app.slideLink.querySelectorAll('img').length, 1); assert.equal(app.photoPosition.textContent, '6 / 6');
+  exposePhotos(app);
+  tickPhoto(app); const next = app.slideLink.querySelectorAll('img')[1];
+  assert.equal(next.src, `/images/${studioPhotos[1].name}-720.webp`); await next.onload();
+  assert.equal(app.slideLink.querySelectorAll('img').length, 1); assert.equal(app.slideLink.querySelector('img'), next);
   assert.equal([...app.timers.values()].some(timer => timer.delay === 650), false);
+  assert.equal(photoTimers(app).length, 1);
+});
+
+test('without IntersectionObserver automatic photo rotation starts and still pauses in a hidden tab', async () => {
+  const app = harness({ hero: false, gallery: false, heroSlide: true, heroSlideMobile: true, intersection: false });
+  tickPhoto(app); const next = app.slideLink.querySelectorAll('img')[1]; await next.onload();
+  assert.equal(app.slideLink.querySelector('img'), next); assert.equal(photoTimers(app).length, 1);
+  app.document.hidden = true; app.document.emit('visibilitychange'); assert.equal(photoTimers(app).length, 0);
+  app.document.hidden = false; app.document.emit('visibilitychange'); assert.equal(photoTimers(app).length, 1);
+});
+
+test('motion preference changes cancel stale layers and restart automatic replacement', async () => {
+  const app = harness({ hero: false, gallery: false, heroSlide: true, heroSlideMobile: true, photoReduced: false });
+  exposePhotos(app); const initial = app.slideLink.querySelector('img'); tickPhoto(app);
+  const stale = app.slideLink.querySelectorAll('img')[1]; let decodeReady;
+  stale.decode = () => new Promise(resolve => { decodeReady = resolve; }); stale.onload();
+  app.photoMotion.emit(true); decodeReady(); await settle();
+  assert.equal(stale.parentNode, null); assert.equal(initial.parentNode, app.slideLink); assert.equal(photoTimers(app).length, 1);
+  tickPhoto(app); const next = app.slideLink.querySelectorAll('img')[1]; await next.onload();
+  assert.equal(app.slideLink.querySelector('img'), next); assert.equal([...app.timers.values()].some(timer => timer.delay === 650), false);
+  app.photoMotion.emit(false); assert.equal(photoTimers(app).length, 1);
 });
 
 test('failed or stale hero image work never removes the photograph already displayed', async () => {
   const app = harness({ hero: false, gallery: false, heroSlide: true, heroSlideMobile: true, photoReduced: false });
+  exposePhotos(app);
   const initial = app.slideLink.querySelector('img');
-  app.nextPhoto.emit('click'); let next = app.slideLink.querySelectorAll('img')[1]; next.onerror();
+  tickPhoto(app); let next = app.slideLink.querySelectorAll('img')[1]; next.onerror();
   assert.equal(app.slideLink.querySelectorAll('img').length, 1); assert.equal(initial.parentNode, app.slideLink);
-  app.nextPhoto.emit('click'); next = app.slideLink.querySelectorAll('img')[1];
+  tickPhoto(app); next = app.slideLink.querySelectorAll('img')[1];
   next.decode = () => Promise.reject(new Error('decode')); await next.onload();
   assert.equal(app.slideLink.querySelectorAll('img').length, 1); assert.equal(initial.parentNode, app.slideLink);
-  app.nextPhoto.emit('click'); next = app.slideLink.querySelectorAll('img')[1];
+  tickPhoto(app); next = app.slideLink.querySelectorAll('img')[1];
   let decodeReady; next.decode = () => new Promise(resolve => { decodeReady = resolve; }); next.onload();
   app.fire('pagehide', {}); decodeReady(); await settle();
   assert.equal(app.slideLink.querySelectorAll('img').length, 1); assert.equal(initial.parentNode, app.slideLink);
-  assert.equal(app.photoPosition.textContent, '1 / 6'); assert.equal(app.intervals.filter(timer => timer.active).length, 0);
-  app.fire('pageshow', {}); app.nextPhoto.emit('click'); next = app.slideLink.querySelectorAll('img')[1];
+  assert.equal(app.intervals.filter(timer => timer.active).length, 0);
+  app.fire('pageshow', {}); tickPhoto(app); next = app.slideLink.querySelectorAll('img')[1];
   app.document.hidden = true; app.document.emit('visibilitychange');
   assert.equal(next.parentNode, null); assert.equal(initial.parentNode, app.slideLink);
 });
