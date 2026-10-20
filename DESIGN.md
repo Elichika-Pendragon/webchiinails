@@ -15,6 +15,8 @@ This records the existing website and the owner-approved refinement on 20 Octobe
 
 ## Interaction
 
+Unavailable booking dates use a soft gray background (`#f0f0f0`) and muted gray numerals (`#777`), including hover and pressed states. They remain disabled with the existing keyboard focus indicator; selected available dates retain the rose treatment.
+
 Use at least 44 × 44 CSS pixels for the main standalone controls and mobile page tabs, with full-row native disclosure summaries. Preserve inline text links within prose. Keep the secondary booking-rules link on its own centered row below the main CTA.
 
 Menu is a disclosure, not a modal: normal Tab navigation remains available. Close it on outside pointer input, focus leaving its controls, Escape, selecting a destination, or crossing the 960px breakpoint. Escape returns focus to Menu. Opening the contact panel closes Menu and moves focus to the contact close control; closing it with Escape or its close button returns focus to the chat trigger. The existing nonmodal contact region permits normal keyboard navigation.

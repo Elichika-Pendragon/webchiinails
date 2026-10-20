@@ -249,7 +249,7 @@ if (form) {
     if (calendar?.getMonth() === month && info.selectionKey === monthSelectionKey(month)) {
       calendar.setAvailability({ month, status: info.status, closedDates: info.closedDates });
       calendarStatus.textContent = info.status === 'ready'
-        ? 'Tanggal gelap tidak tersedia. Jam kosong diperiksa setelah memilih tanggal.'
+        ? 'Tanggal abu-abu tidak tersedia. Jam kosong diperiksa setelah memilih tanggal.'
         : info.status === 'loading' ? 'Memeriksa jadwal bulan ini…' : 'Jadwal bulan ini belum dapat diperiksa. Coba lagi sebelum memilih tanggal.';
       calendarRetry.hidden = info.status !== 'error';
     }
