@@ -15,7 +15,7 @@
  * https://developers.google.com/workspace/calendar/api/v3/reference/events/insert
  * https://developers.google.com/workspace/calendar/api/v3/reference/events/get
  */
-import { validateBooking } from './booking.js';
+import { validateBooking, BOOKING_DESIGNS, normalizeBookingDesign } from './booking.js';
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const API_URL = 'https://www.googleapis.com/calendar/v3';
@@ -71,7 +71,7 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
   const email = env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   const calendarId = env.GOOGLE_CALENDAR_ID;
   const pem = env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
-  const request = options.fetch ?? globalThis.fetch;
+  const request = options.fetch ?? (typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : null);
   const now = options.now ?? Date.now;
   const timeoutMs = options.timeoutMs ?? 8000;
   const maxRangeDays = options.maxRangeDays ?? 31;
@@ -106,7 +106,7 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
   }
 
   // Timeout covers both headers and JSON body, even if a test fetch ignores abort.
-  async function jsonRequest(url, init, stage, allowConflict = false, allowNotFound = false) {
+  async function jsonRequest(url, init, stage, allowConflict = false, allowNotFound = false, allowGone = false) {
     const controller = new AbortController();
     let timer;
     const timeout = new Promise((_, reject) => {
@@ -114,10 +114,13 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     });
     try {
       return await Promise.race([(async () => {
-        const response = await request(url, { ...init, redirect: 'error', signal: controller.signal });
+        // Workers rejects redirect:"error" before network I/O. Manual keeps
+        // credentials on this exact endpoint; every redirect is rejected below.
+        const response = await request(url, { ...init, redirect: 'manual', signal: controller.signal });
         if (!response || typeof response.status !== 'number') throw failure('CALENDAR_RESPONSE');
         if (allowConflict && response.status === 409) return { conflict: true };
         if (allowNotFound && response.status === 404) return NOT_FOUND;
+        if (allowGone && response.status === 410) return NOT_FOUND;
         if (!response.ok) {
           if (stage === 'token' || response.status === 401 || response.status === 403) {
             cachedToken = null;
@@ -159,13 +162,13 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     finally { pendingToken = null; }
   }
 
-  async function api(path, body, allowConflict = false, allowNotFound = false) {
+  async function api(path, body, allowConflict = false, allowNotFound = false, allowGone = false) {
     const token = await accessToken();
     return jsonRequest(`${API_URL}${path}`, {
       method: body ? 'POST' : 'GET',
       headers: { Authorization: `Bearer ${token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}),
-    }, 'calendar', allowConflict, allowNotFound);
+    }, 'calendar', allowConflict, allowNotFound, allowGone);
   }
 
   async function availability(bounds = {}) {
@@ -205,36 +208,51 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     if (requestedStart === null) throw failure('CALENDAR_INPUT');
     const current = clock();
     const amount = value => Number.isSafeInteger(value) ? String(value) : value;
+    const legacySchedule = appointment.designType === undefined || appointment.designType === 'legacy';
+    const design = legacySchedule ? { designType: 'simple', durationMinutes: 120 } : normalizeBookingDesign(appointment.designType, appointment.durationMinutes);
+    if (!design || (legacySchedule && appointment.durationMinutes !== undefined && appointment.durationMinutes !== 120)) throw failure('CALENDAR_INPUT');
     let checked;
     try {
       // Past starts permit reconciliation of a prior write only, never insertion.
-      // Recompute the canonical 10% DP; legacy/customer deposit input is ignored.
-      checked = validateBooking({ name: appointment.name, whatsapp: appointment.whatsapp, agreedPrice: amount(appointment.agreedPrice), date: appointment.date, time: appointment.time }, { now: Math.min(current, requestedStart - 1) });
+      // This is a trusted server snapshot, never a customer's approval/payment
+      // flag. Omitted mode preserves the original adapter's v1 fingerprint.
+      checked = validateBooking({ name: appointment.name, whatsapp: appointment.whatsapp, agreedPrice: amount(appointment.agreedPrice), date: appointment.date, time: appointment.time, paymentMode: appointment.paymentMode === 'legacy' ? 'deposit' : appointment.paymentMode, ...design }, { now: Math.min(current, requestedStart - 1) });
     } catch { throw failure('CALENDAR_INPUT'); }
     if (!checked.valid) throw failure('CALENDAR_INPUT');
     const value = checked.value;
+    const legacy = appointment.paymentMode === undefined || appointment.paymentMode === 'legacy';
+    if (!legacySchedule && legacy) throw failure('CALENDAR_INPUT');
+    const paymentMode = legacy ? 'legacy' : value.paymentMode;
+    const paymentAmount = legacy ? Math.floor(value.agreedPrice / 10) + (value.agreedPrice % 10 ? 1 : 0) : value.deposit;
+    if ((!legacy && appointment.paymentMode !== paymentMode) || (appointment.paymentAmount !== undefined && appointment.paymentAmount !== paymentAmount)) throw failure('CALENDAR_INPUT');
     const { startISO, endISO } = checked.preview;
     const eventId = `chii${await sha256(`chiinails:booking:v1:${bookingId}`)}`;
     const summary = `Chii Nails · ${value.name}`;
-    const description = `Booking: ${bookingId}\nNama: ${value.name}\nWhatsApp: +${value.whatsapp}\nHarga disepakati: Rp${value.agreedPrice}\nDP 10%: Rp${value.deposit}\nNominal dan pembayaran diperiksa terpisah oleh operator.`;
-    const fingerprint = await sha256(JSON.stringify({ version: 1, calendarId, bookingId, summary, description, startISO, endISO }));
+    const sharedDescription = `Booking: ${bookingId}\nNama: ${value.name}\nWhatsApp: ${legacySchedule ? `+${value.whatsapp}` : `https://wa.me/${value.whatsapp}`}\nHarga disepakati: Rp${value.agreedPrice}`;
+    const financialDescription = legacy
+      ? `${sharedDescription}\nDP 10%: Rp${paymentAmount}\nNominal dan pembayaran diperiksa terpisah oleh operator.`
+      : `${sharedDescription}\nPilihan pembayaran: ${paymentMode === 'full' ? 'Full payment' : 'DP 10%, minimal Rp20000'}\nNominal pembayaran: Rp${paymentAmount}\nSisa pembayaran: Rp${value.agreedPrice - paymentAmount}\nNominal dan pembayaran diperiksa terpisah oleh operator.`;
+    const description = legacySchedule ? financialDescription : `${financialDescription}\nJenis desain: ${BOOKING_DESIGNS[design.designType].label}\nDurasi: ${design.durationMinutes} menit`;
+    const version = legacySchedule ? legacy ? 1 : 2 : 3;
+    const source = `chiinails-booking-v${version}`;
+    const fingerprint = await sha256(JSON.stringify({ version, calendarId, bookingId, summary, description, startISO, endISO }));
     const body = {
       id: eventId, summary, description,
       start: { dateTime: startISO, timeZone: 'Asia/Jakarta' },
       end: { dateTime: endISO, timeZone: 'Asia/Jakarta' },
       status: 'confirmed', visibility: 'private', transparency: 'opaque',
-      extendedProperties: { private: { source: 'chiinails-booking-v1', bookingId, fingerprint } },
+      extendedProperties: { private: { source, bookingId, fingerprint } },
     };
-    return { body, bookingId, eventId, summary, description, fingerprint, startISO, endISO, past: requestedStart <= current };
+    return { body, bookingId, eventId, summary, description, fingerprint, source, startISO, endISO, past: requestedStart <= current };
   }
 
   function verifyEvent(event, expected, reconciled) {
-    const { bookingId, eventId, summary, description, fingerprint, startISO, endISO } = expected;
+    const { bookingId, eventId, summary, description, fingerprint, source, startISO, endISO } = expected;
     const metadata = event.extendedProperties?.private;
     if (event.id !== eventId || event.status !== 'confirmed' || event.summary !== summary || event.description !== description
       || event.visibility !== 'private' || event.transparency !== 'opaque'
       || timestamp(event.start?.dateTime) !== timestamp(startISO) || timestamp(event.end?.dateTime) !== timestamp(endISO)
-      || !record(metadata) || metadata.source !== 'chiinails-booking-v1' || metadata.bookingId !== bookingId || metadata.fingerprint !== fingerprint
+      || !record(metadata) || metadata.source !== source || metadata.bookingId !== bookingId || metadata.fingerprint !== fingerprint
       || (event.attendees !== undefined && (!Array.isArray(event.attendees) || event.attendees.length))) throw failure(reconciled ? 'CALENDAR_CONFLICT' : 'CALENDAR_RESPONSE');
     return { eventId, startISO, endISO, reconciled };
   }
@@ -259,5 +277,34 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     return { found: true, ...verifyEvent(event, expected, true) };
   }
 
-  return Object.freeze({ availability, createApprovedAppointment, reconcileApprovedAppointment });
+  // Definite deletion of an already accepted event can release application
+  // claims. Callers must first establish healthy access to this same calendar
+  // through free/busy; 403, malformed events and network errors never mean gone.
+  async function readAppointmentState(input = {}) {
+    if (!record(input) || typeof input.bookingId !== 'string' || !/^[A-Za-z0-9_-]{8,128}$/.test(input.bookingId)
+      || typeof input.eventId !== 'string') throw failure('CALENDAR_INPUT');
+    const expectedId = `chii${await sha256(`chiinails:booking:v1:${input.bookingId}`)}`;
+    if (input.eventId !== expectedId) throw failure('CALENDAR_INPUT');
+    const event = await api(`/calendars/${encodeURIComponent(calendarId)}/events/${expectedId}`, undefined, false, true, true);
+    if (event === NOT_FOUND) return { state: 'deleted' };
+    if (event.id !== expectedId || !['confirmed', 'tentative', 'cancelled'].includes(event.status)) throw failure('CALENDAR_RESPONSE');
+    // A cancelled Google event may contain only its ID and status (a tombstone).
+    if (event.status === 'cancelled') return { state: 'deleted' };
+    const start = timestamp(event.start?.dateTime);
+    const end = timestamp(event.end?.dateTime);
+    const metadata = event.extendedProperties?.private;
+    if (start === null || end === null || end <= start || !record(metadata) || metadata.bookingId !== input.bookingId
+      || !['chiinails-booking-v1', 'chiinails-booking-v2', 'chiinails-booking-v3'].includes(metadata.source)) throw failure('CALENDAR_RESPONSE');
+    return { state: 'active' };
+  }
+
+  // Recheck on every synchronization batch; a cached role would miss a later
+  // downgrade where free/busy works but event 404 actually means inaccessible.
+  async function verifyCalendarWriteAccess() {
+    const result = await api(`/calendars/${encodeURIComponent(calendarId)}/events?maxResults=1&fields=accessRole`);
+    if (!['writer', 'owner'].includes(result.accessRole)) throw failure('CALENDAR_AUTH');
+    return true;
+  }
+
+  return Object.freeze({ availability, createApprovedAppointment, reconcileApprovedAppointment, readAppointmentState, verifyCalendarWriteAccess });
 }

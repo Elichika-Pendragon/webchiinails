@@ -9,26 +9,32 @@
  * helpers. All handlers accept (Request, env) and return a sanitized Response.
  */
 import { BookingAuthError, getAuthChallenge, signInOwner, requireBookingOwner, signOutOwner } from './booking-auth.js';
-import { BookingRequestError, createBookingRequest, getBookingRequest, decideBookingRequest } from './booking-requests.js';
+import { BookingRequestError, createBookingRequest, getBookingRequest, decideBookingRequest, getBookingAvailability, getBookingPaymentProof } from './booking-requests.js';
 import { createGoogleCalendarProvider } from './google-calendar.js';
+import { normalizeBookingDesign, getOperatingHours, getBookingDateBounds } from './booking.js';
+import { PAYMENT_PROOF_BODY_MAX_BYTES, PAYMENT_PROOF_MAX_BYTES, paymentProofBytes } from './booking-proofs.js';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', { fatal: true });
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const TOKEN = /^[A-Za-z0-9_-]{43}$/;
 const REQUEST_FIELDS = ['name', 'whatsapp', 'agreedPrice', 'date', 'time', 'idempotencyKey'];
-const VALIDATION_FIELDS = ['name', 'whatsapp', 'agreedPrice', 'date', 'time'];
+const VALIDATION_FIELDS = ['name', 'whatsapp', 'agreedPrice', 'date', 'time', 'paymentMode', 'designType', 'durationMinutes', 'proof'];
 const FIELD_MESSAGES = {
   name: 'Isi nama 2–80 karakter.',
   whatsapp: 'Isi nomor WhatsApp Indonesia yang valid.',
   agreedPrice: 'Isi harga yang disepakati dalam angka Rupiah.',
   date: 'Pilih tanggal yang valid dalam periode pemesanan.',
   time: 'Pilih jam layanan yang masih tersedia.',
+  paymentMode: 'Pilih DP atau full payment.',
+  designType: 'Pilih jenis desain yang valid.',
+  durationMinutes: 'Pilih durasi sesuai konsultasi.',
+  proof: 'Unggah bukti pembayaran dalam format gambar.',
 };
 const STORE_CODES = new Set([
   'BOOKING_CONFIG', 'BOOKING_INPUT', 'BOOKING_OWNER', 'REQUEST_NOT_FOUND', 'REQUEST_EXPIRED', 'REQUEST_STATE',
   'REQUEST_IN_PROGRESS', 'IDEMPOTENCY_CONFLICT', 'BOOKING_RATE_LIMIT', 'SLOT_CONFLICT', 'CALENDAR_UNAVAILABLE',
-  'CALENDAR_RECONCILE', 'BOOKING_STORAGE',
+  'CALENDAR_RECONCILE', 'BOOKING_STORAGE', 'PROOF_NOT_FOUND', 'PROOF_EXPIRED',
 ]);
 const ERROR_STATUSES = new Set([400, 401, 403, 404, 405, 409, 410, 413, 415, 429, 503]);
 const HTTP_ERRORS = {
@@ -199,15 +205,18 @@ export function createBookingHttpHandlers(overrides = {}) {
   const createRequest = overrides.createBookingRequest ?? createBookingRequest;
   const getRequest = overrides.getBookingRequest ?? getBookingRequest;
   const decideRequest = overrides.decideBookingRequest ?? decideBookingRequest;
+  const readAvailability = overrides.getBookingAvailability ?? getBookingAvailability;
+  const readProof = overrides.getBookingPaymentProof ?? getBookingPaymentProof;
   const requireOwner = overrides.requireBookingOwner ?? requireBookingOwner;
   const challenge = overrides.getAuthChallenge ?? getAuthChallenge;
   const signIn = overrides.signInOwner ?? signInOwner;
   const signOut = overrides.signOutOwner ?? signOutOwner;
   const createCalendar = overrides.createGoogleCalendarProvider ?? createGoogleCalendarProvider;
   const bodyTimeoutMs = overrides.bodyTimeoutMs ?? 5000;
+  const proofBodyTimeoutMs = overrides.bodyTimeoutMs ?? 30000;
   const authOptions = { now, ...(overrides.fetch ? { fetch: overrides.fetch } : {}) };
   // Keep at most two credential sets per isolate. Tokens/imported RSA keys live
-  // in the provider; normal reads/cancel/login never instantiate this adapter.
+  // in the provider; owner reads/cancel/login never instantiate this adapter.
   const calendarProviders = [];
 
   function calendar(env) {
@@ -217,7 +226,8 @@ export function createBookingHttpHandlers(overrides = {}) {
     let provider;
     try { provider = createCalendar(env, { now, ...(overrides.fetch ? { fetch: overrides.fetch } : {}) }); }
     catch { throw new BookingHttpError('BOOKING_UNAVAILABLE'); }
-    if (typeof provider?.availability !== 'function' || typeof provider?.createApprovedAppointment !== 'function' || typeof provider?.reconcileApprovedAppointment !== 'function') throw new BookingHttpError('BOOKING_UNAVAILABLE');
+    if (typeof provider?.availability !== 'function' || typeof provider?.createApprovedAppointment !== 'function' || typeof provider?.reconcileApprovedAppointment !== 'function'
+      || typeof provider?.readAppointmentState !== 'function' || typeof provider?.verifyCalendarWriteAccess !== 'function') throw new BookingHttpError('BOOKING_UNAVAILABLE');
     calendarProviders.push({ values, provider });
     if (calendarProviders.length > 2) calendarProviders.shift();
     return provider;
@@ -240,9 +250,43 @@ export function createBookingHttpHandlers(overrides = {}) {
       assertReady(env);
       method(request, ['POST']);
       sameOrigin(request, env, true);
-      const input = await readJson(request, 8192, bodyTimeoutMs);
-      if (Object.keys(input).some(key => !REQUEST_FIELDS.includes(key)) || REQUEST_FIELDS.some(key => typeof input[key] !== 'string')) throw new BookingHttpError('BOOKING_INPUT');
-      return json(await createRequest(env, input, { now }), 201);
+      const input = await readJson(request, PAYMENT_PROOF_BODY_MAX_BYTES, proofBodyTimeoutMs);
+      if (Object.keys(input).some(key => !REQUEST_FIELDS.includes(key) && !['paymentMode', 'designType', 'durationMinutes', 'proof'].includes(key)) || REQUEST_FIELDS.some(key => typeof input[key] !== 'string')
+        || (input.paymentMode !== undefined && !['deposit', 'full'].includes(input.paymentMode))
+        || (input.designType !== undefined && typeof input.designType !== 'string') || (input.durationMinutes !== undefined && typeof input.durationMinutes !== 'string')
+        || !normalizeBookingDesign(input.designType, input.durationMinutes)
+        || !object(input.proof) || Object.keys(input.proof).sort().join(',') !== 'base64,contentType' || input.proof.contentType !== 'image/jpeg'
+        || typeof input.proof.base64 !== 'string' || input.proof.base64.length > 4 * Math.ceil(PAYMENT_PROOF_MAX_BYTES / 3)) throw new BookingHttpError('BOOKING_INPUT');
+      return json(await createRequest(env, input, { now, calendar: calendar(env) }), 201);
+    }),
+    proof: guarded(async (request, env) => {
+      assertReady(env);
+      method(request, ['GET']);
+      sameOrigin(request, env);
+      const identity = await requireOwner(request, env, authOptions);
+      const owner = { email: identity.email, subject: identity.subject, verified: true };
+      const bytes = paymentProofBytes(await readProof(env, tokenFrom(request), { owner, now }));
+      if (!bytes) throw new BookingHttpError('BOOKING_UNAVAILABLE');
+      const headers = secureHeaders();
+      headers.set('Content-Type', 'image/jpeg');
+      headers.set('Content-Length', String(bytes.byteLength));
+      headers.set('Content-Security-Policy', "default-src 'none'; sandbox");
+      return new Response(bytes, { headers });
+    }),
+    availability: guarded(async (request, env) => {
+      assertReady(env);
+      method(request, ['POST']);
+      sameOrigin(request, env, true);
+      if (new URL(request.url).search) throw new BookingHttpError('BOOKING_INPUT');
+      const input = await readJson(request, 1024, bodyTimeoutMs);
+      if (Object.keys(input).sort().join(',') !== 'date,designType,durationMinutes' || typeof input.date !== 'string' || typeof input.designType !== 'string'
+        || typeof input.durationMinutes !== 'string') throw new BookingHttpError('BOOKING_INPUT');
+      const selection = normalizeBookingDesign(input.designType, input.durationMinutes);
+      if (!selection) throw new BookingHttpError('BOOKING_INPUT');
+      const date = input.date;
+      const bounds = getBookingDateBounds({ now: now() });
+      if (!getOperatingHours(date) || date < bounds.minDate || date > bounds.maxDate) throw new BookingHttpError('BOOKING_INPUT');
+      return json(await readAvailability(env, { date, ...selection }, { now, calendar: calendar(env) }));
     }),
     review: guarded(async (request, env) => {
       assertReady(env);
@@ -274,3 +318,5 @@ export const handleBookingStatus = handlers.status;
 export const handleBookingRequests = handlers.requests;
 export const handleBookingReview = handlers.review;
 export const handleBookingSession = handlers.session;
+export const handleBookingAvailability = handlers.availability;
+export const handleBookingProof = handlers.proof;

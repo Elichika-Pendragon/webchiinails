@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { salon } from '../src/content.js';
 import {
   BOOKING_DEFAULTS, getOperatingHours, getBookingDateBounds,
-  listBookingSlots, normalizeWhatsApp, parseRupiah, calculateDeposit, validateBooking,
+  listBookingSlots, normalizeWhatsApp, parseRupiah, calculateDeposit, calculatePayment, validateBooking, normalizeBookingDesign, BOOKING_DESIGNS,
 } from './booking.js';
 
 const now = Date.parse('2026-10-19T17:30:00Z'); // 20 Oct, 00.30 WIB.
@@ -121,6 +121,29 @@ test('WhatsApp normalizes common Indonesian formats and rejects injected/foreign
   for (const value of ['+12025550123', '81234567890', '+62081234567890', '628123', '62812345678901234', '08abc123456789', '08\n1234567890', '++6281234567890', '6e281234567890', {}, 6281234567890, null]) assert.equal(normalizeWhatsApp(value), null, String(value));
 });
 
+test('Indonesian mobile prefixes and exact national length boundaries normalize without accepting service numbers', () => {
+  for (const prefix of ['81', '82', '83', '85', '86', '87', '88', '89']) {
+    for (const length of [9, 10, 11, 12]) {
+      const national = prefix + '1234567890'.slice(0, length - 2);
+      for (const value of [`0${national}`, `62${national}`, `+62${national}`]) assert.equal(normalizeWhatsApp(value), `62${national}`, value);
+    }
+  }
+  for (const value of ['081234567', '6281234567', '+6281234567', '08123456789012', '628123456789012', '+628123456789012',
+    '080412345678', '08001234567', '084123456789', '6280412345678', '628412345678', '+081234567890', '+08 1234 567890',
+    '02112345678', '622112345678', '+626281234567890', '08abc123456789', '08123456789x', '08123.456789',
+    '081234567890\n', '081234567890\u0000', '０８１２３４５６７８９０', '٠٨١٢٣٤٥٦٧٨٩٠']) assert.equal(normalizeWhatsApp(value), null, value);
+});
+
+test('invalid mobile syntax produces only a WhatsApp field error while valid formatted input is canonical', () => {
+  for (const whatsapp of ['081234567', '08123456789012', '080412345678', '084123456789', '+081234567890', '08123456789x']) {
+    const result = validateBooking(form({ whatsapp }), { now });
+    assert.equal(result.valid, false);
+    assert.deepEqual(Object.keys(result.errors), ['whatsapp']);
+    assert.equal(result.value, null);
+  }
+  assert.equal(validateBooking(form({ whatsapp: '+62 (812) 3456-7890' }), { now }).value.whatsapp, '6281234567890');
+});
+
 test('rupiah accepts digit strings only and never coerces malformed values', () => {
   assert.equal(parseRupiah('155000'), 155000);
   assert.equal(parseRupiah('0'), 0);
@@ -129,8 +152,8 @@ test('rupiah accepts digit strings only and never coerces malformed values', () 
   assert.equal(parseRupiah('10000001', 20000000), 10000001);
 });
 
-test('DP is 10% of a strict positive rupiah total, rounded up to whole rupiah', () => {
-  for (const [total, deposit] of [['155000', 15500], ['200000', 20000], ['155001', 15501], ['11', 2], ['10', 1], ['1', 1], ['000001', 1], ['10000000', 1000000]]) {
+test('DP applies the Rp20,000 minimum, rounds 10% upward and never exceeds the total', () => {
+  for (const [total, deposit] of [['155000', 20000], ['200000', 20000], ['155001', 20000], ['200001', 20001], ['20001', 20000], ['20000', 20000], ['19999', 19999], ['11', 11], ['10', 10], ['1', 1], ['000001', 1], ['10000000', 1000000]]) {
     assert.equal(calculateDeposit(total), deposit, total);
   }
   for (const total of ['0', '000', '10000001', '1e5', '-50000', '+50000', '50000.0', '50.000', '50,000', ' 50000 ', '50000\n', '', 'Infinity', '0xFFFF', '50000<script>', null, {}, [], 50000]) {
@@ -146,8 +169,8 @@ test('validation returns normalized declared values and an explicitly unverified
   const result = validateBooking(form({ name: '  Jesika Aydilla  ' }), options);
   assert.equal(result.valid, true);
   assert.deepEqual(result.errors, {});
-  assert.deepEqual(result.value, { name: 'Jesika Aydilla', whatsapp: '6281234567890', agreedPrice: 155000, deposit: 15500, date: '2026-10-20', time: '08:00', quoteStatus: 'customer-declared' });
-  assert.equal(result.preview.remainingBalance, 139500);
+  assert.deepEqual(result.value, { name: 'Jesika Aydilla', whatsapp: '6281234567890', agreedPrice: 155000, deposit: 20000, paymentMode: 'deposit', paymentPolicy: 'min20k-v2', designType: 'simple', durationMinutes: 120, date: '2026-10-20', time: '08:00', quoteStatus: 'customer-declared' });
+  assert.equal(result.preview.remainingBalance, 135000);
   assert.equal(result.preview.startISO, '2026-10-20T08:00:00+07:00');
   assert.equal(result.preview.endISO, '2026-10-20T10:00:00+07:00');
   assert.equal(result.preview.timeZone, 'Asia/Jakarta');
@@ -157,7 +180,7 @@ test('validation returns normalized declared values and an explicitly unverified
 });
 
 test('DP and remaining balance recalculate from every changed total', () => {
-  for (const [agreedPrice, deposit, remainingBalance] of [['155000', 15500, 139500], ['200000', 20000, 180000], ['155001', 15501, 139500], ['1', 1, 0]]) {
+  for (const [agreedPrice, deposit, remainingBalance] of [['155000', 20000, 135000], ['200000', 20000, 180000], ['155001', 20000, 135001], ['200001', 20001, 180000], ['1', 1, 0]]) {
     const result = validateBooking(form({ agreedPrice }), options);
     assert.equal(result.valid, true);
     assert.equal(result.value.deposit, deposit);
@@ -180,6 +203,71 @@ test('missing, malformed and forged legacy deposit input cannot change the canon
   const invalidPrice = validateBooking(form({ agreedPrice: 'invalid', deposit: '50000' }), options);
   assert.ok(invalidPrice.errors.agreedPrice);
   assert.equal('deposit' in invalidPrice.errors, false);
+});
+
+test('payment choice derives minimum DP or full total, normalizes small totals and rejects invalid modes', () => {
+  assert.deepEqual(calculatePayment('155000'), { paymentMode: 'deposit', deposit: 20000, remainingBalance: 135000, paymentPolicy: 'min20k-v2' });
+  assert.deepEqual(calculatePayment('155001', 'full'), { paymentMode: 'full', deposit: 155001, remainingBalance: 0, paymentPolicy: 'min20k-v2' });
+  for (const mode of ['deposit', 'full']) {
+    for (const total of ['1', '19999', '20000']) {
+      const result = calculatePayment(total, mode);
+      assert.equal(result.paymentMode, 'full');
+      assert.equal(result.deposit, Number(total));
+      assert.equal(result.remainingBalance, 0);
+      const validated = validateBooking(form({ agreedPrice: total, paymentMode: mode }), { now });
+      assert.equal(validated.valid, true);
+      assert.equal(validated.value.paymentMode, 'full');
+    }
+  }
+  for (const mode of ['', 'legacy', 'cash', 'FULL', null, {}, [], 1]) {
+    assert.equal(calculatePayment('155000', mode), null);
+    assert.ok(validateBooking(form({ paymentMode: mode }), { now }).errors.paymentMode);
+  }
+  assert.equal(calculatePayment('invalid', 'full'), null);
+  const full = validateBooking(form({ paymentMode: 'full', deposit: '1', paymentAmount: '1' }), { now });
+  assert.equal(full.value.deposit, 155000);
+  assert.equal(full.preview.remainingBalance, 0);
+});
+
+test('design selection permits only agreed exact durations and defaults cached clients to simple two hours', () => {
+  assert.deepEqual(normalizeBookingDesign(), { designType: 'simple', durationMinutes: 120 });
+  for (const [designType, allowed] of Object.entries(BOOKING_DESIGNS)) {
+    for (const durationMinutes of allowed.durations) {
+      assert.deepEqual(normalizeBookingDesign(designType, String(durationMinutes)), { designType, durationMinutes });
+      assert.deepEqual(normalizeBookingDesign(designType, durationMinutes), { designType, durationMinutes });
+      const result = validateBooking(form({ designType, durationMinutes: String(durationMinutes), time: '08:00' }), { now });
+      assert.equal(result.valid, true);
+      assert.equal(result.preview.end - result.preview.start, durationMinutes * 60000);
+    }
+  }
+  for (const [designType, durationMinutes] of [['legacy', '120'], ['plain', '120'], ['simple', '180'], ['full-art', '120'], ['full-art', '3'], ['full-art', '180.0'], ['full-art', true], ['constructor', '120']]) {
+    assert.equal(normalizeBookingDesign(designType, durationMinutes), null);
+    assert.equal(validateBooking(form({ designType, durationMinutes }), { now }).valid, false);
+  }
+});
+
+test('full-art caps starts at noon on weekdays while weekend closing constrains every exact duration', () => {
+  for (const durationMinutes of [180, 240, 300]) {
+    const weekday = listBookingSlots('2026-10-21', { now, designType: 'full-art', durationMinutes });
+    assert.equal(weekday.at(-1).time, '12:00');
+    assert.ok(weekday.every(slot => slot.end <= Date.parse('2026-10-21T17:00:00+07:00')));
+  }
+  for (const date of ['2026-10-24', '2026-10-25']) {
+    assert.equal(listBookingSlots(date, { now, designType: 'full-art', durationMinutes: 180 }).at(-1).time, '09:00');
+    assert.deepEqual(listBookingSlots(date, { now, designType: 'full-art', durationMinutes: 240 }).map(slot => slot.time), ['08:00']);
+    assert.deepEqual(listBookingSlots(date, { now, designType: 'full-art', durationMinutes: 300 }), []);
+    assert.equal(listBookingSlots(date, { now, designType: 'plain', durationMinutes: 60 }).at(-1).time, '10:00');
+  }
+  assert.equal(validateBooking(form({ date: '2026-10-24', designType: 'full-art', durationMinutes: '180', time: '09:30' }), { now }).valid, false);
+  assert.equal(validateBooking(form({ designType: 'full-art', durationMinutes: '180', time: '12:30' }), { now }).valid, false);
+});
+
+test('elapsed starts are displayable but never validate as a new booking', () => {
+  const afterOpening = Date.parse('2026-10-20T09:15:00+07:00');
+  const shown = listBookingSlots('2026-10-20', { now: afterOpening, includeElapsed: true, designType: 'plain', durationMinutes: 60 });
+  assert.equal(shown[0].time, '08:00');
+  assert.equal(listBookingSlots('2026-10-20', { now: afterOpening, designType: 'plain', durationMinutes: 60 })[0].time, '09:30');
+  assert.equal(validateBooking(form({ designType: 'plain', durationMinutes: '60', time: '08:00' }), { now: afterOpening, includeElapsed: true }).valid, false);
 });
 
 test('malformed forms report field errors without returning partial trusted output', () => {

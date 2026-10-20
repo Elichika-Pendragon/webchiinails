@@ -31,8 +31,10 @@ for (const page of [...seoPages, bookingPage, approvalPage]) {
 const bookingHtml = await readFile(new URL(bookingPage.file, root), 'utf8');
 const depositInput = bookingHtml.match(/<input\b[^>]*id="booking-deposit"[^>]*>/)?.[0] || '';
 assert.match(depositInput, /\sreadonly(?:\s|=|>|\/)/, 'DP is calculated, never customer-editable');
-assert.equal(bookingHtml.match(/<label\b[^>]*for="booking-deposit"[^>]*>([^<]*)<\/label>/)?.[1], 'DP 10%', 'Concise requested DP label');
-assert.ok(bookingHtml.includes('DP 10%') && bookingHtml.includes('transfer atau QRIS'), 'Current deposit and payment copy');
+assert.equal(bookingHtml.match(/<label\b[^>]*for="booking-deposit"[^>]*>([^<]*)<\/label>/)?.[1], 'DP · min. Rp20.000', 'Current minimum DP label');
+assert.ok(bookingHtml.includes('minimum Rp20.000') && bookingHtml.includes('full payment') && bookingHtml.includes('transfer atau QRIS'), 'Current payment choices and minimum');
+for (const name of ['paymentMode', 'designType', 'durationMinutes']) assert.match(bookingHtml, new RegExp(`<select\\b[^>]*name="${name}"[^>]*required`), `${name} choice is required`);
+assert.match(bookingHtml, /<input\b[^>]*name="paymentProof"[^>]*required/, 'Payment proof is required before Book');
 assert.ok(!bookingHtml.includes('Jessica') && !bookingHtml.includes('Mulai terakhir'), 'Customer-facing booking copy uses Chii and Last book');
 const bookingIds = [...bookingHtml.matchAll(/\sid="([^"]+)"/g)].map(match => match[1]);
 assert.equal(new Set(bookingIds).size, bookingIds.length, 'Booking IDs are unique so labels and action links target the correct control');

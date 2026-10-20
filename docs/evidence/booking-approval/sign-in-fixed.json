@@ -1,0 +1,10 @@
+{
+  "checkedAt": "2026-10-20T16:53:20.945Z",
+  "purpose": "Intentionally invalid signature; does not authenticate an owner",
+  "status": 401,
+  "code": "AUTH_REQUIRED",
+  "sessionCreated": false,
+  "calendarWrites": 0,
+  "expected": true,
+  "keys": 2
+}

@@ -28,6 +28,7 @@
 .approval-summary .approval-balance{border-bottom:0;font-weight:600;color:var(--rose)}
 .approval-balance dt{color:var(--rose)}
 .approval-actions{margin-top:18px}
+.approval-proof{margin-top:18px}.approval-proof img{width:100%;height:auto;max-height:720px;object-fit:contain;margin-top:14px;border-radius:var(--radius-control,8px);background:var(--blush)}.approval-proof .approval-small{color:var(--muted)}
 .approval-payment-note{padding:16px;background:var(--blush);border-radius:var(--radius-card,12px);font-size:13px;line-height:1.65;margin-bottom:20px}
 .approval-actions>.button+.button{margin-top:12px}
 .approval-page .button-secondary{border-color:#bea3af;color:var(--ink);background:var(--white)}

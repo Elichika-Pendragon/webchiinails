@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { BookingAuthError } from './booking-auth.js';
 import { BookingRequestError } from './booking-requests.js';
 import { createBookingHttpHandlers, isBookingEnabled } from './booking-http.js';
+import { proof, proofBytes } from './fixtures/payment-proof.js';
+import { PAYMENT_PROOF_BODY_MAX_BYTES } from './booking-proofs.js';
 
 // Synthetic adapters only: no resources, DB queries, credentials or network I/O.
 const env = {
@@ -18,8 +20,8 @@ const env = {
 };
 const current = Date.parse('2026-10-20T12:00:00Z');
 const reviewToken = 'A'.repeat(43);
-const input = { name: 'Synthetic Customer', whatsapp: '081234567890', agreedPrice: '100000', date: '2026-10-21', time: '14:00', idempotencyKey: 'synthetic-request-key-1' };
-const summary = { id: 'synthetic-request-id', status: 'pending', name: input.name, whatsapp: '6281234567890', agreedPrice: 100000, deposit: 10000, remainingBalance: 90000, date: input.date, time: input.time, startISO: '2026-10-21T14:00:00+07:00', endISO: '2026-10-21T16:00:00+07:00', durationMinutes: 120, expiresAt: '2026-10-21T07:00:00.000Z' };
+const input = { name: 'Synthetic Customer', whatsapp: '081234567890', agreedPrice: '100000', date: '2026-10-21', time: '14:00', idempotencyKey: 'synthetic-request-key-1', proof };
+const summary = { id: 'synthetic-request-id', status: 'pending', name: input.name, whatsapp: '6281234567890', agreedPrice: 100000, deposit: 20000, paymentMode: 'deposit', paymentPolicy: 'min20k-v2', remainingBalance: 80000, date: input.date, time: input.time, startISO: '2026-10-21T14:00:00+07:00', endISO: '2026-10-21T16:00:00+07:00', durationMinutes: 120, expiresAt: '2026-10-21T07:00:00.000Z' };
 const created = { requestId: summary.id, status: 'pending', reviewUrl: `${env.SITE_URL}/book/approve?r=${reviewToken}`, booking: summary };
 const identity = { email: env.BOOKING_OWNER_EMAIL, subject: 'synthetic-owner', csrfToken: 'C'.repeat(43) };
 
@@ -32,12 +34,14 @@ function request(path, { method = 'GET', body, origin = env.SITE_URL, headers = 
 
 function fixture(extra = {}) {
   const calls = [];
-  const provider = { availability() {}, createApprovedAppointment() {}, reconcileApprovedAppointment() {} };
+  const provider = { availability() {}, createApprovedAppointment() {}, reconcileApprovedAppointment() {}, readAppointmentState() {}, verifyCalendarWriteAccess() {} };
   const options = {
     now: () => current,
     createBookingRequest: async (config, body, settings) => { calls.push(['create', config, body, settings]); return created; },
     getBookingRequest: async (config, token, settings) => { calls.push(['read', config, token, settings]); return summary; },
     decideBookingRequest: async (config, token, action, settings) => { calls.push(['decide', config, token, action, settings]); return { ...summary, status: action === 'accept' ? 'accepted' : 'cancelled' }; },
+    getBookingAvailability: async (config, selection, settings) => { calls.push(['availability', config, selection, settings]); return { ...selection, timeZone: 'Asia/Jakarta', slots: [{ time: '08:00', available: true }, { time: '08:30', available: false }] }; },
+    getBookingPaymentProof: async (config, token, settings) => { calls.push(['proof', config, token, settings]); return proofBytes; },
     requireBookingOwner: async (incoming, config, settings) => { calls.push(['owner', incoming, config, settings]); return identity; },
     getAuthChallenge: async () => { calls.push(['challenge']); return Response.json({ authenticated: false, csrfToken: 'C'.repeat(43), clientId: env.GOOGLE_OAUTH_CLIENT_ID, nonce: 'N'.repeat(43) }); },
     signInOwner: async () => { calls.push(['signIn']); return Response.json({ authenticated: true, csrfToken: 'D'.repeat(43) }); },
@@ -68,7 +72,7 @@ test('readiness requires exact activation and every binding without revealing co
     assert.equal(status.status, 200);
     assert.deepEqual(await status.json(), { enabled: false });
     secure(status);
-    for (const route of ['requests', 'review', 'session']) {
+    for (const route of ['requests', 'review', 'session', 'availability', 'proof']) {
       const response = await item.handlers[route](request(route, { method: route === 'requests' ? 'POST' : 'GET', ...(route === 'requests' ? { body: input } : {}) }), missing);
       assert.equal(response.status, 503);
       assert.equal((await response.json()).code, 'BOOKING_DISABLED');
@@ -84,18 +88,17 @@ test('unsafe origins and malformed required settings cannot enable booking', () 
   for (const change of [{ SITE_URL: 'http://synthetic.example' }, { SITE_URL: 'https://synthetic.example/other' }, { BOOKING_DB: {} }, { BOOKING_LINK_SECRET: 'short' }, { BOOKING_AUTH_SECRET: 'short' }, { GOOGLE_OAUTH_CLIENT_ID: 'bad' }, { GOOGLE_SERVICE_ACCOUNT_EMAIL: 'personal@gmail.com' }, { GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: 'not a PEM key' }, { GOOGLE_CALENDAR_ID: 'primary' }, { GOOGLE_CALENDAR_ID: ' calendar ' }, { BOOKING_OWNER_EMAIL: ' padded@gmail.com' }]) assert.equal(isBookingEnabled({ ...env, ...change }), false);
 });
 
-test('creation passes only validated JSON fields to the ledger and uses no owner or Calendar adapter', async () => {
+test('creation forwards the read-only availability adapter without requiring owner auth', async () => {
   const item = fixture();
   const response = await item.handlers.requests(request('requests', { method: 'POST', body: input }), env);
   assert.equal(response.status, 201);
   assert.deepEqual(await response.json(), created);
   secure(response);
-  assert.equal(item.calls.length, 1);
-  assert.equal(item.calls[0][0], 'create');
-  assert.equal(item.calls[0][1], env);
-  assert.deepEqual(item.calls[0][2], input);
-  assert.equal(item.calls[0][3].now(), current);
-  assert.equal('calendar' in item.calls[0][3], false);
+  assert.deepEqual(item.calls.map(call => call[0]), ['calendar', 'create']);
+  assert.equal(item.calls[1][1], env);
+  assert.deepEqual(item.calls[1][2], input);
+  assert.equal(item.calls[1][3].now(), current);
+  assert.equal(item.calls[1][3].calendar, item.provider);
 });
 
 test('creation rejects cross-site, missing Origin and different-host requests before ledger access', async () => {
@@ -106,6 +109,60 @@ test('creation rejects cross-site, missing Origin and different-host requests be
     assert.equal((await response.json()).code, 'BOOKING_ORIGIN');
   }
   assert.equal(item.calls.length, 0);
+});
+
+test('public payment mode permits only deposit or full, retaining omitted-mode cached-client compatibility', async () => {
+  const item = fixture();
+  for (const paymentMode of ['deposit', 'full']) {
+    const response = await item.handlers.requests(request('requests', { method: 'POST', body: { ...input, paymentMode } }), env);
+    assert.equal(response.status, 201);
+    assert.equal(item.calls.at(-1)[2].paymentMode, paymentMode);
+  }
+  const count = item.calls.length;
+  for (const paymentMode of ['legacy', '', 'cash', 'FULL', true, null, {}, []]) {
+    const response = await item.handlers.requests(request('requests', { method: 'POST', body: { ...input, paymentMode } }), env);
+    assert.equal(response.status, 400);
+  }
+  assert.equal(item.calls.length, count);
+});
+
+test('public design and duration fields are strict strings and permit only the agreed combinations', async () => {
+  const item = fixture();
+  for (const [designType, durationMinutes] of [['plain', '60'], ['simple', '60'], ['simple', '120'], ['full-art', '180'], ['full-art', '240'], ['full-art', '300']]) {
+    const response = await item.handlers.requests(request('requests', { method: 'POST', body: { ...input, designType, durationMinutes } }), env);
+    assert.equal(response.status, 201);
+    assert.equal(item.calls.at(-1)[2].durationMinutes, durationMinutes);
+  }
+  const count = item.calls.length;
+  for (const [designType, durationMinutes] of [['legacy', '120'], ['plain', '120'], ['simple', '300'], ['full-art', 180], ['full-art', '180.0'], [null, '60']]) {
+    assert.equal((await item.handlers.requests(request('requests', { method: 'POST', body: { ...input, designType, durationMinutes } }), env)).status, 400);
+  }
+  assert.equal(item.calls.length, count);
+});
+
+test('public availability uses bounded same-origin POST JSON and returns only occupancy without owner auth', async () => {
+  const item = fixture();
+  const route = 'availability';
+  const body = { date: '2026-10-21', designType: 'full-art', durationMinutes: '180' };
+  const incoming = extra => request(route, { method: 'POST', body, ...extra });
+  const response = await item.handlers.availability(incoming(), env);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { date: '2026-10-21', designType: 'full-art', durationMinutes: 180, timeZone: 'Asia/Jakarta', slots: [{ time: '08:00', available: true }, { time: '08:30', available: false }] });
+  secure(response);
+  assert.deepEqual(item.calls.map(call => call[0]), ['calendar', 'availability']);
+  const bad = fixture();
+  for (const change of [{}, { ...body, extra: '1' }, { ...body, designType: 'legacy' }, { ...body, durationMinutes: '120' }, { ...body, durationMinutes: 180 }, { ...body, date: '2026-02-30' }, { ...body, date: '2027-12-31' }, { ...body, date: '2026-10-19' }]) {
+    assert.equal((await bad.handlers.availability(incoming({ body: change }), env)).status, 400);
+  }
+  assert.equal((await bad.handlers.availability(request(`${route}?extra=1`, { method: 'POST', body }), env)).status, 400);
+  assert.equal(bad.calls.length, 0);
+  assert.equal((await bad.handlers.availability(incoming({ base: 'https://other.example' }), env)).status, 403);
+  assert.equal((await bad.handlers.availability(incoming({ origin: null }), env)).status, 403);
+  assert.equal((await bad.handlers.availability(request(route), env)).status, 405);
+  const failing = fixture({ getBookingAvailability: async () => { throw new BookingRequestError('CALENDAR_UNAVAILABLE'); } });
+  const failure = await failing.handlers.availability(incoming(), env);
+  assert.equal(failure.status, 503);
+  assert.equal('slots' in await failure.json(), false);
 });
 
 test('method and CORS preflight fallthrough fail closed with explicit allowed methods', async () => {
@@ -125,8 +182,9 @@ test('creation rejects malformed, oversized, non-JSON and unexpected fields befo
     [input, { 'Content-Type': 'text/plain' }, 415, 'BOOKING_MEDIA'],
     ['{bad json', {}, 400, 'BOOKING_INPUT'],
     ['[]', {}, 400, 'BOOKING_INPUT'],
-    ['x'.repeat(8193), {}, 413, 'BOOKING_BODY'],
-    [input, { 'Content-Length': '9000' }, 413, 'BOOKING_BODY'],
+    ['x'.repeat(PAYMENT_PROOF_BODY_MAX_BYTES + 1), {}, 413, 'BOOKING_BODY'],
+    [input, { 'Content-Length': String(PAYMENT_PROOF_BODY_MAX_BYTES + 1) }, 413, 'BOOKING_BODY'],
+    [{ ...input, proof: undefined }, {}, 400, 'BOOKING_INPUT'],
     [{ ...input, approved: true }, {}, 400, 'BOOKING_INPUT'],
     [{ ...input, deposit: '1' }, {}, 400, 'BOOKING_INPUT'],
     [{ ...input, agreedPrice: 100000 }, {}, 400, 'BOOKING_INPUT'],
@@ -176,6 +234,47 @@ test('read-only review authenticates first and forwards verified internal owner 
   assert.deepEqual(item.calls[1][3].owner, { email: identity.email, subject: identity.subject, verified: true });
   assert.equal('csrfToken' in item.calls[1][3].owner, false);
   assert.equal('calendar' in item.calls[1][3], false);
+});
+
+test('payment-proof image requires owner auth before token lookup and uses private image-only response headers', async () => {
+  const denied = fixture({ requireBookingOwner: async () => { throw new BookingAuthError('AUTH_REQUIRED'); } });
+  for (const token of ['invalid', reviewToken]) {
+    const response = await denied.handlers.proof(request(`proof?token=${token}`), env);
+    assert.equal(response.status, 401);
+    assert.equal((await response.json()).code, 'AUTH_REQUIRED');
+    secure(response);
+  }
+  assert.equal(denied.calls.length, 0);
+  const item = fixture();
+  const response = await item.handlers.proof(request(`proof?token=${reviewToken}`), env);
+  assert.equal(response.status, 200);
+  assert.deepEqual(new Uint8Array(await response.arrayBuffer()), proofBytes);
+  assert.equal(response.headers.get('Content-Type'), 'image/jpeg');
+  assert.equal(response.headers.get('Content-Length'), String(proofBytes.length));
+  assert.equal(response.headers.get('X-Content-Type-Options'), 'nosniff');
+  assert.equal(response.headers.get('Content-Security-Policy'), "default-src 'none'; sandbox");
+  assert.equal(response.headers.get('Cache-Control'), 'private, no-store, max-age=0');
+  assert.equal(response.headers.get('Cross-Origin-Resource-Policy'), 'same-origin');
+  assert.equal(response.headers.get('Referrer-Policy'), 'no-referrer');
+  assert.equal(response.headers.get('X-Robots-Tag'), 'noindex, nofollow');
+  assert.equal(response.headers.get('Access-Control-Allow-Origin'), null);
+  assert.deepEqual(item.calls.map(call => call[0]), ['owner', 'proof']);
+  assert.deepEqual(item.calls[1][3].owner, { email: identity.email, subject: identity.subject, verified: true });
+});
+
+test('payment-proof route rejects bad or duplicate tokens, cross-site reads, mutations and expired bytes', async () => {
+  const item = fixture();
+  for (const suffix of ['?token=invalid', `?token=${reviewToken}&token=${reviewToken}`, `?token=${reviewToken}&extra=1`]) assert.equal((await item.handlers.proof(request(`proof${suffix}`), env)).status, 404);
+  assert.equal(item.calls.every(call => call[0] === 'owner'), true);
+  const before = item.calls.length;
+  assert.equal((await item.handlers.proof(request(`proof?token=${reviewToken}`, { origin: 'https://attacker.example', headers: { Origin: 'https://attacker.example' } }), env)).status, 403);
+  assert.equal((await item.handlers.proof(request(`proof?token=${reviewToken}`, { method: 'POST', body: {} }), env)).status, 405);
+  assert.equal(item.calls.length, before);
+  const expired = fixture({ getBookingPaymentProof: async () => { throw new BookingRequestError('PROOF_EXPIRED', 410); } });
+  const response = await expired.handlers.proof(request(`proof?token=${reviewToken}`), env);
+  assert.equal(response.status, 410);
+  assert.equal((await response.json()).code, 'PROOF_EXPIRED');
+  secure(response);
 });
 
 test('malformed and duplicate review tokens produce no store lookup after authentication', async () => {
@@ -266,7 +365,7 @@ test('typed failures preserve safe status/code while untrusted details and unkno
 });
 
 test('Pages wrappers resolve correctly and remain disabled without configuration', async () => {
-  for (const [path, method, status] of [['status', 'GET', 200], ['requests', 'POST', 503], ['review', 'GET', 503], ['auth/session', 'GET', 503]]) {
+  for (const [path, method, status] of [['status', 'GET', 200], ['requests', 'POST', 503], ['review', 'GET', 503], ['auth/session', 'GET', 503], ['availability', 'GET', 503], ['proof', 'GET', 503]]) {
     const wrapper = await import(`../functions/api/booking/${path}.js`);
     const response = await wrapper.onRequest({ request: request(path, { method }), env: {} });
     assert.equal(response.status, status);

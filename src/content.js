@@ -75,8 +75,8 @@ export const pressOnPricing = {
 };
 
 export const bookingRules = [
-  { title: 'Isi data booking terlebih dahulu', body: 'Wajib booking sebelum datang. Kirim nama, nomor telepon, tanggal, jam, dan DP booking melalui WhatsApp agar jadwal tidak bertabrakan dengan pelanggan lain.' },
-  { title: 'Booking wajib DP; pembatalan membuat DP hangus', body: 'Booking memerlukan DP sebesar 10% dari harga yang disepakati. Konfirmasikan cara pembayaran melalui transfer atau QRIS langsung melalui WhatsApp. Setelah booking, pembatalan tidak diperbolehkan; jika tetap dibatalkan, DP hangus.' },
+  { title: 'Isi data booking terlebih dahulu', body: 'Wajib booking sebelum datang. Kirim nama, nomor telepon, tanggal, jam, dan pilihan pembayaran booking melalui WhatsApp agar jadwal tidak bertabrakan dengan pelanggan lain.' },
+  { title: 'Booking wajib DP atau full payment', body: 'Pilih DP sebesar 10% dari harga yang disepakati dengan minimum Rp20.000, atau full payment. Nominal pembayaran tidak melebihi harga total; harga Rp20.000 atau kurang dibayar penuh. Konfirmasikan cara pembayaran melalui transfer atau QRIS langsung melalui WhatsApp. Setelah booking, pembatalan tidak diperbolehkan; jika tetap dibatalkan, DP hangus.' },
   { title: 'Jam layanan & Last book', body: 'Booking only, tanpa walk-in. Senin–Jumat buka 08.00–17.00 WIB, dengan Last book pukul 14:00. Sabtu–Minggu buka 08.00–12.00 WIB, dengan Last book pukul 10:00. Konfirmasikan ketersediaan jadwal melalui WhatsApp sebelum datang.' },
   { title: 'Tidak tersedia home service', body: 'Layanan dilakukan di studio. Kami belum dapat menerima home service karena keterbatasan kendaraan dan untuk menjaga jadwal booking tetap teratur.' },
   { title: 'Jadwal booking tidak bisa diganti', body: 'Pastikan kamu memiliki waktu luang pada hari dan jam yang dipilih. Jadwal tidak dapat diganti karena kami sudah menolak booking pelanggan lain pada slot tersebut.' },

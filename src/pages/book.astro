@@ -4,7 +4,7 @@ import { salon } from '../content.js';
 import '../booking.css';
 const fields = [
   { name: 'name', label: 'Nama', type: 'text', autocomplete: 'name', max: 80 },
-  { name: 'whatsapp', label: 'Nomor WhatsApp', type: 'tel', autocomplete: 'tel', hint: 'Gunakan nomor yang dipakai saat konsultasi.', max: 40 },
+  { name: 'whatsapp', label: 'Nomor WhatsApp', type: 'tel', autocomplete: 'tel', hint: 'Gunakan nomor Indonesia saat konsultasi, misalnya 081234567890. Bisa diawali 08, 628, atau +628.', max: 40 },
 ];
 ---
 <!doctype html>
@@ -29,7 +29,7 @@ const fields = [
         <h1>Siapkan nail date-mu.</h1>
         <p>Sudah konsultasi dengan Chii? Isi detail sesuai kesepakatan, lalu kirim ringkasannya melalui WhatsApp.</p>
       </div>
-      <div class="booking-preview-note"><strong id="booking-mode-title">Booking setelah konsultasi</strong><p id="booking-mode-description">Nama, nomor WhatsApp, harga total, tanggal, dan jam wajib diisi. DP 10% dihitung dari harga total.</p></div>
+      <div class="booking-preview-note"><strong id="booking-mode-title">Booking setelah konsultasi</strong><p id="booking-mode-description">Nama, nomor WhatsApp, harga total, tanggal, dan jam wajib diisi. Pilih DP atau full payment sesuai kesepakatan.</p></div>
       <div class="booking-layout">
         <section aria-labelledby="booking-form-title">
           <h2 id="booking-form-title" tabindex="-1">Detail booking</h2>
@@ -47,15 +47,26 @@ const fields = [
             </fieldset>
             <fieldset disabled>
               <legend>Nominal sesuai konsultasi</legend>
-              <p class="booking-fieldset-hint">Isi harga total dalam Rupiah tanpa titik atau koma. DP dihitung otomatis sebesar 10%.</p>
+              <p class="booking-fieldset-hint">Isi harga total dalam Rupiah tanpa titik atau koma. DP 10% dengan minimum Rp20.000, atau pilih full payment.</p>
+              <div class="booking-field booking-payment-choice"><label for="booking-paymentMode">Pilihan pembayaran</label><select id="booking-paymentMode" name="paymentMode" required aria-describedby="hint-paymentMode error-paymentMode"><option value="deposit" selected>DP · 10%, min. Rp20.000</option><option value="full">Full payment · Lunas</option></select><small id="hint-paymentMode">Nominal pembayaran tidak melebihi harga total. Harga Rp20.000 atau kurang dibayar penuh.</small><p id="error-paymentMode" class="booking-field-error" hidden></p></div>
               <div class="booking-amounts">
                 <div class="booking-field"><label for="booking-agreedPrice">Harga total</label><div class="booking-currency"><span aria-hidden="true">Rp</span><input id="booking-agreedPrice" name="agreedPrice" type="text" inputmode="numeric" maxlength="8" required aria-describedby="error-agreedPrice" /></div><p id="error-agreedPrice" class="booking-field-error" hidden></p></div>
-                <div class="booking-field"><label for="booking-deposit">DP 10%</label><div class="booking-currency"><span aria-hidden="true">Rp</span><input id="booking-deposit" name="deposit" type="text" readonly aria-describedby="hint-deposit error-deposit" /></div><small id="hint-deposit">Dihitung dari harga total. Pecahan Rupiah dibulatkan ke atas.</small><p id="error-deposit" class="booking-field-error" hidden></p></div>
+                <div class="booking-field"><label id="booking-payment-amount-label" for="booking-deposit">DP · min. Rp20.000</label><div class="booking-currency"><span aria-hidden="true">Rp</span><input id="booking-deposit" name="deposit" type="text" readonly aria-describedby="hint-deposit error-deposit" /></div><small id="hint-deposit">Dihitung dari pilihan pembayaran dan harga total.</small><p id="error-deposit" class="booking-field-error" hidden></p></div>
+              </div>
+              <div class="booking-payment-routes" aria-label="Tujuan pembayaran">
+                <p class="booking-payment-heading">Tujuan pembayaran</p>
+                <div class="booking-payment-route"><div><strong>ShopeePay</strong><span id="booking-shopeepay-number" class="booking-account-number">083843639096</span><small>Hermadewi</small></div><button type="button" data-copy-payment="booking-shopeepay-number" data-payment-label="ShopeePay" aria-label="Salin nomor ShopeePay">Salin</button></div>
+                <div class="booking-payment-route"><div><strong>blu · BCA Digital</strong><span id="booking-blu-number" class="booking-account-number">002409374146</span><small>Jesica R.</small></div><button type="button" data-copy-payment="booking-blu-number" data-payment-label="rekening blu" aria-label="Salin nomor rekening blu">Salin</button></div>
+                <p id="booking-copy-status" class="booking-copy-status" role="status" aria-live="polite" aria-atomic="true"></p>
               </div>
             </fieldset>
             <fieldset disabled>
-              <legend>Permintaan jadwal</legend>
-              <p class="booking-fieldset-hint">Durasi 2 jam · waktu Palembang (WIB). Chii akan memeriksa ketersediaannya.</p>
+              <legend>Desain & jadwal</legend>
+              <p class="booking-fieldset-hint">Pilih kategori dan durasi yang sudah disepakati dengan Chii. Semua waktu menggunakan WIB.</p>
+              <div class="booking-amounts booking-design-options">
+                <div class="booking-field"><label for="booking-designType">Kategori desain</label><select id="booking-designType" name="designType" required aria-describedby="hint-designType error-designType"><option value="plain">Plain / Nail gel / Removal · 1 jam</option><option value="simple" selected>Simple art · 1–2 jam</option><option value="full-art">Full art · 3–5 jam</option></select><small id="hint-designType">Kategori ini menentukan durasi, bukan harga layanan.</small><p id="error-designType" class="booking-field-error" hidden></p></div>
+                <div class="booking-field"><label for="booking-durationMinutes">Durasi sesuai konsultasi</label><select id="booking-durationMinutes" name="durationMinutes" required aria-describedby="hint-durationMinutes error-durationMinutes"><option value="60">1 jam</option><option value="120" selected>2 jam</option></select><small id="hint-durationMinutes">Pilih durasi yang sudah disepakati.</small><p id="error-durationMinutes" class="booking-field-error" hidden></p></div>
+              </div>
               <div class="booking-field">
                 <label id="booking-date-label" for="booking-date">Tanggal</label>
                 <input id="booking-date" name="date" type="date" required aria-describedby="error-date" />
@@ -75,10 +86,17 @@ const fields = [
                 <small id="booking-calendar-help">Pilih tanggal permintaanmu. Ketersediaan tetap dikonfirmasi oleh Chii.</small>
                 <p id="error-date" class="booking-field-error" hidden></p>
               </div>
-              <div class="booking-field"><label for="booking-time">Jam mulai</label><select id="booking-time" name="time" required aria-describedby="hint-time error-time"><option value="">Pilih tanggal terlebih dahulu</option></select><small id="hint-time">Pilihan mengikuti jam studio; belum menunjukkan slot yang kosong.</small><p id="error-time" class="booking-field-error" hidden></p></div>
+              <div class="booking-field"><label id="booking-time-label" for="booking-time">Jam mulai</label><select id="booking-time" name="time" required aria-describedby="hint-time error-time"><option value="">Pilih tanggal terlebih dahulu</option></select><div id="booking-slots" class="booking-slots" role="group" aria-labelledby="booking-time-label" aria-describedby="hint-time error-time" tabindex="-1" hidden></div><small id="hint-time">Pilih kategori, durasi, dan tanggal untuk melihat jam yang tersedia.</small><p id="booking-slot-status" class="booking-slot-status" role="status" aria-live="polite" aria-atomic="true"></p><button id="booking-slot-retry" class="booking-status-retry text-link" type="button" hidden>Periksa jadwal lagi</button><p id="error-time" class="booking-field-error" hidden></p></div>
+            </fieldset>
+            <fieldset disabled>
+              <legend>Bukti pembayaran</legend>
+              <div class="booking-field"><label for="booking-paymentProof">Unggah bukti pembayaran</label><input id="booking-paymentProof" name="paymentProof" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" required aria-describedby="hint-paymentProof booking-proof-status error-paymentProof" /><small id="hint-paymentProof">JPEG, PNG, atau WebP · maksimal 10 MB. Gambar diperkecil sebelum dikirim.</small><p id="error-paymentProof" class="booking-field-error" hidden></p></div>
+              <div id="booking-proof-preview" class="booking-proof-preview" hidden><img id="booking-proof-image" width="320" height="180" alt="Pratinjau bukti pembayaran" /><button id="booking-proof-remove" class="booking-status-retry text-link" type="button">Hapus gambar</button></div>
+              <p id="booking-proof-status" class="booking-slot-status" role="status" aria-live="polite" aria-atomic="true">Unggah bukti pembayaran untuk melanjutkan.</p>
+              <p class="booking-privacy">Bukti hanya dapat dilihat Chii dan dihapus otomatis 30 hari setelah jadwal booking.</p>
             </fieldset>
             <button id="booking-review" class="button" type="submit" aria-describedby="booking-required-hint booking-submit-status" disabled>Book</button>
-            <p id="booking-required-hint" class="booking-privacy">Lengkapi semua kolom untuk melanjutkan. DP 10% dihitung dari harga total.</p>
+            <p id="booking-required-hint" class="booking-privacy">Lengkapi semua kolom dan bukti pembayaran untuk melanjutkan. Nominal mengikuti pilihan DP atau full payment.</p>
             <p id="booking-submit-status" class="booking-submit-status" role="status" aria-live="polite" aria-atomic="true">Memeriksa layanan booking…</p>
             <button id="booking-status-retry" class="booking-status-retry text-link" type="button" hidden>Periksa layanan lagi</button>
             <p id="booking-submit-privacy" class="booking-privacy">Dengan menekan Book, kamu menyiapkan permintaan untuk dikirim ke Chii. Kamu tetap perlu menekan Kirim di WhatsApp.</p>
@@ -87,17 +105,17 @@ const fields = [
             <h2 id="booking-review-title" tabindex="-1">Permintaan siap dikirim.</h2>
             <p id="booking-review-description">WhatsApp akan dibuka dengan ringkasan booking. Tekan Kirim untuk menghubungi Chii.</p>
             <dl class="booking-summary">
-              <div><dt>Nama</dt><dd data-booking-value="name"></dd></div><div><dt>WhatsApp</dt><dd data-booking-value="whatsapp"></dd></div><div><dt>Tanggal</dt><dd data-booking-value="date"></dd></div><div><dt>Waktu · 2 jam</dt><dd data-booking-value="time"></dd></div><div><dt>Harga total</dt><dd data-booking-value="agreedPrice"></dd></div><div><dt>DP 10%</dt><dd data-booking-value="deposit"></dd></div><div class="booking-balance"><dt>Sisa setelah DP diterima</dt><dd data-booking-value="remainingBalance"></dd></div>
+              <div><dt>Nama</dt><dd data-booking-value="name"></dd></div><div><dt>WhatsApp</dt><dd data-booking-value="whatsapp"></dd></div><div><dt>Desain</dt><dd data-booking-value="design"></dd></div><div><dt>Tanggal</dt><dd data-booking-value="date"></dd></div><div><dt id="booking-duration-summary-label">Waktu</dt><dd data-booking-value="time"></dd></div><div><dt>Harga total</dt><dd data-booking-value="agreedPrice"></dd></div><div><dt id="booking-payment-summary-label">Pembayaran</dt><dd data-booking-value="deposit"></dd></div><div class="booking-balance"><dt>Sisa pembayaran</dt><dd data-booking-value="remainingBalance"></dd></div>
             </dl>
-            <p class="booking-transfer-note">Bayar DP melalui transfer atau QRIS sesuai petunjuk Chii di WhatsApp. Kirim bukti pembayaran di percakapan yang sama untuk diperiksa.</p>
+            <p class="booking-transfer-note">Bayar nominal pilihanmu melalui transfer atau QRIS sesuai petunjuk Chii di WhatsApp. Kirim bukti pembayaran di percakapan yang sama untuk diperiksa.</p>
             <a id="booking-whatsapp-link" class="button" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Buka WhatsApp</a>
             <button id="booking-edit" class="booking-edit text-link" type="button">Ubah detail</button>
-            <p id="booking-review-privacy" class="booking-privacy">Booking belum dikonfirmasi sampai Chii menyetujui jadwal dan memeriksa DP.</p>
+            <p id="booking-review-privacy" class="booking-privacy">Booking belum dikonfirmasi sampai Chii menyetujui jadwal dan memeriksa pembayaran.</p>
           </section>
         </section>
         <aside class="booking-guidance" aria-labelledby="booking-guidance-title">
           <h2 id="booking-guidance-title">Dari obrolan ke nail date.</h2>
-          <ol><li><strong>Konsultasi dulu.</strong><p>Sepakati desain dan harga total dengan Chii. DP 10% dihitung otomatis.</p></li><li><strong>Lengkapi detailmu.</strong><p>Pilih permintaan tanggal dan waktu untuk sesi dua jam.</p></li><li><strong>Konfirmasi melalui WhatsApp.</strong><p>Chii memeriksa pembayaran melalui transfer atau QRIS dan jadwal sebelum mengonfirmasi booking.</p></li></ol>
+          <ol><li><strong>Konsultasi dulu.</strong><p>Sepakati desain, durasi, dan harga total dengan Chii. Pilih DP 10% dengan minimum Rp20.000 atau full payment.</p></li><li><strong>Lengkapi detailmu.</strong><p>Plain, nail gel, atau removal memakai slot 1 jam. Simple art 1–2 jam dan full art 3–5 jam, sesuai konsultasi.</p></li><li><strong>Konfirmasi melalui WhatsApp.</strong><p>Chii memeriksa pembayaran melalui transfer atau QRIS dan jadwal sebelum mengonfirmasi booking.</p></li></ol>
           <div class="booking-hours"><strong>Jam studio · WIB</strong>{salon.openingHours.map(day => <p>{day.label}<span>{day.opens.replace(':', '.')}–{day.closes.replace(':', '.')}<small>Last book {day.lastBooking}</small></span></p>)}</div>
           <a class="text-link" href="/about#booking-rules">Baca aturan booking →</a>
         </aside>

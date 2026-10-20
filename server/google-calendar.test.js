@@ -20,7 +20,7 @@ test('service-account JWT is signed RS256 with limited scopes, correct audience 
   let calls = 0;
   const calendar = provider(async (url, init) => {
     calls++;
-    assert.equal(init.redirect, 'error');
+    assert.equal(init.redirect, 'manual');
     assert.ok(init.signal instanceof AbortSignal);
     if (url === 'https://oauth2.googleapis.com/token') {
       assert.equal(init.method, 'POST');
@@ -161,6 +161,78 @@ test('event DP and fingerprint ignore legacy deposit input and recalculate from 
   assert.equal(changed.id, original.id);
   assert.match(changed.description, /Harga disepakati: Rp155001\nDP 10%: Rp15501\n/);
   assert.notEqual(changed.extendedProperties.private.fingerprint, original.extendedProperties.private.fingerprint);
+});
+
+test('payment snapshots distinguish minimum DP and full payment while legacy event fingerprints remain identical', async () => {
+  const bodies = [];
+  let calls = 0;
+  const calendar = provider(async (url, init) => {
+    calls++;
+    if (url.includes('oauth2')) return token();
+    const body = JSON.parse(init.body);
+    bodies.push(body);
+    return json(body);
+  });
+  await calendar.createApprovedAppointment(appointment);
+  const original = bodies.at(-1);
+  await calendar.createApprovedAppointment({ ...appointment, paymentMode: 'legacy', paymentAmount: 15500 });
+  assert.deepEqual(bodies.at(-1), original);
+  await calendar.createApprovedAppointment({ ...appointment, paymentMode: 'deposit', paymentAmount: 20000 });
+  const dp = bodies.at(-1);
+  assert.equal(dp.id, original.id);
+  assert.equal(dp.extendedProperties.private.source, 'chiinails-booking-v2');
+  assert.match(dp.description, /Pilihan pembayaran: DP 10%, minimal Rp20000\nNominal pembayaran: Rp20000\nSisa pembayaran: Rp135000/);
+  assert.notEqual(dp.extendedProperties.private.fingerprint, original.extendedProperties.private.fingerprint);
+  await calendar.createApprovedAppointment({ ...appointment, paymentMode: 'full', paymentAmount: 155000 });
+  const full = bodies.at(-1);
+  assert.match(full.description, /Pilihan pembayaran: Full payment\nNominal pembayaran: Rp155000\nSisa pembayaran: Rp0/);
+  assert.notEqual(full.extendedProperties.private.fingerprint, dp.extendedProperties.private.fingerprint);
+  const before = calls;
+  for (const changes of [{ paymentMode: 'deposit', paymentAmount: 1 }, { paymentMode: 'full', paymentAmount: 20000 }, { paymentMode: 'legacy', paymentAmount: 20000 }, { paymentMode: 'cash' }]) {
+    await assert.rejects(calendar.createApprovedAppointment({ ...appointment, ...changes }), isCode('CALENDAR_INPUT'));
+  }
+  assert.equal(calls, before);
+});
+
+test('default fetch preserves its Worker global receiver', async () => {
+  const original = globalThis.fetch;
+  let count = 0;
+  globalThis.fetch = async function (url) {
+    assert.equal(this, globalThis);
+    count++;
+    return url.includes('oauth2') ? token() : json(freeBusy());
+  };
+  try {
+    const calendar = createGoogleCalendarProvider(env, { now: () => current });
+    assert.equal((await calendar.availability(range)).busyIntervals.length, 0);
+    assert.equal(count, 2);
+  } finally { globalThis.fetch = original; }
+});
+
+test('explicit design snapshot writes its actual duration and preserves all previous two-hour versions', async () => {
+  const bodies = [];
+  const calendar = provider(async (url, init) => {
+    if (url.includes('oauth2')) return token();
+    const body = JSON.parse(init.body);
+    bodies.push(body);
+    return json(body);
+  });
+  for (const [designType, durationMinutes] of [['plain', 60], ['simple', 60], ['simple', 120], ['full-art', 180], ['full-art', 240], ['full-art', 300]]) {
+    await calendar.createApprovedAppointment({ ...appointment, designType, durationMinutes, paymentMode: 'deposit', paymentAmount: 20000 });
+    const body = bodies.at(-1);
+    assert.equal(Date.parse(body.end.dateTime) - Date.parse(body.start.dateTime), durationMinutes * 60000);
+    assert.equal(body.extendedProperties.private.source, 'chiinails-booking-v3');
+    assert.match(body.description, new RegExp(`Durasi: ${durationMinutes} menit`));
+    assert.match(body.description, /WhatsApp: https:\/\/wa.me\/6281234567890\n/);
+  }
+  await calendar.createApprovedAppointment({ ...appointment, paymentMode: 'full', paymentAmount: 155000 });
+  const previous = bodies.at(-1);
+  await calendar.createApprovedAppointment({ ...appointment, designType: 'legacy', durationMinutes: 120, paymentMode: 'full', paymentAmount: 155000 });
+  assert.deepEqual(bodies.at(-1), previous);
+  assert.equal(previous.extendedProperties.private.source, 'chiinails-booking-v2');
+  for (const changes of [{ designType: 'plain', durationMinutes: 120 }, { designType: 'full-art', durationMinutes: 300, time: '12:30' }, { designType: 'full-art', durationMinutes: 300, date: '2026-10-24' }, { designType: 'legacy', durationMinutes: 60 }]) {
+    await assert.rejects(calendar.createApprovedAppointment({ ...appointment, paymentMode: 'deposit', paymentAmount: 20000, ...changes }), isCode('CALENDAR_INPUT'));
+  }
 });
 
 test('weekday 14.00 last-book boundary creates a two-hour event ending at 16.00', async () => {
@@ -325,4 +397,84 @@ test('a rejected cached token is cleared for a later retry without blind event r
   assert.equal(calendarCalls, 1);
   await calendar.availability(range);
   assert.equal(tokenCalls, 2);
+});
+
+test('Worker-compatible manual redirects survive a constructor that rejects error mode and never follow credential redirects', async () => {
+  let calls = 0;
+  const workerFetch = async (url, init) => {
+    if (init.redirect === 'error') throw new TypeError('Invalid redirect value, must be follow or manual');
+    calls++;
+    assert.equal(init.redirect, 'manual');
+    return url.includes('oauth2') ? token() : json(freeBusy());
+  };
+  await assert.rejects(workerFetch('https://synthetic.example', { redirect: 'error' }), TypeError);
+  assert.equal((await provider(workerFetch).availability(range)).busyIntervals.length, 0);
+  assert.equal(calls, 2);
+  for (const status of [301, 302, 303, 307, 308]) {
+    const visited = [];
+    const redirected = provider(async (url, init) => {
+      visited.push(url);
+      assert.equal(init.redirect, 'manual');
+      return url.includes('oauth2') ? token() : new Response('', { status, headers: { Location: 'https://untrusted.example/collect' } });
+    });
+    await assert.rejects(redirected.availability(range), isCode('CALENDAR_UNAVAILABLE'));
+    assert.equal(visited.length, 2);
+    assert.equal(visited.some(url => url.includes('untrusted')), false);
+  }
+});
+
+test('accepted-event state reads use only the deterministic stored ID and distinguish definite deletion from failures', async () => {
+  let stored;
+  const seed = provider(async (url, init) => url.includes('oauth2') ? token() : (stored = JSON.parse(init.body), json(stored)));
+  const original = await seed.createApprovedAppointment(appointment);
+  const identity = { bookingId: appointment.bookingId, eventId: original.eventId };
+  let event = stored;
+  let status = 200;
+  let gets = 0;
+  const reader = provider(async (url, init) => {
+    if (url.includes('oauth2')) return token();
+    assert.equal(init.method, 'GET');
+    assert.equal(init.body, undefined);
+    assert.ok(url.endsWith(`/events/${original.eventId}`));
+    gets++;
+    return json(event, status);
+  });
+  assert.deepEqual(await reader.readAppointmentState(identity), { state: 'active' });
+  for (const code of [404, 410]) {
+    status = code; event = {};
+    assert.deepEqual(await reader.readAppointmentState(identity), { state: 'deleted' });
+  }
+  status = 200; event = { id: original.eventId, status: 'cancelled' };
+  assert.deepEqual(await reader.readAppointmentState(identity), { state: 'deleted' });
+  for (const malformed of [{}, { id: 'wrong', status: 'cancelled' }, { id: original.eventId, status: 'confirmed' }, { ...stored, extendedProperties: {} }]) {
+    event = malformed;
+    await assert.rejects(reader.readAppointmentState(identity), isCode('CALENDAR_RESPONSE'));
+  }
+  for (const code of [401, 403, 429, 500]) {
+    status = code;
+    await assert.rejects(reader.readAppointmentState(identity), isCode(code === 401 || code === 403 ? 'CALENDAR_AUTH' : 'CALENDAR_UNAVAILABLE'));
+  }
+  const before = gets;
+  await assert.rejects(reader.readAppointmentState({ ...identity, eventId: 'wrong' }), isCode('CALENDAR_INPUT'));
+  assert.equal(gets, before);
+});
+
+test('Calendar deletion synchronization requires a fresh fields-only writer or owner role on every batch', async () => {
+  let role = 'writer';
+  let calls = 0;
+  const calendar = provider(async (url, init) => {
+    if (url.includes('oauth2')) return token();
+    assert.equal(init.method, 'GET');
+    assert.ok(url.endsWith('/events?maxResults=1&fields=accessRole'));
+    calls++;
+    return json(role === undefined ? {} : { accessRole: role });
+  });
+  assert.equal(await calendar.verifyCalendarWriteAccess(), true);
+  role = 'owner';
+  assert.equal(await calendar.verifyCalendarWriteAccess(), true);
+  for (const value of ['reader', 'freeBusyReader', 'writerWithoutPrivateAccess', 'none', undefined]) {
+    role = value;
+    await assert.rejects(calendar.verifyCalendarWriteAccess(), isCode('CALENDAR_AUTH'));
+  }
+  assert.equal(calls, 7);
 });

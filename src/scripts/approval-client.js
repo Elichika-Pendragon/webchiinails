@@ -1,3 +1,5 @@
+import { calculatePayment, normalizeBookingDesign } from '../../server/booking.js';
+
 const main = document.querySelector('.approval-page');
 
 if (main) {
@@ -14,6 +16,13 @@ if (main) {
   const state = document.getElementById('approval-state');
   const outcome = document.getElementById('approval-outcome');
   const calendarLink = document.getElementById('approval-calendar-link');
+  const paymentLabel = document.getElementById('approval-payment-label');
+  const paymentNote = document.getElementById('approval-payment-note');
+  const durationLabel = document.getElementById('approval-duration-label');
+  const proofPanel = document.getElementById('approval-proof');
+  const proofButton = document.getElementById('approval-proof-toggle');
+  const proofImage = document.getElementById('approval-proof-image');
+  const proofStatus = document.getElementById('approval-proof-status');
   const token = new URL(window.location.href).searchParams.get('r') || '';
   const validToken = /^[A-Za-z0-9_-]{43}$/.test(token);
   const currency = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
@@ -25,6 +34,21 @@ if (main) {
   let active = true;
   let busy = false;
   let googleLoading = null;
+  let proofUrl = '';
+  let proofLoading = false;
+  let proofSequence = 0;
+
+  function clearProofImage() {
+    proofSequence++;
+    if (proofUrl) URL.revokeObjectURL(proofUrl);
+    proofUrl = '';
+    proofImage.removeAttribute('src');
+    proofImage.hidden = true;
+    proofButton.setAttribute('aria-expanded', 'false');
+    proofButton.textContent = 'Lihat bukti pembayaran';
+    proofLoading = false;
+    proofStatus.textContent = '';
+  }
 
   function setStatus(message, error = false) {
     status.textContent = message;
@@ -39,6 +63,7 @@ if (main) {
     recoverButton.disabled = value;
     retryButton.disabled = value;
     signInButton.disabled = value;
+    proofButton.disabled = value || proofLoading;
     acceptButton.textContent = value && action === 'accept' ? 'Memeriksa dan menyimpan…' : 'Terima booking';
     cancelButton.textContent = value && action === 'cancel' ? 'Membatalkan…' : 'Batalkan permintaan';
     recoverButton.textContent = value && action === 'recover' ? 'Memeriksa penyimpanan…' : 'Periksa penyimpanan';
@@ -73,6 +98,8 @@ if (main) {
     requestPanel.hidden = true;
     actions.hidden = true;
     recoverButton.hidden = true;
+    clearProofImage();
+    proofPanel.hidden = true;
     calendarLink.hidden = true;
     calendarLink.removeAttribute('href');
     document.querySelectorAll('[data-approval-value]').forEach(element => {
@@ -144,10 +171,21 @@ if (main) {
     if (!/^\+?[0-9]{8,16}$/.test(String(item.whatsapp || ''))) throw new Error('summary');
     const amounts = ['agreedPrice', 'deposit', 'remainingBalance'];
     if (amounts.some(key => !Number.isSafeInteger(item[key]) || item[key] < 0 || item[key] > 100000000)) throw new Error('summary');
-    if (item.agreedPrice < 1 || item.deposit !== Math.ceil(item.agreedPrice / 10) || item.remainingBalance !== item.agreedPrice - item.deposit) throw new Error('summary');
+    if (item.agreedPrice < 1 || item.remainingBalance !== item.agreedPrice - item.deposit) throw new Error('summary');
+    if (item.paymentMode === 'legacy' && item.paymentPolicy === 'legacy-10pct-v1') {
+      if (item.deposit !== Math.ceil(item.agreedPrice / 10)) throw new Error('summary');
+    } else {
+      if (!['deposit', 'full'].includes(item.paymentMode) || item.paymentPolicy !== 'min20k-v2') throw new Error('summary');
+      const payment = calculatePayment(String(item.agreedPrice), item.paymentMode);
+      if (!payment || payment.paymentMode !== item.paymentMode || payment.deposit !== item.deposit) throw new Error('summary');
+    }
+    const design = item.designType === 'legacy' && item.durationMinutes === 120
+      ? { designType: 'legacy', durationMinutes: 120 }
+      : normalizeBookingDesign(item.designType, item.durationMinutes);
+    if (!design || design.designType !== item.designType || design.durationMinutes !== item.durationMinutes) throw new Error('summary');
     const start = new Date(item.startISO);
     const end = new Date(item.endISO);
-    if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end.getTime() - start.getTime() !== 7200000) throw new Error('summary');
+    if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end.getTime() - start.getTime() !== design.durationMinutes * 60000) throw new Error('summary');
     return { ...item, start, end };
   }
 
@@ -157,9 +195,12 @@ if (main) {
     signInPanel.hidden = true;
     retryButton.hidden = true;
     requestPanel.hidden = false;
+    clearProofImage();
+    proofPanel.hidden = item.hasPaymentProof !== true;
     const values = {
       name: item.name,
       whatsapp: item.whatsapp,
+      design: { plain: 'Plain / Nail gel / Removal', simple: 'Simple art', 'full-art': 'Full art', legacy: 'Sesuai konsultasi · ketentuan sebelumnya' }[item.designType],
       date: dateFormat.format(item.start),
       time: `${timeFormat.format(item.start)}–${timeFormat.format(item.end)} WIB`,
       agreedPrice: currency.format(item.agreedPrice),
@@ -170,6 +211,9 @@ if (main) {
       element.textContent = values[element.dataset.approvalValue] || '';
       if (element.dataset.approvalValue === 'whatsapp') element.href = `https://wa.me/${item.whatsapp.replace(/^\+/, '')}`;
     });
+    paymentLabel.textContent = item.paymentMode === 'full' ? 'Full payment' : item.paymentMode === 'legacy' ? 'DP 10% · ketentuan sebelumnya' : 'DP · 10%, min. Rp20.000';
+    durationLabel.textContent = `Waktu · ${item.durationMinutes / 60} jam`;
+    paymentNote.textContent = `${item.paymentMode === 'legacy' ? 'Permintaan ini memakai ketentuan DP 10% sebelumnya. ' : ''}Dengan menerima, kamu menyatakan nominal sudah sesuai konsultasi dan pembayaran sudah diterima. Jadwal akan diperiksa kembali sebelum ditambahkan ke kalender.`;
     const labels = { pending: 'Menunggu konfirmasi', approving: 'Sedang diproses', reconcile: 'Perlu pemeriksaan', accepted: 'Diterima', cancelled: 'Dibatalkan', expired: 'Kedaluwarsa' };
     state.textContent = labels[item.status];
     actions.hidden = item.status !== 'pending';
@@ -178,9 +222,9 @@ if (main) {
     calendarLink.removeAttribute('href');
     outcome.hidden = item.status === 'pending';
     const messages = {
-      pending: 'Periksa nominal, pembayaran DP, dan jadwal sebelum menerima.',
+      pending: 'Periksa nominal, pembayaran, dan jadwal sebelum menerima.',
       accepted: 'Booking diterima dan tersimpan di kalender.',
-      cancelled: 'Permintaan dibatalkan. Jadwal tidak ditambahkan ke kalender.',
+      cancelled: item.cancelledViaCalendar === true ? 'Booking dibatalkan melalui Google Calendar. Slot tidak lagi ditahan oleh booking ini.' : 'Permintaan dibatalkan. Jadwal tidak ditambahkan ke kalender.',
       expired: 'Permintaan ini sudah kedaluwarsa. Pelanggan perlu mengirim permintaan baru.',
       approving: 'Permintaan sedang diproses. Tunggu sebentar, lalu periksa penyimpanan jika status belum berubah.',
       reconcile: 'Hasil penyimpanan kalender belum pasti. Periksa penyimpanan untuk memastikan hasilnya; jadwal tidak dikirim ulang otomatis.',
@@ -311,6 +355,39 @@ if (main) {
   acceptButton.addEventListener('click', () => decide('accept'));
   cancelButton.addEventListener('click', () => decide('cancel'));
   recoverButton.addEventListener('click', () => decide('accept', true));
+  proofButton.addEventListener('click', async () => {
+    if (busy || proofLoading || session?.authenticated !== true || summary?.hasPaymentProof !== true) return;
+    if (proofUrl) { clearProofImage(); return; }
+    const sequence = ++proofSequence;
+    const controller = new AbortController();
+    controllers.add(controller);
+    const timeout = window.setTimeout(() => controller.abort(), 12000);
+    proofLoading = true;
+    proofButton.disabled = true;
+    proofStatus.textContent = 'Memuat bukti pembayaran…';
+    try {
+      const response = await fetch(`/api/booking/proof?token=${encodeURIComponent(token)}`, { credentials: 'same-origin', cache: 'no-store', referrerPolicy: 'no-referrer', headers: { Accept: 'image/jpeg' }, signal: controller.signal });
+      if (!response.ok) throw Object.assign(new Error('proof'), { status: response.status });
+      if (!/^image\/jpeg(?:;|$)/i.test(response.headers.get('Content-Type') || '')) throw new Error('proof');
+      const blob = await response.blob();
+      if (!blob.size || blob.size > 500 * 1024 || blob.type !== 'image/jpeg') throw new Error('proof');
+      if (!active || sequence !== proofSequence) return;
+      proofUrl = URL.createObjectURL(blob);
+      proofImage.src = proofUrl;
+      proofImage.hidden = false;
+      proofButton.textContent = 'Tutup bukti pembayaran';
+      proofButton.setAttribute('aria-expanded', 'true');
+      proofStatus.textContent = 'Periksa bukti dengan transaksi yang benar-benar masuk sebelum menerima booking.';
+    } catch (error) {
+      if (!active || sequence !== proofSequence) return;
+      if (error.status === 401 || error.status === 403) showFailure(error);
+      else proofStatus.textContent = error.status === 410 || error.status === 404 ? 'Bukti pembayaran sudah tidak tersedia.' : 'Bukti belum dapat dibuka. Periksa koneksi, lalu coba lagi.';
+    } finally {
+      window.clearTimeout(timeout);
+      controllers.delete(controller);
+      if (active && sequence === proofSequence) { proofLoading = false; proofButton.disabled = busy; }
+    }
+  });
   retryButton.addEventListener('click', () => { if (!busy) boot(); });
   window.addEventListener('pagehide', () => {
     active = false;
