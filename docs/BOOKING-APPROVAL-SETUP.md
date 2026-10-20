@@ -1,6 +1,6 @@
 # Booking approval activation checklist
 
-Updated 20 October 2026. **Resources are configured; deployment, real owner website sign-in and a live booking/Calendar write remain pending.** This is an implementation/setup checklist, not evidence that the complete production flow is active. Publishing the Astro pages alone or saving runtime settings does not establish a successful booking.
+Updated 20 October 2026. **Code is live and production reports enabled; real owner website sign-in and a Calendar write remain pending.** Code `bccc3a887f0f6b7ddba827cf27c2f08042a4cdbf` deployed successfully as `180ada8e-26ff-4d22-a9fc-24fdce3fa1d7` at 22:53 WIB, with Functions compiled. Exact public artifacts/status and a synthetic pending request pass; they do not establish a completed booking approval.
 
 ## Current verified setup
 
@@ -8,7 +8,9 @@ With explicit owner approval, Google branding/support-contact configuration and 
 
 The dedicated service account still has no project IAM role. It now has **Make changes and see all event details** writer access to the existing Nail Art Calendar only. One JSON key was created for this setup and its private key saved as an encrypted Cloudflare Production secret. D1 was created, migrated and bound to Production as `BOOKING_DB`. Six server settings are saved as Secrets; the public OAuth client ID and `BOOKING_ENABLED=true` are saved as Text. Existing `SITE_URL` is unchanged. No billing/trial or paid upgrade was activated.
 
-A read-only live provider check using official OAuth and free/busy succeeded at **2026-10-20 15:47:54 UTC**. It wrote **0 Calendar events**. Account/project/Calendar/database identifiers and credential values remain outside distributable documentation. New deployment/runtime parity, actual permitted-owner sign-in and an authorized live request/approval test are still pending. The sections below preserve the setup/verification procedure; completed resources should be verified, not duplicated.
+A read-only live provider check using official OAuth and free/busy succeeded at **2026-10-20 15:47:54 UTC**. It wrote **0 Calendar events**. Deployed status reports `enabled:true`; seven routes/five JS assets and public SEO/ownership match the exact prepared build. A clearly labelled synthetic public TEST request returned 201/pending with canonical DP Rp15.501 and a two-hour interval, and unauthenticated review returned 401. The Google Identity Services button and basic `openid email profile` popup open, and the user completed Google device verification and account steps. A website return showed 401/sign-in-again messaging, another showed temporary 503 unavailability, and retry returned to anonymous sign-in. Production status and anonymous auth-session GET return 200, with status enabled and auth anonymous. The website owner session, authenticated decision and event insertion remain unverified; no definite Google/browser cause is established. No further login request was made in this final check. Account/project/Calendar/database identifiers, credentials and test review tokens remain outside distributable documentation. The sections below preserve the setup/verification procedure; completed resources should be verified, not duplicated.
+
+Evidence: [GET-only production checks](evidence/booking-approval/live-verification.json), [read-only Calendar access](evidence/booking-approval/calendar-readonly-access.json). The synthetic request remains pending, with 0 Calendar writes. Its review/cancellation still requires a verified owner session; no direct token or database edit substitutes for authorization.
 
 ## Intended customer and owner flow
 
@@ -65,7 +67,7 @@ Use the Pages runtime environment for the intended deployment. The table lists n
 
 | Name | Kind | Value/purpose |
 | --- | --- | --- |
-| `BOOKING_ENABLED` | Variable | Exact `true` enables the feature when every requirement is present. Production is now prepared with `true`; deployed status and the live flow still require verification. Set `false` to disable safely. |
+| `BOOKING_ENABLED` | Variable | Exact `true` enables the feature when every requirement is present. Deployed production status now reports enabled; owner login/Calendar acceptance still require verification. Set `false` to disable safely. |
 | `SITE_URL` | Variable | `https://<production-host>`; exact origin without an application path. |
 | `BOOKING_DB` | D1 binding | The migrated booking database object, not a text database identifier. |
 | `BOOKING_LINK_SECRET` | Encrypted secret | Independently generated random value of at least 32 bytes, encoded as a string; HMAC for request-link/idempotency material. |
@@ -89,7 +91,7 @@ Generate both signing secrets independently with a cryptographic random generato
 7. Attempt two overlapping test approvals and an adjacent appointment. Exactly one overlapping request may hold the slot; an adjacent appointment may succeed. A fresh external busy interval must block insertion.
 8. Use synthetic provider tests, not a deliberately interrupted real booking, to exercise uncertain writes. Status `reconcile` retains reservations. Wait at least 60 seconds, then use the owner's explicit **Periksa penyimpanan** action. Lookup must recover the existing event or prove absence before a fresh availability check and insertion. Refreshing the summary alone does not reconcile a write. Never create a replacement booking to bypass a reservation.
 9. Verify the test run leaves no real customer data. Test-event deletion and any cleanup are separate explicit owner actions; the pending cancel button does not delete accepted events.
-10. Review the data/credential decisions below and confirm Free-plan settings. For this installation the owner-authorized `BOOKING_ENABLED=true` is already saved; deploy the reviewed code and verify the actual status/runtime configuration. Complete one authorized production end-to-end test before broadly distributing the same `/book` link. Do not equate a saved flag or read-only Calendar check with a successful website booking.
+10. Review the data/credential decisions below and confirm Free-plan settings. This installation is deployed and reports `enabled:true`, and its synthetic pending-request/anonymous-refusal checks passed. Google device verification/account steps have been completed, but the website session remains unverified after failed returns. Record this unresolved state; authenticated request/decision/Calendar confirmation must not be claimed or distributed as a verified flow. Do not equate a saved flag, read-only Calendar access or pending request with an accepted appointment.
 
 ## Retention and operating decisions still outstanding
 
