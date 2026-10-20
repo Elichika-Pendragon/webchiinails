@@ -78,8 +78,8 @@ test('valid Google signature grants a seven-day session without returning email 
   const fixture = await challenge({ fetch: async (url, init) => {
     calls++;
     assert.equal(url, 'https://www.googleapis.com/oauth2/v3/certs');
-    assert.equal(init.redirect, 'error');
-    assert.equal(init.credentials, 'omit');
+    assert.equal(init.redirect, 'manual');
+    assert.equal(Object.hasOwn(init, 'credentials'), false);
     assert.ok(init.signal instanceof AbortSignal);
     return jwks();
   } });
@@ -285,7 +285,7 @@ test('Worker fetch uses its global receiver before a forged signature is rejecte
     if (this !== globalThis) throw new TypeError('Illegal invocation');
     calls++;
     assert.equal(url, 'https://www.googleapis.com/oauth2/v3/certs');
-    assert.equal(init.redirect, 'error');
+    assert.equal(init.redirect, 'manual');
     return jwks();
   } });
   const valid = await token(fixture.body.nonce);
@@ -298,6 +298,43 @@ test('Worker fetch uses its global receiver before a forged signature is rejecte
   // signature, nonce, origin, owner or CSRF check and retains the JWKS cache.
   assert.equal((await login(fixture)).status, 200);
   assert.equal(calls, 1);
+});
+
+test('Worker-compatible JWKS initialization verifies without browser-only options or error redirect mode', async () => {
+  let calls = 0;
+  const fixture = await challenge({ fetch: async function workerdFetch(url, init) {
+    // This models the actual workerd Request constructor (http.c++), which
+    // supports follow/manual and throws for error before issuing HTTP traffic.
+    if (Object.hasOwn(init, 'credentials')) throw new Error("The 'credentials' field on 'RequestInitializerDict' is not implemented.");
+    if (!['follow', 'manual'].includes(init.redirect)) throw new TypeError('Invalid redirect value, must be one of follow or manual.');
+    if (this !== globalThis) throw new TypeError('Illegal invocation');
+    assert.equal(url, 'https://www.googleapis.com/oauth2/v3/certs');
+    assert.deepEqual(Object.keys(init).sort(), ['headers', 'redirect', 'signal']);
+    assert.deepEqual(init.headers, { Accept: 'application/json' });
+    assert.equal(init.redirect, 'manual');
+    calls++;
+    return jwks();
+  } });
+  const valid = await token(fixture.body.nonce);
+  const [header, claims] = valid.split('.');
+  const forged = `${header}.${claims}.${Buffer.alloc(256).toString('base64url')}`;
+  await assert.rejects(signInOwner(request(undefined, { method: 'POST', cookie: fixture.cookie, csrf: fixture.body.csrfToken, body: { credential: forged, nonce: fixture.body.nonce } }), env, fixture.options), isCode('AUTH_REQUIRED', 401));
+  assert.equal((await login(fixture)).status, 200);
+  assert.equal(calls, 1);
+});
+
+test('manual JWKS redirects and unexpected success statuses fail closed without following Location', async () => {
+  for (const status of [201, 204, 301, 302, 303, 307, 308]) {
+    let calls = 0;
+    const fixture = await challenge({ fetch: async (url, init) => {
+      calls++;
+      assert.equal(url, 'https://www.googleapis.com/oauth2/v3/certs');
+      assert.equal(init.redirect, 'manual');
+      return new Response(status === 204 ? null : JSON.stringify({ keys: [publicKey] }), { status, headers: { 'Content-Type': 'application/json', Location: 'https://untrusted.example/keys' } });
+    } });
+    await assert.rejects(login(fixture), isCode('AUTH_JWKS_RESPONSE', 503));
+    assert.equal(calls, 1);
+  }
 });
 
 test('JSON sign-in body enforces type, valid structure and byte limits', async () => {

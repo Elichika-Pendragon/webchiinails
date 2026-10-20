@@ -237,12 +237,15 @@ async function googleKeys(config, kid) {
     let upstream;
     let stage = 'AUTH_JWKS_FETCH';
     try {
-      // Worker's native fetch rejects an unrelated receiver such as `config`.
-      // Preserve its global receiver while keeping injected fetch/cache identity.
-      upstream = await config.fetcher.call(globalThis, JWKS_URL, { headers: { Accept: 'application/json' }, credentials: 'omit', redirect: 'error', signal: controller.signal });
+      // workerd rejects redirect:'error' before any network request. Manual mode
+      // never follows a redirect, and the exact-200 check below fails closed.
+      // This server-only fixed-URL request forwards no incoming headers/cookies;
+      // browser credentials options have no role (and older Workers reject them).
+      // Preserve the global receiver and injected fetch/cache identity as well.
+      upstream = await config.fetcher.call(globalThis, JWKS_URL, { headers: { Accept: 'application/json' }, redirect: 'manual', signal: controller.signal });
       if (controller.signal.aborted) throw fail('AUTH_TIMEOUT');
       stage = 'AUTH_JWKS_RESPONSE';
-      if (!(upstream instanceof Response) || !upstream.ok) throw fail(stage);
+      if (!(upstream instanceof Response) || upstream.status !== 200 || upstream.redirected) throw fail(stage);
       stage = 'AUTH_JWKS_BODY';
       const document = await boundedJson(upstream, 65536, stage, controller.signal);
       stage = 'AUTH_JWKS_FORMAT';
