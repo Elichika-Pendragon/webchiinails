@@ -19,8 +19,16 @@ const setMenu = open => {
   if (menu) menu.textContent = open ? 'Tutup ×' : 'Menu ☰';
   navigation?.classList.toggle('is-open', open);
 };
-menu?.addEventListener('click', () => setMenu(menu.getAttribute('aria-expanded') !== 'true'));
+menu?.addEventListener('click', () => {
+  const open = menu.getAttribute('aria-expanded') !== 'true';
+  if (open) setChat(false);
+  setMenu(open);
+});
 navigation?.addEventListener('click', event => { if (event.target.closest('a')) setMenu(false); });
+const resetMenu = () => setMenu(false);
+const compactMenu = matchMedia('(max-width: 960px)');
+if (compactMenu.addEventListener) compactMenu.addEventListener('change', resetMenu);
+else compactMenu.addListener?.(resetMenu);
 
 const widget = document.querySelector('.chat-widget');
 const chatTrigger = widget?.querySelector('.chat-trigger');
@@ -31,12 +39,18 @@ const setChat = (open, restoreFocus = false) => {
   chatPanel.hidden = !open;
   chatTrigger.setAttribute('aria-expanded', String(open));
   chatTrigger.lastChild.textContent = open ? 'Close chat' : 'Chat with us';
-  if (open) chatClose?.focus();
+  if (open) { setMenu(false); chatClose?.focus(); }
   else if (restoreFocus) chatTrigger.focus();
 };
 chatTrigger?.addEventListener('click', () => setChat(chatPanel.hidden));
 chatClose?.addEventListener('click', () => setChat(false, true));
-document.addEventListener('pointerdown', event => { if (widget && !widget.contains(event.target)) setChat(false); });
+document.addEventListener('pointerdown', event => {
+  if (widget && !widget.contains(event.target)) setChat(false);
+  if (!menu?.contains(event.target) && !navigation?.contains(event.target)) setMenu(false);
+});
+document.addEventListener('focusin', event => {
+  if (!menu?.contains(event.target) && !navigation?.contains(event.target)) setMenu(false);
+});
 document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return;
   if (chatPanel && !chatPanel.hidden) setChat(false, true);

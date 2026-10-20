@@ -1,0 +1,1970 @@
+{
+  "checkedAt": "2026-10-20T10:43:45.662Z",
+  "origin": "http://127.0.0.1:4323",
+  "browser": "Chrome 156.0.8078.12",
+  "thirdPartyRequests": "blocked",
+  "combinations": 30,
+  "errors": [],
+  "reducedMotion": {
+    "animation": "none",
+    "scroll": "auto"
+  },
+  "shortViewportChat": {
+    "x": 24,
+    "y": 40,
+    "width": 350,
+    "height": 280
+  },
+  "results": [
+    {
+      "width": 320,
+      "route": "/",
+      "documentWidth": 320,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Home",
+          "width": 46.828125,
+          "height": 44
+        },
+        {
+          "name": "Services",
+          "width": 64.390625,
+          "height": 44
+        },
+        {
+          "name": "Custom sets",
+          "width": 81.9375,
+          "height": 44
+        },
+        {
+          "name": "Visit",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "About",
+          "width": 46.828125,
+          "height": 44
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 200,
+          "height": 48
+        },
+        {
+          "name": "Open Google Maps",
+          "width": 280,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": "12px",
+        "price": "12px",
+        "rules": "12px",
+        "mobileCard": "12px"
+      }
+    },
+    {
+      "width": 320,
+      "route": "/services",
+      "documentWidth": 320,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Home",
+          "width": 46.828125,
+          "height": 44
+        },
+        {
+          "name": "Services",
+          "width": 64.390625,
+          "height": 44
+        },
+        {
+          "name": "Custom sets",
+          "width": 81.9375,
+          "height": 44
+        },
+        {
+          "name": "Visit",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "About",
+          "width": 46.828125,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi custom nail art →",
+          "width": 224,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi nail extensions →",
+          "width": 224,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi press-on nails →",
+          "width": 224,
+          "height": 44
+        },
+        {
+          "name": "Bagaimana cara booking nail art di Chii ",
+          "width": 278,
+          "height": 77
+        },
+        {
+          "name": "Berapa harga custom nail art dan extensi",
+          "width": 278,
+          "height": 77
+        },
+        {
+          "name": "Bisa pesan press-on dari luar Palembang?",
+          "width": 278,
+          "height": 77
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 280,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": null,
+        "service": "12px",
+        "price": null,
+        "rules": "12px",
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 320,
+      "route": "/custom-sets",
+      "documentWidth": 320,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Home",
+          "width": 46.828125,
+          "height": 44
+        },
+        {
+          "name": "Services",
+          "width": 64.390625,
+          "height": 44
+        },
+        {
+          "name": "Custom sets",
+          "width": 81.9375,
+          "height": 44
+        },
+        {
+          "name": "Visit",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "About",
+          "width": 46.828125,
+          "height": 44
+        },
+        {
+          "name": "Postingan sebelumnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Postingan berikutnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Request a custom set",
+          "width": 193.046875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi desain & harga ↗",
+          "width": 280,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 280,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": null,
+        "service": null,
+        "price": "12px",
+        "rules": null,
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 320,
+      "route": "/visit",
+      "documentWidth": 320,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Home",
+          "width": 46.828125,
+          "height": 44
+        },
+        {
+          "name": "Services",
+          "width": 64.390625,
+          "height": 44
+        },
+        {
+          "name": "Custom sets",
+          "width": 81.9375,
+          "height": 44
+        },
+        {
+          "name": "Visit",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "About",
+          "width": 46.828125,
+          "height": 44
+        },
+        {
+          "name": "Get directions ↗",
+          "width": 280,
+          "height": 48
+        },
+        {
+          "name": "Open Google Maps",
+          "width": 280,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 280,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": null,
+        "price": null,
+        "rules": null,
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 320,
+      "route": "/about",
+      "documentWidth": 320,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Home",
+          "width": 46.828125,
+          "height": 44
+        },
+        {
+          "name": "Services",
+          "width": 64.390625,
+          "height": 44
+        },
+        {
+          "name": "Custom sets",
+          "width": 81.9375,
+          "height": 44
+        },
+        {
+          "name": "Visit",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "About",
+          "width": 46.828125,
+          "height": 44
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "01Isi data booking terlebih dahulu+",
+          "width": 278,
+          "height": 77
+        },
+        {
+          "name": "02Booking wajib DP; pembatalan membuat D",
+          "width": 278,
+          "height": 99.5
+        },
+        {
+          "name": "03Jam layanan & batas booking terakhir+",
+          "width": 278,
+          "height": 77
+        },
+        {
+          "name": "04Tidak tersedia home service+",
+          "width": 278,
+          "height": 77
+        },
+        {
+          "name": "05Jadwal booking tidak bisa diganti+",
+          "width": 278,
+          "height": 77
+        },
+        {
+          "name": "06Denda keterlambatan Rp10.000 per 10 me",
+          "width": 278,
+          "height": 77
+        },
+        {
+          "name": "Booking via WhatsApp",
+          "width": 232,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 280,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": null,
+        "price": null,
+        "rules": "12px",
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 390,
+      "route": "/",
+      "documentWidth": 390,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Home",
+          "width": 59,
+          "height": 44
+        },
+        {
+          "name": "Services",
+          "width": 81.125,
+          "height": 44
+        },
+        {
+          "name": "Custom sets",
+          "width": 103.25,
+          "height": 44
+        },
+        {
+          "name": "Visit",
+          "width": 51.625,
+          "height": 44
+        },
+        {
+          "name": "About",
+          "width": 59,
+          "height": 44
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 270,
+          "height": 48
+        },
+        {
+          "name": "Open Google Maps",
+          "width": 350,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": "12px",
+        "price": "12px",
+        "rules": "12px",
+        "mobileCard": "12px"
+      }
+    },
+    {
+      "width": 390,
+      "route": "/services",
+      "documentWidth": 390,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Home",
+          "width": 59,
+          "height": 44
+        },
+        {
+          "name": "Services",
+          "width": 81.125,
+          "height": 44
+        },
+        {
+          "name": "Custom sets",
+          "width": 103.25,
+          "height": 44
+        },
+        {
+          "name": "Visit",
+          "width": 51.625,
+          "height": 44
+        },
+        {
+          "name": "About",
+          "width": 59,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi custom nail art →",
+          "width": 294,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi nail extensions →",
+          "width": 294,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi press-on nails →",
+          "width": 294,
+          "height": 44
+        },
+        {
+          "name": "Bagaimana cara booking nail art di Chii ",
+          "width": 348,
+          "height": 77
+        },
+        {
+          "name": "Berapa harga custom nail art dan extensi",
+          "width": 348,
+          "height": 77
+        },
+        {
+          "name": "Bisa pesan press-on dari luar Palembang?",
+          "width": 348,
+          "height": 77
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 350,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": null,
+        "service": "12px",
+        "price": null,
+        "rules": "12px",
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 390,
+      "route": "/custom-sets",
+      "documentWidth": 390,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Home",
+          "width": 59,
+          "height": 44
+        },
+        {
+          "name": "Services",
+          "width": 81.125,
+          "height": 44
+        },
+        {
+          "name": "Custom sets",
+          "width": 103.25,
+          "height": 44
+        },
+        {
+          "name": "Visit",
+          "width": 51.625,
+          "height": 44
+        },
+        {
+          "name": "About",
+          "width": 59,
+          "height": 44
+        },
+        {
+          "name": "Postingan sebelumnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Postingan berikutnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Request a custom set",
+          "width": 193.046875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi desain & harga ↗",
+          "width": 350,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 350,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": null,
+        "service": null,
+        "price": "12px",
+        "rules": null,
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 390,
+      "route": "/visit",
+      "documentWidth": 390,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Home",
+          "width": 59,
+          "height": 44
+        },
+        {
+          "name": "Services",
+          "width": 81.125,
+          "height": 44
+        },
+        {
+          "name": "Custom sets",
+          "width": 103.25,
+          "height": 44
+        },
+        {
+          "name": "Visit",
+          "width": 51.625,
+          "height": 44
+        },
+        {
+          "name": "About",
+          "width": 59,
+          "height": 44
+        },
+        {
+          "name": "Get directions ↗",
+          "width": 350,
+          "height": 48
+        },
+        {
+          "name": "Open Google Maps",
+          "width": 350,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 350,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": null,
+        "price": null,
+        "rules": null,
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 390,
+      "route": "/about",
+      "documentWidth": 390,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Home",
+          "width": 59,
+          "height": 44
+        },
+        {
+          "name": "Services",
+          "width": 81.125,
+          "height": 44
+        },
+        {
+          "name": "Custom sets",
+          "width": 103.25,
+          "height": 44
+        },
+        {
+          "name": "Visit",
+          "width": 51.625,
+          "height": 44
+        },
+        {
+          "name": "About",
+          "width": 59,
+          "height": 44
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "01Isi data booking terlebih dahulu+",
+          "width": 348,
+          "height": 68
+        },
+        {
+          "name": "02Booking wajib DP; pembatalan membuat D",
+          "width": 348,
+          "height": 77
+        },
+        {
+          "name": "03Jam layanan & batas booking terakhir+",
+          "width": 348,
+          "height": 77
+        },
+        {
+          "name": "04Tidak tersedia home service+",
+          "width": 348,
+          "height": 68
+        },
+        {
+          "name": "05Jadwal booking tidak bisa diganti+",
+          "width": 348,
+          "height": 68
+        },
+        {
+          "name": "06Denda keterlambatan Rp10.000 per 10 me",
+          "width": 348,
+          "height": 77
+        },
+        {
+          "name": "Booking via WhatsApp",
+          "width": 302,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 350,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": null,
+        "price": null,
+        "rules": "12px",
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 768,
+      "route": "/",
+      "documentWidth": 768,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi custom nail art →",
+          "width": 170.65625,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi nail extensions →",
+          "width": 170.671875,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi press-on nails →",
+          "width": 170.671875,
+          "height": 44
+        },
+        {
+          "name": "Postingan sebelumnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Postingan berikutnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Request a custom set",
+          "width": 193.046875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi desain & harga ↗",
+          "width": 233.1875,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "Get directions ↗",
+          "width": 158.3125,
+          "height": 48
+        },
+        {
+          "name": "Open Google Maps",
+          "width": 175.609375,
+          "height": 48
+        },
+        {
+          "name": "Bagaimana cara booking nail art di Chii ",
+          "width": 686,
+          "height": 72
+        },
+        {
+          "name": "Berapa harga custom nail art dan extensi",
+          "width": 686,
+          "height": 72
+        },
+        {
+          "name": "Bisa pesan press-on dari luar Palembang?",
+          "width": 686,
+          "height": 72
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": "12px",
+        "price": "12px",
+        "rules": "12px",
+        "mobileCard": "12px"
+      }
+    },
+    {
+      "width": 768,
+      "route": "/services",
+      "documentWidth": 768,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi custom nail art →",
+          "width": 170.65625,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi nail extensions →",
+          "width": 170.671875,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi press-on nails →",
+          "width": 170.671875,
+          "height": 44
+        },
+        {
+          "name": "Bagaimana cara booking nail art di Chii ",
+          "width": 686,
+          "height": 72
+        },
+        {
+          "name": "Berapa harga custom nail art dan extensi",
+          "width": 686,
+          "height": 72
+        },
+        {
+          "name": "Bisa pesan press-on dari luar Palembang?",
+          "width": 686,
+          "height": 72
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": null,
+        "service": "12px",
+        "price": null,
+        "rules": "12px",
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 768,
+      "route": "/custom-sets",
+      "documentWidth": 768,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Postingan sebelumnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Postingan berikutnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Request a custom set",
+          "width": 193.046875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi desain & harga ↗",
+          "width": 233.1875,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": null,
+        "service": null,
+        "price": "12px",
+        "rules": null,
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 768,
+      "route": "/visit",
+      "documentWidth": 768,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Get directions ↗",
+          "width": 158.3125,
+          "height": 48
+        },
+        {
+          "name": "Open Google Maps",
+          "width": 175.609375,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": null,
+        "price": null,
+        "rules": null,
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 768,
+      "route": "/about",
+      "documentWidth": 768,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "01Isi data booking terlebih dahulu+",
+          "width": 366,
+          "height": 72
+        },
+        {
+          "name": "02Booking wajib DP; pembatalan membuat D",
+          "width": 366,
+          "height": 84
+        },
+        {
+          "name": "03Jam layanan & batas booking terakhir+",
+          "width": 366,
+          "height": 84
+        },
+        {
+          "name": "04Tidak tersedia home service+",
+          "width": 366,
+          "height": 72
+        },
+        {
+          "name": "05Jadwal booking tidak bisa diganti+",
+          "width": 366,
+          "height": 72
+        },
+        {
+          "name": "06Denda keterlambatan Rp10.000 per 10 me",
+          "width": 366,
+          "height": 84
+        },
+        {
+          "name": "Booking via WhatsApp",
+          "width": 216,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": null,
+        "price": null,
+        "rules": "12px",
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 960,
+      "route": "/",
+      "documentWidth": 960,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi custom nail art →",
+          "width": 234.65625,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi nail extensions →",
+          "width": 234.671875,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi press-on nails →",
+          "width": 234.65625,
+          "height": 44
+        },
+        {
+          "name": "Postingan sebelumnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Postingan berikutnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Request a custom set",
+          "width": 193.046875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi desain & harga ↗",
+          "width": 233.1875,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "Get directions ↗",
+          "width": 158.3125,
+          "height": 48
+        },
+        {
+          "name": "Open Google Maps",
+          "width": 175.609375,
+          "height": 48
+        },
+        {
+          "name": "Bagaimana cara booking nail art di Chii ",
+          "width": 878,
+          "height": 72
+        },
+        {
+          "name": "Berapa harga custom nail art dan extensi",
+          "width": 878,
+          "height": 72
+        },
+        {
+          "name": "Bisa pesan press-on dari luar Palembang?",
+          "width": 878,
+          "height": 72
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": "12px",
+        "price": "12px",
+        "rules": "12px",
+        "mobileCard": "12px"
+      }
+    },
+    {
+      "width": 960,
+      "route": "/services",
+      "documentWidth": 960,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi custom nail art →",
+          "width": 234.65625,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi nail extensions →",
+          "width": 234.671875,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi press-on nails →",
+          "width": 234.65625,
+          "height": 44
+        },
+        {
+          "name": "Bagaimana cara booking nail art di Chii ",
+          "width": 878,
+          "height": 72
+        },
+        {
+          "name": "Berapa harga custom nail art dan extensi",
+          "width": 878,
+          "height": 72
+        },
+        {
+          "name": "Bisa pesan press-on dari luar Palembang?",
+          "width": 878,
+          "height": 72
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": null,
+        "service": "12px",
+        "price": null,
+        "rules": "12px",
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 960,
+      "route": "/custom-sets",
+      "documentWidth": 960,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Postingan sebelumnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Postingan berikutnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Request a custom set",
+          "width": 193.046875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi desain & harga ↗",
+          "width": 233.1875,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": null,
+        "service": null,
+        "price": "12px",
+        "rules": null,
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 960,
+      "route": "/visit",
+      "documentWidth": 960,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Get directions ↗",
+          "width": 158.3125,
+          "height": 48
+        },
+        {
+          "name": "Open Google Maps",
+          "width": 175.609375,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": null,
+        "price": null,
+        "rules": null,
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 960,
+      "route": "/about",
+      "documentWidth": 960,
+      "h1Count": 1,
+      "headerHeight": 64,
+      "targets": [
+        {
+          "name": "Menu ☰",
+          "width": 68.09375,
+          "height": 44
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "01Isi data booking terlebih dahulu+",
+          "width": 558,
+          "height": 72
+        },
+        {
+          "name": "02Booking wajib DP; pembatalan membuat D",
+          "width": 558,
+          "height": 72
+        },
+        {
+          "name": "03Jam layanan & batas booking terakhir+",
+          "width": 558,
+          "height": 72
+        },
+        {
+          "name": "04Tidak tersedia home service+",
+          "width": 558,
+          "height": 72
+        },
+        {
+          "name": "05Jadwal booking tidak bisa diganti+",
+          "width": 558,
+          "height": 72
+        },
+        {
+          "name": "06Denda keterlambatan Rp10.000 per 10 me",
+          "width": 558,
+          "height": 72
+        },
+        {
+          "name": "Booking via WhatsApp",
+          "width": 216,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": null,
+        "price": null,
+        "rules": "12px",
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 961,
+      "route": "/",
+      "documentWidth": 961,
+      "h1Count": 1,
+      "headerHeight": 76,
+      "targets": [
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 200,
+          "height": 44
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi custom nail art →",
+          "width": 235,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi nail extensions →",
+          "width": 235,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi press-on nails →",
+          "width": 235,
+          "height": 44
+        },
+        {
+          "name": "Postingan sebelumnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Postingan berikutnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Request a custom set",
+          "width": 193.046875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi desain & harga ↗",
+          "width": 233.1875,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "Get directions ↗",
+          "width": 158.3125,
+          "height": 48
+        },
+        {
+          "name": "Open Google Maps",
+          "width": 175.609375,
+          "height": 48
+        },
+        {
+          "name": "Bagaimana cara booking nail art di Chii ",
+          "width": 879,
+          "height": 72
+        },
+        {
+          "name": "Berapa harga custom nail art dan extensi",
+          "width": 879,
+          "height": 72
+        },
+        {
+          "name": "Bisa pesan press-on dari luar Palembang?",
+          "width": 879,
+          "height": 72
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": "12px",
+        "price": "12px",
+        "rules": "12px",
+        "mobileCard": "12px"
+      }
+    },
+    {
+      "width": 961,
+      "route": "/services",
+      "documentWidth": 961,
+      "h1Count": 1,
+      "headerHeight": 76,
+      "targets": [
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 200,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi custom nail art →",
+          "width": 235,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi nail extensions →",
+          "width": 235,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi press-on nails →",
+          "width": 235,
+          "height": 44
+        },
+        {
+          "name": "Bagaimana cara booking nail art di Chii ",
+          "width": 879,
+          "height": 72
+        },
+        {
+          "name": "Berapa harga custom nail art dan extensi",
+          "width": 879,
+          "height": 72
+        },
+        {
+          "name": "Bisa pesan press-on dari luar Palembang?",
+          "width": 879,
+          "height": 72
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": null,
+        "service": "12px",
+        "price": null,
+        "rules": "12px",
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 961,
+      "route": "/custom-sets",
+      "documentWidth": 961,
+      "h1Count": 1,
+      "headerHeight": 76,
+      "targets": [
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 200,
+          "height": 44
+        },
+        {
+          "name": "Postingan sebelumnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Postingan berikutnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Request a custom set",
+          "width": 193.046875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi desain & harga ↗",
+          "width": 233.1875,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": null,
+        "service": null,
+        "price": "12px",
+        "rules": null,
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 961,
+      "route": "/visit",
+      "documentWidth": 961,
+      "h1Count": 1,
+      "headerHeight": 76,
+      "targets": [
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 200,
+          "height": 44
+        },
+        {
+          "name": "Get directions ↗",
+          "width": 158.3125,
+          "height": 48
+        },
+        {
+          "name": "Open Google Maps",
+          "width": 175.609375,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": null,
+        "price": null,
+        "rules": null,
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 961,
+      "route": "/about",
+      "documentWidth": 961,
+      "h1Count": 1,
+      "headerHeight": 76,
+      "targets": [
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 200,
+          "height": 44
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "01Isi data booking terlebih dahulu+",
+          "width": 558.65625,
+          "height": 72
+        },
+        {
+          "name": "02Booking wajib DP; pembatalan membuat D",
+          "width": 558.65625,
+          "height": 72
+        },
+        {
+          "name": "03Jam layanan & batas booking terakhir+",
+          "width": 558.65625,
+          "height": 72
+        },
+        {
+          "name": "04Tidak tersedia home service+",
+          "width": 558.65625,
+          "height": 72
+        },
+        {
+          "name": "05Jadwal booking tidak bisa diganti+",
+          "width": 558.65625,
+          "height": 72
+        },
+        {
+          "name": "06Denda keterlambatan Rp10.000 per 10 me",
+          "width": 558.65625,
+          "height": 72
+        },
+        {
+          "name": "Booking via WhatsApp",
+          "width": 216.34375,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": null,
+        "price": null,
+        "rules": "12px",
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 1280,
+      "route": "/",
+      "documentWidth": 1280,
+      "h1Count": 1,
+      "headerHeight": 76,
+      "targets": [
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 200,
+          "height": 44
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi custom nail art →",
+          "width": 312,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi nail extensions →",
+          "width": 312,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi press-on nails →",
+          "width": 312,
+          "height": 44
+        },
+        {
+          "name": "Postingan sebelumnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Postingan berikutnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Request a custom set",
+          "width": 193.046875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi desain & harga ↗",
+          "width": 233.1875,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "Get directions ↗",
+          "width": 158.3125,
+          "height": 48
+        },
+        {
+          "name": "Open Google Maps",
+          "width": 175.609375,
+          "height": 48
+        },
+        {
+          "name": "Bagaimana cara booking nail art di Chii ",
+          "width": 898,
+          "height": 72
+        },
+        {
+          "name": "Berapa harga custom nail art dan extensi",
+          "width": 898,
+          "height": 72
+        },
+        {
+          "name": "Bisa pesan press-on dari luar Palembang?",
+          "width": 898,
+          "height": 72
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": "12px",
+        "price": "12px",
+        "rules": "12px",
+        "mobileCard": "12px"
+      }
+    },
+    {
+      "width": 1280,
+      "route": "/services",
+      "documentWidth": 1280,
+      "h1Count": 1,
+      "headerHeight": 76,
+      "targets": [
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 200,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi custom nail art →",
+          "width": 312,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi nail extensions →",
+          "width": 312,
+          "height": 44
+        },
+        {
+          "name": "Konsultasi press-on nails →",
+          "width": 312,
+          "height": 44
+        },
+        {
+          "name": "Bagaimana cara booking nail art di Chii ",
+          "width": 898,
+          "height": 72
+        },
+        {
+          "name": "Berapa harga custom nail art dan extensi",
+          "width": 898,
+          "height": 72
+        },
+        {
+          "name": "Bisa pesan press-on dari luar Palembang?",
+          "width": 898,
+          "height": 72
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": null,
+        "service": "12px",
+        "price": null,
+        "rules": "12px",
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 1280,
+      "route": "/custom-sets",
+      "documentWidth": 1280,
+      "h1Count": 1,
+      "headerHeight": 76,
+      "targets": [
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 200,
+          "height": 44
+        },
+        {
+          "name": "Postingan sebelumnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Postingan berikutnya",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "name": "Request a custom set",
+          "width": 193.046875,
+          "height": 48
+        },
+        {
+          "name": "Konsultasi desain & harga ↗",
+          "width": 233.1875,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": null,
+        "service": null,
+        "price": "12px",
+        "rules": null,
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 1280,
+      "route": "/visit",
+      "documentWidth": 1280,
+      "h1Count": 1,
+      "headerHeight": 76,
+      "targets": [
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 200,
+          "height": 44
+        },
+        {
+          "name": "Get directions ↗",
+          "width": 158.3125,
+          "height": 48
+        },
+        {
+          "name": "Open Google Maps",
+          "width": 175.609375,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": null,
+        "price": null,
+        "rules": null,
+        "mobileCard": null
+      }
+    },
+    {
+      "width": 1280,
+      "route": "/about",
+      "documentWidth": 1280,
+      "h1Count": 1,
+      "headerHeight": 76,
+      "targets": [
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 200,
+          "height": 44
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        },
+        {
+          "name": "01Isi data booking terlebih dahulu+",
+          "width": 728.65625,
+          "height": 72
+        },
+        {
+          "name": "02Booking wajib DP; pembatalan membuat D",
+          "width": 728.65625,
+          "height": 72
+        },
+        {
+          "name": "03Jam layanan & batas booking terakhir+",
+          "width": 728.65625,
+          "height": 72
+        },
+        {
+          "name": "04Tidak tersedia home service+",
+          "width": 728.65625,
+          "height": 72
+        },
+        {
+          "name": "05Jadwal booking tidak bisa diganti+",
+          "width": 728.65625,
+          "height": 72
+        },
+        {
+          "name": "06Denda keterlambatan Rp10.000 per 10 me",
+          "width": 728.65625,
+          "height": 72
+        },
+        {
+          "name": "Booking via WhatsApp",
+          "width": 301.34375,
+          "height": 48
+        },
+        {
+          "name": "Kirim desain inspirasimu",
+          "width": 210.46875,
+          "height": 48
+        }
+      ],
+      "radius": {
+        "button": "8px",
+        "photo": "16px",
+        "service": null,
+        "price": null,
+        "rules": "12px",
+        "mobileCard": null
+      }
+    }
+  ]
+}

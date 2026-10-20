@@ -1,0 +1,59 @@
+{
+  "checkedAt": "2026-10-20T10:43:58.028Z",
+  "origin": "https://chiinails.pages.dev",
+  "baseline": true,
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/",
+      "cssBytes": 23421,
+      "cssGzipBytes": 5461,
+      "js": "/_astro/Page.astro_astro_type_script_index_0_lang.BWXv9FTS.js",
+      "htmlGzipBytes": 12274
+    },
+    {
+      "route": "/services",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/services",
+      "cssBytes": 23421,
+      "cssGzipBytes": 5461,
+      "js": "/_astro/Page.astro_astro_type_script_index_0_lang.BWXv9FTS.js",
+      "htmlGzipBytes": 8784
+    },
+    {
+      "route": "/custom-sets",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/custom-sets",
+      "cssBytes": 23421,
+      "cssGzipBytes": 5461,
+      "js": "/_astro/Page.astro_astro_type_script_index_0_lang.BWXv9FTS.js",
+      "htmlGzipBytes": 9494
+    },
+    {
+      "route": "/visit",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/visit",
+      "cssBytes": 23421,
+      "cssGzipBytes": 5461,
+      "js": "/_astro/Page.astro_astro_type_script_index_0_lang.BWXv9FTS.js",
+      "htmlGzipBytes": 8363
+    },
+    {
+      "route": "/about",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/about",
+      "cssBytes": 23421,
+      "cssGzipBytes": 5461,
+      "js": "/_astro/Page.astro_astro_type_script_index_0_lang.BWXv9FTS.js",
+      "htmlGzipBytes": 8894
+    }
+  ],
+  "javascript": {
+    "path": "/_astro/Page.astro_astro_type_script_index_0_lang.BWXv9FTS.js",
+    "bytes": 11829,
+    "gzipBytes": 4806,
+    "sha256": "7cfa696640e2dda8d23023b73722c27e9042d2df3c0167c163e49951a6dc2b7f"
+  },
+  "seo": "5 production canonicals/indexable HTML/H1s; sitemap/robots/ownership file intact"
+}
