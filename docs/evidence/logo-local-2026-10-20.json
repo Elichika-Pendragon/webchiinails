@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-20T10:58:38.894Z",
+  "checkedAt": "2026-10-20T11:03:38.377Z",
   "origin": "http://127.0.0.1:4323",
   "browser": "Chrome 156.0.8078.12",
   "mode": "headless, responsive viewport checks; third-party requests blocked",
@@ -44,7 +44,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 231.90625,
@@ -117,7 +119,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 231.90625,
@@ -190,7 +194,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 231.90625,
@@ -263,7 +269,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 231.90625,
@@ -336,7 +344,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 231.90625,
@@ -409,7 +419,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 301.90625,
@@ -482,7 +494,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 301.90625,
@@ -555,7 +569,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 301.90625,
@@ -628,7 +644,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 301.90625,
@@ -701,7 +719,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 301.90625,
@@ -774,7 +794,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 631.90625,
@@ -847,7 +869,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 631.90625,
@@ -920,7 +944,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 631.90625,
@@ -993,7 +1019,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 631.90625,
@@ -1066,7 +1094,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 631.90625,
@@ -1139,7 +1169,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 659.90625,
@@ -1212,7 +1244,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 659.90625,
@@ -1285,7 +1319,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 659.90625,
@@ -1358,7 +1394,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 659.90625,
@@ -1431,7 +1469,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 659.90625,
@@ -1504,7 +1544,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 851.90625,
@@ -1577,7 +1619,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 851.90625,
@@ -1650,7 +1694,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 851.90625,
@@ -1723,7 +1769,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 851.90625,
@@ -1796,7 +1844,9 @@
         "y": 6,
         "width": 80,
         "height": 52,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 851.90625,
@@ -1869,7 +1919,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -1930,7 +1982,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -1991,7 +2045,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2052,7 +2108,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2113,7 +2171,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2174,7 +2234,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2235,7 +2297,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2296,7 +2360,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2357,7 +2423,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2418,7 +2486,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2479,7 +2549,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2540,7 +2612,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2601,7 +2675,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2662,7 +2738,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2723,7 +2801,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2784,7 +2864,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2845,7 +2927,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2906,7 +2990,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -2967,7 +3053,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3028,7 +3116,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3089,7 +3179,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3150,7 +3242,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3211,7 +3305,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3272,7 +3368,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3333,7 +3431,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3394,7 +3494,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3455,7 +3557,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3516,7 +3620,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3577,7 +3683,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3638,7 +3746,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3699,7 +3809,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3760,7 +3872,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3821,7 +3935,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3882,7 +3998,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,
@@ -3943,7 +4061,9 @@
         "y": 6,
         "width": 96,
         "height": 64,
-        "visible": true
+        "visible": true,
+        "src": "http://127.0.0.1:4323/images/logo-brand.webp",
+        "naturalWidth": 288
       },
       "menu": {
         "x": 0,

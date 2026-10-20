@@ -10,7 +10,8 @@ This records the existing website and the owner-approved refinement on 20 Octobe
 - `--radius-panel: 20px`: floating contact panel. Keep the established circular slider buttons and pill-shaped chat/page-tab controls.
 - Clip pictures inside their own frames. Keep adjacent focus indicators visible. Hero and post links use an inset keyboard outline where their container clips imagery.
 - Keep the compact header: 76px desktop / 64px mobile and tablet; collapse navigation at 960px. Mobile content and five page tabs still switch at 720px. Desktop retains the scrolling Home; mobile retains separate detail routes.
-- Header logo legibility: display the existing square logo inside a 96×64px desktop frame and an 80×52px compact frame using `object-fit: cover`. Crop only surplus pink margins, preserving the complete artwork and original proportions. This makes the visible mark approximately 50% larger than the earlier square display boxes, without increasing header height or downloading a new asset.
+- Header logo legibility: display the square logo inside a 96×64px desktop frame and an 80×52px compact frame using `object-fit: cover`. Crop only surplus pink margins, preserving the complete artwork and original proportions. This makes the visible mark approximately 50% larger than the earlier square display boxes, without increasing header height.
+- Original branding supplied later on 20 October: archive `docs/source-assets/chii-nails-original.png` (2000×2000, 187,965 bytes). Header and gallery profile share `public/images/logo-brand.webp`, a 288×288, 15,486-byte lossless WebP export after proportional Lanczos resizing. The header uses `object-position: 50% 36%` to center the actual artwork within its pink margins. The export replaces the former 176px / 3,018-byte logo in these uses; the +12,468-byte quality tradeoff adds no JS or extra per-page logo URL. Never serve the original PNG in the header. Figma sync remains deferred.
 
 ## Interaction
 

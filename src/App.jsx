@@ -5,7 +5,7 @@ import { selectHeroMedia } from './feed-data.js';
 import PriceList from './PriceList.jsx';
 import './styles.css';
 
-const image = (name) => name === 'studio' ? '/images/studio-clean.webp' : `/images/${name}.${name === 'map' ? 'png' : 'webp'}`;
+const image = (name) => name === 'studio' ? '/images/studio-clean.webp' : `/images/${name === 'logo' ? 'logo-brand' : name}.${name === 'map' ? 'png' : 'webp'}`;
 const external = { target: '_blank', rel: 'noopener noreferrer' };
 
 function LinkButton({ href = salon.custom, children, secondary = false, ...props }) {
@@ -22,7 +22,7 @@ function Header() {
   }, []);
   return <header className="site-header">
     <div className="header-inner container">
-      <a href="/" className="brand" aria-label="Chii Nails — Beranda"><img src={image('logo')} width="88" height="88" alt="Chii Nails Nail Art Studio" /></a>
+      <a href="/" className="brand" aria-label="Chii Nails — Beranda"><img src={image('logo')} width="96" height="64" alt="Chii Nails Nail Art Studio" /></a>
       <button ref={toggle} className="menu-toggle" aria-expanded={open} aria-controls="main-navigation" onClick={() => setOpen(!open)}>{open ? 'Tutup ×' : 'Menu ☰'}</button>
       <nav id="main-navigation" className={open ? 'navigation is-open' : 'navigation'} aria-label="Menu utama">
         <a className="desktop-nav-link" href="/#services" onClick={() => setOpen(false)}>Services</a><a className="desktop-nav-link" href="/#gallery" onClick={() => setOpen(false)}>Custom sets</a><a className="mobile-nav-link" href="/services" onClick={() => setOpen(false)}>Services</a><a className="mobile-nav-link" href="/custom-sets" onClick={() => setOpen(false)}>Custom sets & prices</a><a href="/about" onClick={() => setOpen(false)}>About & rules</a><a className="desktop-nav-link" href="/#visit" onClick={() => setOpen(false)}>Visit us</a><a className="mobile-nav-link" href="/visit" onClick={() => setOpen(false)}>Visit us</a>
