@@ -79,7 +79,7 @@ Pertahankan chiinails.pages.dev sebagai domain utama. HTTPS sudah disediakan Pag
 
 - Desktop dan HP: logo menyatu dengan header; menu tidak terpotong; halaman tidak melebar ke samping.
 - Booking wajib DP; nominal dikonfirmasi di WhatsApp; pembatalan DP hangus; denda Rp10.000/10 menit.
-- Senin–Jumat 08.00–17.00, last booking 15.00; Sabtu–Minggu 08.00–12.00, last booking 10.00 WIB. Tidak menerima walk-in.
+- Senin–Jumat 08.00–17.00, Last book 14.00; Sabtu–Minggu 08.00–12.00, Last book 10.00 WIB. Tidak menerima walk-in.
 - Slider: geser, tombol panah, postingan terbaru, link asli, dan fallback ketika Instagram gagal.
 - Chat tetap di kanan bawah, bisa ditutup, WhatsApp dan Instagram menuju akun yang benar.
 - Peta interaktif mengarah ke Dewi Salon & Chii.Nails, dan Get directions memakai link yang diberikan pemilik.

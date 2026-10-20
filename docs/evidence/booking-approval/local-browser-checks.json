@@ -1,0 +1,103 @@
+{
+  "fixtureOnly": true,
+  "realCalendarCalls": 0,
+  "ownerAuthenticationLive": false,
+  "approval": [
+    {
+      "buttons": [
+        {
+          "height": 50,
+          "text": "Terima booking",
+          "width": 272.66668701171875
+        },
+        {
+          "height": 50,
+          "text": "Batalkan permintaan",
+          "width": 272.66668701171875
+        }
+      ],
+      "client": 305,
+      "scenario": "pending",
+      "scroll": 305,
+      "width": 320
+    },
+    {
+      "buttons": [
+        {
+          "height": 50,
+          "text": "Terima booking",
+          "width": 576
+        },
+        {
+          "height": 50,
+          "text": "Batalkan permintaan",
+          "width": 576
+        }
+      ],
+      "client": 1265,
+      "scenario": "pending",
+      "scroll": 1265,
+      "width": 1280
+    },
+    {
+      "client": 375,
+      "googleScriptPresent": false,
+      "privateHidden": true,
+      "privateText": "",
+      "scenario": "anonymous",
+      "scroll": 375,
+      "width": 390
+    },
+    {
+      "scenario": "reconcile",
+      "recoverVisible": true,
+      "cancelVisible": false
+    },
+    {
+      "acceptedClaim": false,
+      "privateVisible": true,
+      "retryVisible": true,
+      "scenario": "uncertainPost",
+      "status": "Status penyimpanan belum dapat dipastikan. Periksa status terbaru sebelum mencoba kembali."
+    }
+  ],
+  "customer": [
+    {
+      "step": "empty",
+      "enabled": false
+    },
+    {
+      "step": "timeMissing",
+      "enabled": false
+    },
+    {
+      "client": 375,
+      "date": "2026-10-22",
+      "deposit": "15501",
+      "enabled": true,
+      "scroll": 375,
+      "step": "complete",
+      "time": "14:00"
+    },
+    {
+      "step": "nameCleared",
+      "enabled": false
+    },
+    {
+      "bookEnabled": true,
+      "bookHeight": 50,
+      "client": 305,
+      "scroll": 305,
+      "step": "layout",
+      "width": 320
+    },
+    {
+      "bookEnabled": true,
+      "bookHeight": 50,
+      "client": 1265,
+      "scroll": 1265,
+      "step": "layout",
+      "width": 1280
+    }
+  ]
+}

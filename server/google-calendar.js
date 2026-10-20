@@ -22,6 +22,7 @@ const API_URL = 'https://www.googleapis.com/calendar/v3';
 const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.events.freebusy';
 const DAY = 86400000;
 const encoder = new TextEncoder();
+const NOT_FOUND = Symbol('calendar-event-not-found');
 
 export class GoogleCalendarError extends Error {
   constructor(code) {
@@ -105,7 +106,7 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
   }
 
   // Timeout covers both headers and JSON body, even if a test fetch ignores abort.
-  async function jsonRequest(url, init, stage, allowConflict = false) {
+  async function jsonRequest(url, init, stage, allowConflict = false, allowNotFound = false) {
     const controller = new AbortController();
     let timer;
     const timeout = new Promise((_, reject) => {
@@ -116,6 +117,7 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
         const response = await request(url, { ...init, redirect: 'error', signal: controller.signal });
         if (!response || typeof response.status !== 'number') throw failure('CALENDAR_RESPONSE');
         if (allowConflict && response.status === 409) return { conflict: true };
+        if (allowNotFound && response.status === 404) return NOT_FOUND;
         if (!response.ok) {
           if (stage === 'token' || response.status === 401 || response.status === 403) {
             cachedToken = null;
@@ -157,13 +159,13 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     finally { pendingToken = null; }
   }
 
-  async function api(path, body, allowConflict = false) {
+  async function api(path, body, allowConflict = false, allowNotFound = false) {
     const token = await accessToken();
     return jsonRequest(`${API_URL}${path}`, {
       method: body ? 'POST' : 'GET',
       headers: { Authorization: `Bearer ${token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}),
-    }, 'calendar', allowConflict);
+    }, 'calendar', allowConflict, allowNotFound);
   }
 
   async function availability(bounds = {}) {
@@ -193,7 +195,7 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     return { timeMin, timeMax, timeZone: 'Asia/Jakarta', busyIntervals: merged };
   }
 
-  async function createApprovedAppointment(appointment = {}) {
+  async function appointmentEvent(appointment = {}) {
     // Caller owns authorization, approval, DP verification and reservation state.
     if (!record(appointment)) throw failure('CALENDAR_INPUT');
     const bookingId = appointment.bookingId;
@@ -223,11 +225,11 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
       status: 'confirmed', visibility: 'private', transparency: 'opaque',
       extendedProperties: { private: { source: 'chiinails-booking-v1', bookingId, fingerprint } },
     };
-    const path = `/calendars/${encodeURIComponent(calendarId)}/events`;
-    const past = requestedStart <= current;
-    let event = past ? await api(`${path}/${eventId}`) : await api(`${path}?sendUpdates=none`, body, true);
-    const reconciled = past || event.conflict === true;
-    if (!past && reconciled) event = await api(`${path}/${eventId}`);
+    return { body, bookingId, eventId, summary, description, fingerprint, startISO, endISO, past: requestedStart <= current };
+  }
+
+  function verifyEvent(event, expected, reconciled) {
+    const { bookingId, eventId, summary, description, fingerprint, startISO, endISO } = expected;
     const metadata = event.extendedProperties?.private;
     if (event.id !== eventId || event.status !== 'confirmed' || event.summary !== summary || event.description !== description
       || event.visibility !== 'private' || event.transparency !== 'opaque'
@@ -237,5 +239,25 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     return { eventId, startISO, endISO, reconciled };
   }
 
-  return Object.freeze({ availability, createApprovedAppointment });
+  async function createApprovedAppointment(appointment = {}) {
+    const expected = await appointmentEvent(appointment);
+    const { eventId, body, past } = expected;
+    const path = `/calendars/${encodeURIComponent(calendarId)}/events`;
+    let event = past ? await api(`${path}/${eventId}`) : await api(`${path}?sendUpdates=none`, body, true);
+    const reconciled = past || event.conflict === true;
+    if (!past && reconciled) event = await api(`${path}/${eventId}`);
+    return verifyEvent(event, expected, reconciled);
+  }
+
+  // Recovery must prove whether the original write landed before another insert.
+  // A missing event is distinct from a failed lookup. This method never writes.
+  async function reconcileApprovedAppointment(appointment = {}) {
+    const expected = await appointmentEvent(appointment);
+    const path = `/calendars/${encodeURIComponent(calendarId)}/events/${expected.eventId}`;
+    const event = await api(path, undefined, false, true);
+    if (event === NOT_FOUND) return { found: false };
+    return { found: true, ...verifyEvent(event, expected, true) };
+  }
+
+  return Object.freeze({ availability, createApprovedAppointment, reconcileApprovedAppointment });
 }

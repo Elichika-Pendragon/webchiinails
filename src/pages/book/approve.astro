@@ -1,0 +1,70 @@
+---
+import '../../styles.css';
+import '../../approval.css';
+---
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="theme-color" content="#ffd2e6" />
+    <title>Konfirmasi booking | Chii Nails</title>
+    <link rel="icon" href="/images/logo.jpg" />
+    <link rel="preload" href="/fonts/cormorant-garamond-latin-500.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/dm-sans-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Lewati ke permintaan booking</a>
+    <header class="approval-header">
+      <div class="approval-header-inner">
+        <a href="/" class="approval-brand" aria-label="Chii Nails — Beranda"><img src="/images/logo-brand.webp" width="80" height="52" alt="Chii Nails Nail Art Studio" /></a>
+        <a href="/" class="approval-back">Kembali ke website</a>
+      </div>
+    </header>
+    <main id="main" class="approval-page" aria-busy="true">
+      <h1>Permintaan booking.</h1>
+      <p class="approval-lead">Tinjau detailnya, lalu terima atau batalkan permintaan.</p>
+
+      <p id="approval-status" class="approval-status" role="status" aria-live="polite" aria-atomic="true">Memeriksa akses…</p>
+      <noscript><p class="approval-notice">Aktifkan JavaScript untuk membuka permintaan ini. Tidak ada booking yang disetujui hanya dengan membuka tautan.</p></noscript>
+
+      <section id="approval-signin-panel" class="approval-signin" aria-labelledby="approval-signin-title" hidden>
+        <h2 id="approval-signin-title">Masuk sebagai pemilik.</h2>
+        <p>Detail pelanggan hanya terlihat setelah akun Google Chii diverifikasi.</p>
+        <button id="approval-signin" class="button approval-button" type="button">Lanjutkan dengan Google</button>
+        <div id="approval-google-button" class="approval-google-button" hidden></div>
+        <p class="approval-small">Jika tautan dibuka di WhatsApp dan halaman masuk tidak muncul, buka tautan ini di Chrome atau Safari.</p>
+      </section>
+
+      <section id="approval-request" class="approval-request" aria-labelledby="approval-request-title" hidden>
+        <div class="approval-request-heading">
+          <h2 id="approval-request-title">Ringkasan booking</h2>
+          <span id="approval-state" class="approval-state"></span>
+        </div>
+        <dl class="approval-summary">
+          <div><dt>Nama</dt><dd data-approval-value="name"></dd></div>
+          <div><dt>WhatsApp</dt><dd><a data-approval-value="whatsapp" class="approval-contact" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"></a></dd></div>
+          <div><dt>Tanggal · WIB</dt><dd data-approval-value="date"></dd></div>
+          <div><dt>Waktu · 2 jam</dt><dd data-approval-value="time"></dd></div>
+          <div><dt>Harga total</dt><dd data-approval-value="agreedPrice"></dd></div>
+          <div><dt>DP 10%</dt><dd data-approval-value="deposit"></dd></div>
+          <div class="approval-balance"><dt>Sisa setelah DP diterima</dt><dd data-approval-value="remainingBalance"></dd></div>
+        </dl>
+        <div id="approval-actions" class="approval-actions" hidden>
+          <p class="approval-payment-note">Dengan menerima, kamu menyatakan nominal sudah sesuai konsultasi dan DP sudah diterima. Jadwal akan diperiksa kembali sebelum ditambahkan ke kalender.</p>
+          <button id="approval-accept" class="button approval-button" type="button">Terima booking</button>
+          <button id="approval-cancel" class="button button-secondary approval-button" type="button">Batalkan permintaan</button>
+        </div>
+        <button id="approval-recover" class="button button-secondary approval-button" type="button" hidden>Periksa penyimpanan</button>
+        <a id="approval-calendar-link" class="button button-secondary approval-button" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" hidden>Lihat di Google Calendar</a>
+        <p id="approval-outcome" class="approval-outcome" hidden></p>
+      </section>
+
+      <button id="approval-retry" class="approval-retry text-link" type="button" hidden>Coba lagi</button>
+      <p class="approval-footer">Membuka tautan ini tidak mengubah booking.</p>
+    </main>
+    <script src="../../scripts/approval-client.js"></script>
+  </body>
+</html>

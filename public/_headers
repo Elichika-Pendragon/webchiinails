@@ -1,0 +1,4 @@
+/book/approve*
+  X-Robots-Tag: noindex, nofollow
+  Referrer-Policy: no-referrer
+  Cache-Control: no-store

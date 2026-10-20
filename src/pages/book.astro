@@ -13,7 +13,7 @@ const fields = [
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="referrer" content="no-referrer" />
     <meta name="theme-color" content="#ffd2e6" />
     <title>Booking setelah konsultasi | Chii Nails Palembang</title>
     <link rel="icon" href="/images/logo.jpg" />
@@ -29,7 +29,7 @@ const fields = [
         <h1>Siapkan nail date-mu.</h1>
         <p>Sudah konsultasi dengan Chii? Isi detail sesuai kesepakatan, lalu kirim ringkasannya melalui WhatsApp.</p>
       </div>
-      <div class="booking-preview-note"><strong>Pratinjau alur booking</strong><p>Jadwal belum terhubung ke kalender. Mengisi formulir ini belum memesan waktu atau mengonfirmasi pembayaran.</p></div>
+      <div class="booking-preview-note"><strong id="booking-mode-title">Booking setelah konsultasi</strong><p id="booking-mode-description">Nama, nomor WhatsApp, harga total, tanggal, dan jam wajib diisi. DP 10% dihitung dari harga total.</p></div>
       <div class="booking-layout">
         <section aria-labelledby="booking-form-title">
           <h2 id="booking-form-title" tabindex="-1">Detail booking</h2>
@@ -77,19 +77,22 @@ const fields = [
               </div>
               <div class="booking-field"><label for="booking-time">Jam mulai</label><select id="booking-time" name="time" required aria-describedby="hint-time error-time"><option value="">Pilih tanggal terlebih dahulu</option></select><small id="hint-time">Pilihan mengikuti jam studio; belum menunjukkan slot yang kosong.</small><p id="error-time" class="booking-field-error" hidden></p></div>
             </fieldset>
-            <button id="booking-review" class="button" type="submit" disabled>Tinjau booking</button>
-            <p class="booking-privacy">Detail tetap di halaman ini sampai kamu memilih mengirimkannya melalui WhatsApp. Kamu akan meninjau pesan sebelum mengirim.</p>
+            <button id="booking-review" class="button" type="submit" aria-describedby="booking-required-hint booking-submit-status" disabled>Book</button>
+            <p id="booking-required-hint" class="booking-privacy">Lengkapi semua kolom untuk melanjutkan. DP 10% dihitung dari harga total.</p>
+            <p id="booking-submit-status" class="booking-submit-status" role="status" aria-live="polite" aria-atomic="true">Memeriksa layanan booking…</p>
+            <button id="booking-status-retry" class="booking-status-retry text-link" type="button" hidden>Periksa layanan lagi</button>
+            <p id="booking-submit-privacy" class="booking-privacy">Dengan menekan Book, kamu menyiapkan permintaan untuk dikirim ke Chii. Kamu tetap perlu menekan Kirim di WhatsApp.</p>
           </form>
           <section id="booking-review-panel" class="booking-review-panel" aria-labelledby="booking-review-title" hidden>
-            <h2 id="booking-review-title" tabindex="-1">Periksa sekali lagi.</h2>
-            <p>Ringkasan ini adalah permintaan booking. Chii perlu memeriksa jadwal, nominal, dan DP terlebih dahulu.</p>
+            <h2 id="booking-review-title" tabindex="-1">Permintaan siap dikirim.</h2>
+            <p id="booking-review-description">WhatsApp akan dibuka dengan ringkasan booking. Tekan Kirim untuk menghubungi Chii.</p>
             <dl class="booking-summary">
               <div><dt>Nama</dt><dd data-booking-value="name"></dd></div><div><dt>WhatsApp</dt><dd data-booking-value="whatsapp"></dd></div><div><dt>Tanggal</dt><dd data-booking-value="date"></dd></div><div><dt>Waktu · 2 jam</dt><dd data-booking-value="time"></dd></div><div><dt>Harga total</dt><dd data-booking-value="agreedPrice"></dd></div><div><dt>DP 10%</dt><dd data-booking-value="deposit"></dd></div><div class="booking-balance"><dt>Sisa setelah DP diterima</dt><dd data-booking-value="remainingBalance"></dd></div>
             </dl>
             <p class="booking-transfer-note">Bayar DP melalui transfer atau QRIS sesuai petunjuk Chii di WhatsApp. Kirim bukti pembayaran di percakapan yang sama untuk diperiksa.</p>
-            <a id="booking-whatsapp-link" class="button" target="_blank" rel="noopener noreferrer">Buka ringkasan di WhatsApp</a>
+            <a id="booking-whatsapp-link" class="button" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Buka WhatsApp</a>
             <button id="booking-edit" class="booking-edit text-link" type="button">Ubah detail</button>
-            <p class="booking-privacy">Booking belum dikonfirmasi sampai Chii menyetujui jadwal dan memeriksa DP. Kalender belum diperbarui otomatis pada pratinjau ini.</p>
+            <p id="booking-review-privacy" class="booking-privacy">Booking belum dikonfirmasi sampai Chii menyetujui jadwal dan memeriksa DP.</p>
           </section>
         </section>
         <aside class="booking-guidance" aria-labelledby="booking-guidance-title">

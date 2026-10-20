@@ -21,7 +21,8 @@ for (const file of javascript) {
   raw += Buffer.byteLength(source); gzip += gzipSync(source).length;
 }
 const bookingPage = { path: '/book', file: 'book.html' };
-for (const page of [...seoPages, bookingPage]) {
+const approvalPage = { path: '/book/approve', file: 'book/approve.html' };
+for (const page of [...seoPages, bookingPage, approvalPage]) {
   const html = await readFile(new URL(page.file, root), 'utf8');
   for (const match of html.matchAll(/(?:src|href)="(\/(?:images|fonts|_astro)\/[^"?#]+)(?:[?#][^"]*)?"/g)) {
     assert.ok((await stat(new URL(`.${match[1]}`, root))).isFile(), `${page.path}: asset ${match[1]} exists`);
@@ -40,6 +41,13 @@ assert.ok(!seoPages.some(page => page.path === bookingPage.path), 'Booking previ
 const header = bookingHtml.match(/<header[\s>][\s\S]*?<\/header>/)?.[0] || '';
 assert.ok(header && !/href="\/book(?:["/#?])/.test(header), 'No booking link in shared header/menu');
 assert.ok(!/astro-island|client:load|client:visible/.test(bookingHtml), 'Booking is static HTML without framework hydration');
+assert.match(bookingHtml, /<button\b[^>]*id="booking-review"[^>]*disabled[^>]*>Book<\/button>/, 'Book starts disabled until the required values are valid');
+const approvalHtml = await readFile(new URL(approvalPage.file, root), 'utf8');
+assert.match(approvalHtml, /<meta name="robots" content="noindex, nofollow"/);
+assert.match(approvalHtml, /<meta name="referrer" content="no-referrer"/);
+assert.ok(!/astro-island|client:load|client:visible|<iframe\b/.test(approvalHtml), 'Approval is static HTML without framework hydration or embeds');
+assert.ok(!/accounts\.google\.com\/gsi\/client/.test(approvalHtml), 'Google sign-in loads only after an owner action');
+assert.ok(!/BOOKING_(?:LINK|AUTH)_SECRET|BOOKING_OWNER_EMAIL|GOOGLE_SERVICE_ACCOUNT|GOOGLE_CALENDAR_ID|BEGIN PRIVATE KEY/.test(approvalHtml), 'Approval HTML contains no credentials or private calendar configuration');
 const sitemap = files.find(file => file.pathname.endsWith('/sitemap.xml'));
 if (sitemap) assert.ok(!(await readFile(sitemap, 'utf8')).includes('/book'), 'Booking preview is excluded from sitemap');
 console.log(JSON.stringify({ pages: seoPages.length, browserJsFiles: javascript.length, browserJsBytes: raw, browserJsGzipBytes: gzip, reactClientRuntime: false }, null, 2));

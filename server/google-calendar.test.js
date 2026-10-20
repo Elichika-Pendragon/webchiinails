@@ -246,6 +246,47 @@ test('delayed retries reconcile an existing past appointment without inserting a
   assert.equal(posts, 1);
 });
 
+test('lookup-only recovery verifies the original event without any insert, even after its start', async () => {
+  let stored;
+  const seed = provider(async (url, init) => {
+    if (url.includes('oauth2')) return token();
+    stored = JSON.parse(init.body);
+    return json(stored);
+  });
+  const original = await seed.createApprovedAppointment(appointment);
+  let gets = 0;
+  const recovery = provider(async (url, init) => {
+    if (url.includes('oauth2')) return token();
+    assert.equal(init.method, 'GET');
+    assert.equal(init.body, undefined);
+    assert.ok(url.endsWith(`/events/${original.eventId}`));
+    gets++;
+    return json(stored);
+  }, { now: () => Date.parse('2026-10-20T09:00:00+07:00') });
+  assert.deepEqual(await recovery.reconcileApprovedAppointment(appointment), { found: true, ...original, reconciled: true });
+  assert.equal(gets, 1);
+  stored.summary = 'Unrelated event';
+  await assert.rejects(recovery.reconcileApprovedAppointment(appointment), isCode('CALENDAR_CONFLICT'));
+});
+
+test('lookup-only recovery distinguishes a real 404 from unavailable or malformed responses', async () => {
+  let calendarCalls = 0;
+  const missing = provider(async (url, init) => {
+    if (url.includes('oauth2')) return token();
+    calendarCalls++;
+    assert.equal(init.method, 'GET');
+    return json({}, 404);
+  });
+  assert.deepEqual(await missing.reconcileApprovedAppointment(appointment), { found: false });
+  assert.equal(calendarCalls, 1);
+  for (const status of [401, 403, 429, 500]) {
+    const failed = provider(async url => url.includes('oauth2') ? token() : json({}, status));
+    await assert.rejects(failed.reconcileApprovedAppointment(appointment), isCode(status === 401 || status === 403 ? 'CALENDAR_AUTH' : 'CALENDAR_UNAVAILABLE'));
+  }
+  const malformed = provider(async url => url.includes('oauth2') ? token() : json({ notFound: true }));
+  await assert.rejects(malformed.reconcileApprovedAppointment(appointment), isCode('CALENDAR_CONFLICT'));
+});
+
 test('token and provider failures contain no token, private key, contact or raw upstream text', async () => {
   const secret = 'sensitive upstream text Client Test +6281234567890 synthetic-token';
   const cases = [

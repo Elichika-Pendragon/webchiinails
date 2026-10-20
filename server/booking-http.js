@@ -1,0 +1,276 @@
+/**
+ * SERVER ONLY. Cloudflare Pages HTTP boundary for the gated booking workflow.
+ * Importing these handlers does not enable booking or create any resources.
+ * Every endpoint other than status fails closed unless BOOKING_ENABLED is the
+ * exact string "true" and all required bindings/configuration are present.
+ *
+ * createBookingHttpHandlers(overrides) supports synthetic store/auth/Calendar
+ * implementations in tests. Production exports below use the real server-only
+ * helpers. All handlers accept (Request, env) and return a sanitized Response.
+ */
+import { BookingAuthError, getAuthChallenge, signInOwner, requireBookingOwner, signOutOwner } from './booking-auth.js';
+import { BookingRequestError, createBookingRequest, getBookingRequest, decideBookingRequest } from './booking-requests.js';
+import { createGoogleCalendarProvider } from './google-calendar.js';
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder('utf-8', { fatal: true });
+const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const TOKEN = /^[A-Za-z0-9_-]{43}$/;
+const REQUEST_FIELDS = ['name', 'whatsapp', 'agreedPrice', 'date', 'time', 'idempotencyKey'];
+const VALIDATION_FIELDS = ['name', 'whatsapp', 'agreedPrice', 'date', 'time'];
+const FIELD_MESSAGES = {
+  name: 'Isi nama 2–80 karakter.',
+  whatsapp: 'Isi nomor WhatsApp Indonesia yang valid.',
+  agreedPrice: 'Isi harga yang disepakati dalam angka Rupiah.',
+  date: 'Pilih tanggal yang valid dalam periode pemesanan.',
+  time: 'Pilih jam layanan yang masih tersedia.',
+};
+const STORE_CODES = new Set([
+  'BOOKING_CONFIG', 'BOOKING_INPUT', 'BOOKING_OWNER', 'REQUEST_NOT_FOUND', 'REQUEST_EXPIRED', 'REQUEST_STATE',
+  'REQUEST_IN_PROGRESS', 'IDEMPOTENCY_CONFLICT', 'BOOKING_RATE_LIMIT', 'SLOT_CONFLICT', 'CALENDAR_UNAVAILABLE',
+  'CALENDAR_RECONCILE', 'BOOKING_STORAGE',
+]);
+const ERROR_STATUSES = new Set([400, 401, 403, 404, 405, 409, 410, 413, 415, 429, 503]);
+const HTTP_ERRORS = {
+  BOOKING_DISABLED: [503, 'Booking belum tersedia. Silakan hubungi Chii melalui WhatsApp.'],
+  BOOKING_ORIGIN: [403, 'Buka formulir booking melalui situs Chii.'],
+  BOOKING_METHOD: [405, 'Metode permintaan tidak didukung.'],
+  BOOKING_MEDIA: [415, 'Kirim data booking dalam format JSON.'],
+  BOOKING_BODY: [413, 'Data booking terlalu besar.'],
+  BOOKING_INPUT: [400, 'Periksa kembali data booking.'],
+  BOOKING_TIMEOUT: [503, 'Permintaan belum selesai. Coba lagi sebentar.'],
+  BOOKING_UNAVAILABLE: [503, 'Permintaan belum dapat diproses. Coba lagi sebentar.'],
+};
+
+class BookingHttpError extends Error {
+  constructor(code, allow) {
+    const [status, message] = HTTP_ERRORS[code] || HTTP_ERRORS.BOOKING_UNAVAILABLE;
+    super(message);
+    this.code = HTTP_ERRORS[code] ? code : 'BOOKING_UNAVAILABLE';
+    this.status = status;
+    this.allow = allow;
+  }
+}
+
+function secureHeaders(extra = {}) {
+  const headers = new Headers(extra);
+  headers.set('Content-Type', 'application/json; charset=utf-8');
+  headers.set('Cache-Control', 'private, no-store, max-age=0');
+  headers.set('Pragma', 'no-cache');
+  headers.set('Referrer-Policy', 'no-referrer');
+  headers.set('X-Robots-Tag', 'noindex, nofollow');
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+  headers.set('Vary', 'Cookie');
+  headers.delete('Access-Control-Allow-Origin');
+  headers.delete('Access-Control-Allow-Credentials');
+  return headers;
+}
+
+function json(value, status = 200, headers = {}) {
+  return new Response(JSON.stringify(value), { status, headers: secureHeaders(headers) });
+}
+
+function protect(response) {
+  if (!(response instanceof Response)) throw new BookingHttpError('BOOKING_UNAVAILABLE');
+  return new Response(response.body, { status: response.status, headers: secureHeaders(response.headers) });
+}
+
+function errorResponse(error) {
+  let code = 'BOOKING_UNAVAILABLE';
+  let message = HTTP_ERRORS.BOOKING_UNAVAILABLE[1];
+  let status = 503;
+  let fields;
+  let allow;
+  if (error instanceof BookingHttpError) {
+    ({ code, message, status, allow } = error);
+  } else if (error instanceof BookingAuthError) {
+    const safe = new BookingAuthError(error.code);
+    ({ code, message, status } = safe);
+  } else if (error instanceof BookingRequestError && STORE_CODES.has(error.code)) {
+    const safe = new BookingRequestError(error.code, ERROR_STATUSES.has(error.status) ? error.status : 503);
+    ({ code, message, status } = safe);
+    if (code === 'BOOKING_INPUT' && object(error.fields)) {
+      // Return only known field names and fixed copy. Even an internal error
+      // accidentally containing user input cannot reflect it into this response.
+      const allowed = Object.keys(error.fields).filter(key => VALIDATION_FIELDS.includes(key));
+      if (allowed.length) fields = Object.fromEntries(allowed.map(key => [key, FIELD_MESSAGES[key]]));
+    }
+  }
+  return json({ code, message, ...(fields ? { fields } : {}) }, status, allow ? { Allow: allow } : {});
+}
+
+function siteOrigin(env) {
+  try {
+    const url = new URL(env?.SITE_URL);
+    if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || url.pathname !== '/' || (env.SITE_URL !== url.origin && env.SITE_URL !== `${url.origin}/`)) return null;
+    return url.origin;
+  } catch { return null; }
+}
+
+/** Readiness is deliberately private: status returns only this boolean. */
+export function isBookingEnabled(env) {
+  if (!object(env) || env.BOOKING_ENABLED !== 'true' || !siteOrigin(env)
+    || typeof env.BOOKING_DB?.prepare !== 'function' || typeof env.BOOKING_DB?.batch !== 'function') return false;
+  const bounded = (value, minimum, maximum) => typeof value === 'string' && encoder.encode(value).length >= minimum && value.length <= maximum && !/[\u0000-\u001f\u007f]/.test(value);
+  return bounded(env.BOOKING_LINK_SECRET, 32, 4096)
+    && bounded(env.BOOKING_AUTH_SECRET, 32, 512)
+    && typeof env.BOOKING_OWNER_EMAIL === 'string' && env.BOOKING_OWNER_EMAIL.length <= 254
+    && /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,63}$/.test(env.BOOKING_OWNER_EMAIL)
+    && typeof env.GOOGLE_OAUTH_CLIENT_ID === 'string' && env.GOOGLE_OAUTH_CLIENT_ID.length <= 256
+    && /^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/.test(env.GOOGLE_OAUTH_CLIENT_ID)
+    && typeof env.GOOGLE_SERVICE_ACCOUNT_EMAIL === 'string' && env.GOOGLE_SERVICE_ACCOUNT_EMAIL.length <= 254
+    && /^[a-z0-9._-]+@[a-z0-9.-]+\.gserviceaccount\.com$/i.test(env.GOOGLE_SERVICE_ACCOUNT_EMAIL)
+    && typeof env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY === 'string' && env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.length <= 16384
+    && /^-----BEGIN PRIVATE KEY-----\s+[A-Za-z0-9+/=\s]+\s+-----END PRIVATE KEY-----$/.test(env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.replace(/\\n/g, '\n').trim())
+    && typeof env.GOOGLE_CALENDAR_ID === 'string' && env.GOOGLE_CALENDAR_ID.length > 0 && env.GOOGLE_CALENDAR_ID.length <= 1024
+    && env.GOOGLE_CALENDAR_ID !== 'primary' && !/[\u0000-\u0020\u007f]/.test(env.GOOGLE_CALENDAR_ID);
+}
+
+function assertReady(env) {
+  if (!isBookingEnabled(env)) throw new BookingHttpError('BOOKING_DISABLED');
+}
+
+function method(request, allowed) {
+  if (!(request instanceof Request) || !allowed.includes(request.method)) throw new BookingHttpError('BOOKING_METHOD', allowed.join(', '));
+}
+
+function sameOrigin(request, env, mutation = false) {
+  const origin = siteOrigin(env);
+  if (!origin || new URL(request.url).origin !== origin || request.headers.get('Sec-Fetch-Site') === 'cross-site') throw new BookingHttpError('BOOKING_ORIGIN');
+  const supplied = request.headers.get('Origin');
+  if ((supplied !== null && supplied !== origin) || (mutation && supplied !== origin)) throw new BookingHttpError('BOOKING_ORIGIN');
+}
+
+function tokenFrom(request) {
+  const query = new URL(request.url).searchParams;
+  const tokens = query.getAll('token');
+  if (tokens.length !== 1 || !TOKEN.test(tokens[0]) || [...query.keys()].some(key => key !== 'token')) throw new BookingRequestError('REQUEST_NOT_FOUND', 404);
+  return tokens[0];
+}
+
+async function readJson(request, maximum = 8192, timeoutMs = 5000) {
+  const type = request.headers.get('Content-Type') || '';
+  if (!/^application\/json(?:\s*;\s*charset\s*=\s*(?:utf-8|"utf-8"))?\s*$/i.test(type)) throw new BookingHttpError('BOOKING_MEDIA');
+  const length = request.headers.get('Content-Length');
+  if (length && (!/^\d+$/.test(length) || Number(length) > maximum)) throw new BookingHttpError('BOOKING_BODY');
+  if (!request.body) throw new BookingHttpError('BOOKING_INPUT');
+  const reader = request.body.getReader();
+  let timer;
+  let timedOut = false;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      timedOut = true;
+      reader.cancel().catch(() => {});
+      reject(new BookingHttpError('BOOKING_TIMEOUT'));
+    }, timeoutMs);
+  });
+  const read = (async () => {
+    const chunks = [];
+    let size = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (timedOut) throw new BookingHttpError('BOOKING_TIMEOUT');
+      if (done) break;
+      size += value.byteLength;
+      if (size > maximum) throw new BookingHttpError('BOOKING_BODY');
+      chunks.push(value);
+    }
+    const all = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) { all.set(chunk, offset); offset += chunk.byteLength; }
+    let value;
+    try { value = JSON.parse(decoder.decode(all)); } catch { throw new BookingHttpError('BOOKING_INPUT'); }
+    if (!object(value)) throw new BookingHttpError('BOOKING_INPUT');
+    return value;
+  })();
+  try { return await Promise.race([read, timeout]); }
+  finally {
+    clearTimeout(timer);
+    reader.cancel().catch(() => {});
+    // The timeout cancellation wakes a pending read before its lock is released.
+    if (!timedOut) reader.releaseLock();
+    else read.finally(() => reader.releaseLock()).catch(() => {});
+  }
+}
+
+export function createBookingHttpHandlers(overrides = {}) {
+  const now = overrides.now ?? Date.now;
+  const createRequest = overrides.createBookingRequest ?? createBookingRequest;
+  const getRequest = overrides.getBookingRequest ?? getBookingRequest;
+  const decideRequest = overrides.decideBookingRequest ?? decideBookingRequest;
+  const requireOwner = overrides.requireBookingOwner ?? requireBookingOwner;
+  const challenge = overrides.getAuthChallenge ?? getAuthChallenge;
+  const signIn = overrides.signInOwner ?? signInOwner;
+  const signOut = overrides.signOutOwner ?? signOutOwner;
+  const createCalendar = overrides.createGoogleCalendarProvider ?? createGoogleCalendarProvider;
+  const bodyTimeoutMs = overrides.bodyTimeoutMs ?? 5000;
+  const authOptions = { now, ...(overrides.fetch ? { fetch: overrides.fetch } : {}) };
+  // Keep at most two credential sets per isolate. Tokens/imported RSA keys live
+  // in the provider; normal reads/cancel/login never instantiate this adapter.
+  const calendarProviders = [];
+
+  function calendar(env) {
+    const values = [env.GOOGLE_SERVICE_ACCOUNT_EMAIL, env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY, env.GOOGLE_CALENDAR_ID];
+    const prior = calendarProviders.find(entry => entry.values.every((value, index) => value === values[index]));
+    if (prior) return prior.provider;
+    let provider;
+    try { provider = createCalendar(env, { now, ...(overrides.fetch ? { fetch: overrides.fetch } : {}) }); }
+    catch { throw new BookingHttpError('BOOKING_UNAVAILABLE'); }
+    if (typeof provider?.availability !== 'function' || typeof provider?.createApprovedAppointment !== 'function' || typeof provider?.reconcileApprovedAppointment !== 'function') throw new BookingHttpError('BOOKING_UNAVAILABLE');
+    calendarProviders.push({ values, provider });
+    if (calendarProviders.length > 2) calendarProviders.shift();
+    return provider;
+  }
+
+  const guarded = handler => async (request, env) => {
+    try { return await handler(request, env); }
+    catch (error) { return errorResponse(error); }
+  };
+
+  return Object.freeze({
+    status: guarded(async (request, env) => {
+      method(request, ['GET']);
+      // Without configured SITE_URL there is no trusted origin to compare; the
+      // only response is the public disabled boolean, never missing field names.
+      if (siteOrigin(env)) sameOrigin(request, env);
+      return json({ enabled: isBookingEnabled(env) });
+    }),
+    requests: guarded(async (request, env) => {
+      assertReady(env);
+      method(request, ['POST']);
+      sameOrigin(request, env, true);
+      const input = await readJson(request, 8192, bodyTimeoutMs);
+      if (Object.keys(input).some(key => !REQUEST_FIELDS.includes(key)) || REQUEST_FIELDS.some(key => typeof input[key] !== 'string')) throw new BookingHttpError('BOOKING_INPUT');
+      return json(await createRequest(env, input, { now }), 201);
+    }),
+    review: guarded(async (request, env) => {
+      assertReady(env);
+      method(request, ['GET', 'POST']);
+      sameOrigin(request, env, request.method === 'POST');
+      // Authenticate before parsing the lookup token, request body or any PII.
+      // The authentication helper performs the session-bound mutation CSRF check.
+      const identity = await requireOwner(request, env, authOptions);
+      const owner = { email: identity.email, subject: identity.subject, verified: true };
+      const token = tokenFrom(request);
+      if (request.method === 'GET') return json(await getRequest(env, token, { owner, now }));
+      const input = await readJson(request, 1024, bodyTimeoutMs);
+      if (Object.keys(input).length !== 1 || !['accept', 'cancel'].includes(input.action)) throw new BookingHttpError('BOOKING_INPUT');
+      const options = { owner, now, ...(input.action === 'accept' ? { calendar: calendar(env) } : {}) };
+      return json(await decideRequest(env, token, input.action, options));
+    }),
+    session: guarded(async (request, env) => {
+      assertReady(env);
+      method(request, ['GET', 'POST', 'DELETE']);
+      sameOrigin(request, env, request.method !== 'GET');
+      const action = request.method === 'GET' ? challenge : request.method === 'POST' ? signIn : signOut;
+      return protect(await action(request, env, authOptions));
+    }),
+  });
+}
+
+const handlers = createBookingHttpHandlers();
+export const handleBookingStatus = handlers.status;
+export const handleBookingRequests = handlers.requests;
+export const handleBookingReview = handlers.review;
+export const handleBookingSession = handlers.session;

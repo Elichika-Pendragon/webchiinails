@@ -23,7 +23,7 @@ Latest interaction constraint: Jessica must not have to enter information or man
 - Target fast loading on mobile and desktop. No new runtime framework, font downloads or animation library is needed for the booking form.
 - Booking only, no walk-ins. DP is 10% of the agreed total and cancellation forfeits DP. Weekday Last book is 14:00, weekend 10:00, while studio closing stays 17:00/12:00. Shared src/content.js records these rules.
 - Latest owner wording permits transfer or QRIS and calls the customer-facing booking contact Chii. This supersedes the earlier no-QRIS preference. Jessica manually checks the actual payment through WhatsApp. No payment API, paid plan or billing activation is authorized.
-- The initial booking implementation is a static preview, authorized for publication on 20 October 2026. It does not accept money, reserve slots, persist customer details or access Calendar. Details stay in page memory until the visitor explicitly opens the reviewed WhatsApp summary.
+- The booking interface supports a labelled WhatsApp-only preview while the backend is disabled. A gated approval implementation is also prepared: five valid fields enable Book, which creates a pending request and opens WhatsApp with a unique owner link when configured. Stored requests and Calendar access remain inactive until configuration and explicit access grants are complete. Payment verification remains manual; no payment API is used.
 - Jessica shares the same /book link after consultation. Never add Book/Booking to the header, menu or public booking sections. Keep this private-link route noindex and outside the search sitemap.
 - Instagram developer access is blocked separately; current curated photos remain functional.
 
