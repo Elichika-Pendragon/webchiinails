@@ -258,6 +258,30 @@ test('Google no-store key responses are not cached between sign-ins', async () =
   assert.equal(calls, 2);
 });
 
+test('Worker fetch uses its global receiver before a forged signature is rejected', async () => {
+  let calls = 0;
+  const fixture = await challenge({ fetch: async function publicKeys(url, init) {
+    // workerd/Chromium enforce this receiver; Node's native fetch does not.
+    // A config.fetcher(...) call therefore appears healthy in Node but fails
+    // before network I/O in Workers with an Illegal invocation TypeError.
+    if (this !== globalThis) throw new TypeError('Illegal invocation');
+    calls++;
+    assert.equal(url, 'https://www.googleapis.com/oauth2/v3/certs');
+    assert.equal(init.redirect, 'error');
+    return jwks();
+  } });
+  const valid = await token(fixture.body.nonce);
+  const [header, claims] = valid.split('.');
+  const forged = `${header}.${claims}.${Buffer.alloc(256).toString('base64url')}`;
+  const incoming = request(undefined, { method: 'POST', cookie: fixture.cookie, csrf: fixture.body.csrfToken, body: { credential: forged, nonce: fixture.body.nonce } });
+  await assert.rejects(signInOwner(incoming, env, fixture.options), isCode('AUTH_REQUIRED', 401));
+  assert.equal(calls, 1);
+  // A genuine synthetic signature still verifies; the receiver fix weakens no
+  // signature, nonce, origin, owner or CSRF check and retains the JWKS cache.
+  assert.equal((await login(fixture)).status, 200);
+  assert.equal(calls, 1);
+});
+
 test('JSON sign-in body enforces type, valid structure and byte limits', async () => {
   const fixture = await challenge();
   const base = { method: 'POST', cookie: fixture.cookie, csrf: fixture.body.csrfToken };

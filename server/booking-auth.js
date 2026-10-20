@@ -229,7 +229,9 @@ async function googleKeys(config, kid) {
   holder.pending = withTimeout(async () => {
     let upstream;
     try {
-      upstream = await config.fetcher(JWKS_URL, { headers: { Accept: 'application/json' }, credentials: 'omit', redirect: 'error', signal: controller.signal });
+      // Worker's native fetch rejects an unrelated receiver such as `config`.
+      // Preserve its global receiver while keeping injected fetch/cache identity.
+      upstream = await config.fetcher.call(globalThis, JWKS_URL, { headers: { Accept: 'application/json' }, credentials: 'omit', redirect: 'error', signal: controller.signal });
       if (controller.signal.aborted) throw fail('AUTH_TIMEOUT');
       if (!(upstream instanceof Response) || !upstream.ok) throw fail('AUTH_UNAVAILABLE');
       const document = await boundedJson(upstream, 65536, 'AUTH_UNAVAILABLE', controller.signal);
