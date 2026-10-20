@@ -10,6 +10,7 @@ This records the existing website and the owner-approved refinement on 20 Octobe
 - `--radius-panel: 20px`: floating contact panel. Keep the established circular slider buttons and pill-shaped chat/page-tab controls.
 - Clip pictures inside their own frames. Keep adjacent focus indicators visible. Hero and post links use an inset keyboard outline where their container clips imagery.
 - Keep the compact header: 76px desktop / 64px mobile and tablet; collapse navigation at 960px. Mobile content and five page tabs still switch at 720px. Desktop retains the scrolling Home; mobile retains separate detail routes.
+- Header logo legibility: display the existing square logo inside a 96×64px desktop frame and an 80×52px compact frame using `object-fit: cover`. Crop only surplus pink margins, preserving the complete artwork and original proportions. This makes the visible mark approximately 50% larger than the earlier square display boxes, without increasing header height or downloading a new asset.
 
 ## Interaction
 
