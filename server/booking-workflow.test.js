@@ -4,6 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { createBookingRequest, getBookingRequest, decideBookingRequest, getBookingAvailability, BookingRequestError } from './booking-requests.js';
 import { createGoogleCalendarProvider } from './google-calendar.js';
+import { getBookingCalendarMonth } from './booking-month.js';
 import { proof } from './fixtures/payment-proof.js';
 
 // Coupled ledger + actual Calendar adapter. This uses ephemeral RSA material,
@@ -53,7 +54,7 @@ function fixture() {
     SITE_URL: 'https://workflow.example', GOOGLE_SERVICE_ACCOUNT_EMAIL: 'booking@workflow-test.iam.gserviceaccount.com',
     GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: pem, GOOGLE_CALENDAR_ID: 'synthetic-workflow@group.calendar.google.com',
   };
-  const state = { now: initial, ambiguousNextInsert: false, externalBusy: [], accessRole: 'writer', goneEvents: new Set() };
+  const state = { now: initial, ambiguousNextInsert: false, externalBusy: [], externalAllDay: [], accessRole: 'writer', goneEvents: new Set() };
   const events = new Map();
   const calls = [];
   const transport = async (url, init) => {
@@ -76,6 +77,11 @@ function fixture() {
     }
     const collection = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(env.GOOGLE_CALENDAR_ID)}/events`;
     if (url === `${collection}?maxResults=1&fields=accessRole`) return json({ accessRole: state.accessRole });
+    if (url.startsWith(`${collection}?timeMin=`) && init.method === 'GET') {
+      const query = new URL(url).searchParams;
+      const start = Date.parse(query.get('timeMin')), end = Date.parse(query.get('timeMax'));
+      return json({ kind: 'calendar#events', items: state.externalAllDay.filter(event => Date.parse(`${event.start.date}T00:00:00+07:00`) < end && Date.parse(`${event.end.date}T00:00:00+07:00`) > start) });
+    }
     if (url === `${collection}?sendUpdates=none`) {
       assert.equal(init.method, 'POST');
       const event = JSON.parse(init.body);
@@ -104,13 +110,13 @@ test('real adapter and ledger couple pending/read-only review to one private ack
   const created = await createBookingRequest(f.env, input({ approved: true, paymentVerified: true, deposit: '1' }), { now: f.now, calendar: f.calendar });
   assert.equal(created.status, 'pending');
   assert.equal(created.booking.deposit, 20000);
-  assert.equal(f.calls.length, 2); // Service token + read-only free/busy.
+  assert.equal(f.calls.length, 3); // Service token + read-only occupancy/all-day query.
   assert.equal(f.events.size, 0);
   assert.equal(f.db.count('booking_slot_claims'), 0);
   const beforeRead = f.db.changes();
   assert.equal((await getBookingRequest(f.env, tokenOf(created), { owner, now: f.now })).status, 'pending');
   assert.equal(f.db.changes(), beforeRead);
-  assert.equal(f.calls.length, 2);
+  assert.equal(f.calls.length, 3);
 
   const accepted = await decideBookingRequest(f.env, tokenOf(created), 'accept', { owner, now: f.now, calendar: f.calendar });
   assert.equal(accepted.status, 'accepted');
@@ -266,10 +272,11 @@ test('real adapter confirms deleted or cancelled Google events before releasing 
     assert.equal(brief.durationMinutes, 300);
     assert.equal(f.db.count('booking_payment_proofs'), 1);
     assert.equal(f.insertCount(), 1);
-    const recent = f.calls.slice(-3);
+    const recent = f.calls.slice(-4);
     assert.ok(recent[0].url.endsWith('/freeBusy'));
-    assert.ok(recent[1].url.endsWith('/events?maxResults=1&fields=accessRole'));
-    assert.ok(recent[2].url.endsWith(`/events/${event.id}`));
+    assert.ok(recent[1].url.includes('/events?timeMin='));
+    assert.ok(recent[2].url.endsWith('/events?maxResults=1&fields=accessRole'));
+    assert.ok(recent[3].url.endsWith(`/events/${event.id}`));
   }
 });
 
@@ -284,4 +291,51 @@ test('real adapter retains accepted claims if free/busy remains healthy but priv
   assert.equal((await getBookingRequest(f.env, tokenOf(one), { owner, now: f.now })).status, 'accepted');
   assert.equal(f.eventGetCount(), 0);
   assert.equal(f.insertCount(), 1);
+});
+
+test('a Free all-day event closes the month date and blocks slots, new Book and pending acceptance until removed', async () => {
+  const f = fixture();
+  const prior = await createBookingRequest(f.env, input({ date: '2026-10-24', time: '08:00' }), { now: f.now, calendar: f.calendar });
+  f.state.externalAllDay = [{ status: 'confirmed', transparency: 'transparent', start: { date: '2026-10-24' }, end: { date: '2026-10-25' } }];
+  const changes = f.db.changes();
+  const month = await getBookingCalendarMonth(f.env, { month: '2026-10', designType: 'plain', durationMinutes: '60' }, { now: f.now, calendar: f.calendar });
+  assert.deepEqual(month.closedDates, ['2026-10-24']);
+  assert.equal(f.db.changes(), changes, 'month shading does not mutate the ledger');
+  const slots = await getBookingAvailability(f.env, { date: '2026-10-24', designType: 'plain', durationMinutes: 60 }, { now: f.now, calendar: f.calendar });
+  assert.ok(slots.slots.length > 0 && slots.slots.every(slot => !slot.available));
+  await assert.rejects(createBookingRequest(f.env, input({ date: '2026-10-24', time: '10:00', idempotencyKey: 'synthetic_closed_day_new_request' }), { now: f.now, calendar: f.calendar }), error => error.code === 'SLOT_CONFLICT');
+  await assert.rejects(decideBookingRequest(f.env, tokenOf(prior), 'accept', { owner, now: f.now, calendar: f.calendar }), error => error.code === 'SLOT_CONFLICT');
+  assert.equal(f.insertCount(), 0);
+  assert.equal(f.db.count('booking_slot_claims'), 0);
+  f.state.externalAllDay = [];
+  assert.deepEqual((await getBookingCalendarMonth(f.env, { month: '2026-10', designType: 'plain', durationMinutes: '60' }, { now: f.now, calendar: f.calendar })).closedDates, []);
+  const reopened = await getBookingAvailability(f.env, { date: '2026-10-24', designType: 'plain', durationMinutes: 60 }, { now: f.now, calendar: f.calendar });
+  assert.ok(reopened.slots.every(slot => slot.available));
+});
+
+test('Oct30 accepted 08–10 hides that interval; filling every legal start closes the day and deleting one reopens it', async () => {
+  const f = fixture();
+  const first = await createBookingRequest(f.env, input({ date: '2026-10-30', time: '08:00' }), { now: f.now, calendar: f.calendar });
+  await decideBookingRequest(f.env, tokenOf(first), 'accept', { owner, now: f.now, calendar: f.calendar });
+  const selection = { date: '2026-10-30', designType: 'simple', durationMinutes: '120' };
+  const monthInput = { month: '2026-10', designType: 'simple', durationMinutes: '120' };
+  const partial = await getBookingAvailability(f.env, selection, { now: f.now, calendar: f.calendar });
+  assert.equal(partial.slots.find(slot => slot.time === '08:00').available, false);
+  assert.equal(partial.slots.find(slot => slot.time === '10:00').available, true);
+  assert.equal((await getBookingCalendarMonth(f.env, monthInput, { now: f.now, calendar: f.calendar })).closedDates.includes(selection.date), false);
+  for (const time of ['10:00', '12:00', '14:00']) {
+    const next = await createBookingRequest(f.env, input({ date: selection.date, time, idempotencyKey: `synthetic_fill_oct30_${time.replace(':', '')}` }), { now: f.now, calendar: f.calendar });
+    await decideBookingRequest(f.env, tokenOf(next), 'accept', { owner, now: f.now, calendar: f.calendar });
+  }
+  assert.equal(f.db.count('booking_slot_claims'), 16);
+  assert.equal((await getBookingCalendarMonth(f.env, monthInput, { now: f.now, calendar: f.calendar })).closedDates.includes(selection.date), true);
+  const stored = f.db.sqlite.prepare('SELECT calendar_event_id FROM booking_requests WHERE id=?').get(first.requestId);
+  f.events.delete(stored.calendar_event_id);
+  const before = f.db.changes();
+  assert.equal((await getBookingCalendarMonth(f.env, monthInput, { now: f.now, calendar: f.calendar })).closedDates.includes(selection.date), false);
+  assert.equal(f.db.changes(), before, 'month refresh reopens the day without releasing ledger claims');
+  const reopened = await getBookingAvailability(f.env, selection, { now: f.now, calendar: f.calendar });
+  assert.equal(reopened.slots.find(slot => slot.time === '08:00').available, true);
+  assert.equal(reopened.slots.find(slot => slot.time === '10:00').available, false);
+  assert.equal(f.db.count('booking_slot_claims'), 12);
 });

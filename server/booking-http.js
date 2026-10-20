@@ -11,6 +11,7 @@
 import { BookingAuthError, getAuthChallenge, signInOwner, requireBookingOwner, signOutOwner } from './booking-auth.js';
 import { BookingRequestError, createBookingRequest, getBookingRequest, decideBookingRequest, getBookingAvailability, getBookingPaymentProof } from './booking-requests.js';
 import { createGoogleCalendarProvider } from './google-calendar.js';
+import { getBookingCalendarMonth, getBookingMonthBounds } from './booking-month.js';
 import { normalizeBookingDesign, getOperatingHours, getBookingDateBounds } from './booking.js';
 import { PAYMENT_PROOF_BODY_MAX_BYTES, PAYMENT_PROOF_MAX_BYTES, paymentProofBytes } from './booking-proofs.js';
 
@@ -206,6 +207,7 @@ export function createBookingHttpHandlers(overrides = {}) {
   const getRequest = overrides.getBookingRequest ?? getBookingRequest;
   const decideRequest = overrides.decideBookingRequest ?? decideBookingRequest;
   const readAvailability = overrides.getBookingAvailability ?? getBookingAvailability;
+  const readCalendarMonth = overrides.getBookingCalendarMonth ?? getBookingCalendarMonth;
   const readProof = overrides.getBookingPaymentProof ?? getBookingPaymentProof;
   const requireOwner = overrides.requireBookingOwner ?? requireBookingOwner;
   const challenge = overrides.getAuthChallenge ?? getAuthChallenge;
@@ -288,6 +290,28 @@ export function createBookingHttpHandlers(overrides = {}) {
       if (!getOperatingHours(date) || date < bounds.minDate || date > bounds.maxDate) throw new BookingHttpError('BOOKING_INPUT');
       return json(await readAvailability(env, { date, ...selection }, { now, calendar: calendar(env) }));
     }),
+    calendar: guarded(async (request, env) => {
+      assertReady(env);
+      method(request, ['POST']);
+      sameOrigin(request, env, true);
+      if (new URL(request.url).search) throw new BookingHttpError('BOOKING_INPUT');
+      const input = await readJson(request, 1024, bodyTimeoutMs);
+      if (Object.keys(input).sort().join(',') !== 'designType,durationMinutes,month' || typeof input.month !== 'string'
+        || typeof input.designType !== 'string' || typeof input.durationMinutes !== 'string') throw new BookingHttpError('BOOKING_INPUT');
+      const selection = normalizeBookingDesign(input.designType, input.durationMinutes);
+      if (!selection) throw new BookingHttpError('BOOKING_INPUT');
+      const bounds = getBookingMonthBounds(input.month, { now });
+      const result = await readCalendarMonth(env, input, { now, calendar: calendar(env) });
+      // Explicit response shape protects this public route even if an internal
+      // adapter accidentally includes private Calendar or customer properties.
+      if (!object(result) || Object.keys(result).sort().join(',') !== 'closedDates,designType,durationMinutes,maxDate,minDate,month,timeZone'
+        || result.designType !== selection.designType || result.durationMinutes !== selection.durationMinutes
+        || result.month !== bounds.month || result.minDate !== bounds.minDate || result.maxDate !== bounds.maxDate || result.timeZone !== 'Asia/Jakarta'
+        || !Array.isArray(result.closedDates) || result.closedDates.length > 31
+        || result.closedDates.some((date, index) => typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)
+          || !getOperatingHours(date) || date < bounds.minDate || date > bounds.maxDate || (index > 0 && date <= result.closedDates[index - 1]))) throw new BookingHttpError('BOOKING_UNAVAILABLE');
+      return json(result);
+    }),
     review: guarded(async (request, env) => {
       assertReady(env);
       method(request, ['GET', 'POST']);
@@ -319,4 +343,5 @@ export const handleBookingRequests = handlers.requests;
 export const handleBookingReview = handlers.review;
 export const handleBookingSession = handlers.session;
 export const handleBookingAvailability = handlers.availability;
+export const handleBookingCalendarMonth = handlers.calendar;
 export const handleBookingProof = handlers.proof;

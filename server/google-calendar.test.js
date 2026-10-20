@@ -13,6 +13,8 @@ const appointment = { bookingId: 'booking_test_001', name: 'Client Test', whatsa
 const json = (value, status = 200) => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
 const token = () => json({ access_token: 'synthetic-token', token_type: 'Bearer', expires_in: 3600 });
 const freeBusy = (busy = [], other = {}) => ({ kind: 'calendar#freeBusy', ...range, calendars: { [env.GOOGLE_CALENDAR_ID]: { busy } }, ...other });
+const events = (items = [], other = {}) => ({ kind: 'calendar#events', items, ...other });
+const emptyCalendar = (url, busy = []) => json(url.endsWith('/freeBusy') ? freeBusy(busy) : events());
 const provider = (fetch, extra = {}, config = {}) => createGoogleCalendarProvider({ ...env, ...config }, { fetch, now: () => current, ...extra });
 const isCode = code => error => error instanceof GoogleCalendarError && error.code === code;
 
@@ -40,13 +42,20 @@ test('service-account JWT is signed RS256 with limited scopes, correct audience 
       assert.equal(await crypto.subtle.verify('RSASSA-PKCS1-v1_5', keys.publicKey, Buffer.from(parts[2], 'base64url'), new TextEncoder().encode(`${parts[0]}.${parts[1]}`)), true);
       return token();
     }
-    assert.equal(url, 'https://www.googleapis.com/calendar/v3/freeBusy');
     assert.equal(init.headers.Authorization, 'Bearer synthetic-token');
+    if (init.method === 'GET') {
+      const query = new URL(url);
+      assert.equal(query.pathname, `/calendar/v3/calendars/${encodeURIComponent(env.GOOGLE_CALENDAR_ID)}/events`);
+      assert.deepEqual(Object.fromEntries(query.searchParams), { ...range, timeZone: 'Asia/Jakarta', singleEvents: 'true', showDeleted: 'false', maxResults: '2500', fields: 'kind,nextPageToken,items(status,start(date,dateTime,timeZone),end(date,dateTime,timeZone))' });
+      assert.equal(init.body, undefined);
+      return json(events());
+    }
+    assert.equal(url, 'https://www.googleapis.com/calendar/v3/freeBusy');
     assert.deepEqual(JSON.parse(init.body), { ...range, timeZone: 'Asia/Jakarta', calendarExpansionMax: 1, items: [{ id: env.GOOGLE_CALENDAR_ID }] });
     return json(freeBusy());
   });
   assert.deepEqual(await calendar.availability(range), { ...range, timeZone: 'Asia/Jakarta', busyIntervals: [] });
-  assert.equal(calls, 2);
+  assert.equal(calls, 3);
 });
 
 test('access tokens cache, concurrent calls share authorization, and near-expiry refreshes', async () => {
@@ -54,7 +63,7 @@ test('access tokens cache, concurrent calls share authorization, and near-expiry
   let tokens = 0;
   const calendar = provider(async url => {
     if (url.includes('oauth2')) { tokens++; return token(); }
-    return json(freeBusy());
+    return emptyCalendar(url);
   }, { now: () => time });
   await Promise.all([calendar.availability(range), calendar.availability(range)]);
   await calendar.availability(range);
@@ -64,6 +73,27 @@ test('access tokens cache, concurrent calls share authorization, and near-expiry
   assert.equal(tokens, 2);
 });
 
+test('independent freeBusy and first event page start together after shared authorization', { timeout: 1000 }, async () => {
+  const responses = new Map();
+  let started;
+  const bothStarted = new Promise(resolve => { started = resolve; });
+  let tokens = 0;
+  const calendar = provider(async url => {
+    if (url.includes('oauth2')) { tokens++; return token(); }
+    return new Promise(resolve => {
+      responses.set(url.endsWith('/freeBusy') ? 'freeBusy' : 'events', resolve);
+      if (responses.size === 2) started();
+    });
+  });
+  const result = calendar.availability(range);
+  await bothStarted;
+  assert.deepEqual([...responses.keys()].sort(), ['events', 'freeBusy']);
+  assert.equal(tokens, 1);
+  responses.get('freeBusy')(json(freeBusy()));
+  responses.get('events')(json(events()));
+  assert.deepEqual((await result).busyIntervals, []);
+});
+
 test('explicit calendar selection and service-account PKCS8 configuration are required', async () => {
   for (const GOOGLE_CALENDAR_ID of ['', 'primary', 'bad\ncalendar', ' padded ']) assert.throws(() => provider(() => token(), {}, { GOOGLE_CALENDAR_ID }), isCode('CALENDAR_CONFIG'));
   assert.throws(() => provider(() => token(), {}, { GOOGLE_SERVICE_ACCOUNT_EMAIL: 'customer@gmail.com' }), isCode('CALENDAR_CONFIG'));
@@ -71,7 +101,7 @@ test('explicit calendar selection and service-account PKCS8 configuration are re
   const invalid = provider(async () => { calls++; return token(); }, {}, { GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: 'not a private key' });
   await assert.rejects(invalid.availability(range), isCode('CALENDAR_CONFIG'));
   assert.equal(calls, 0);
-  const escaped = provider(async url => url.includes('oauth2') ? token() : json(freeBusy()), {}, { GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: pem.replace(/\n/g, '\\n') });
+  const escaped = provider(async url => url.includes('oauth2') ? token() : emptyCalendar(url), {}, { GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: pem.replace(/\n/g, '\\n') });
   assert.deepEqual((await escaped.availability(range)).busyIntervals, []);
 });
 
@@ -88,7 +118,7 @@ test('freeBusy normalizes offsets, sorts and merges overlap while returning no e
     { start: '2026-10-20T10:00:00+07:00', end: '2026-10-20T12:00:00+07:00' },
     { start: '2026-10-20T07:00:00+07:00', end: '2026-10-20T08:30:00+07:00', summary: 'must not return' },
   ];
-  const calendar = provider(async url => url.includes('oauth2') ? token() : json(freeBusy(busy)));
+  const calendar = provider(async url => url.includes('oauth2') ? token() : emptyCalendar(url, busy));
   const result = await calendar.availability(range);
   assert.deepEqual(result.busyIntervals, [
     { start: Date.parse(range.timeMin), end: Date.parse('2026-10-20T08:30:00+07:00') },
@@ -113,6 +143,146 @@ test('HTTP 200 per-calendar errors and malformed/freeBusy data fail closed', asy
     const calendar = provider(async url => url.includes('oauth2') ? token() : json(payload));
     await assert.rejects(calendar.availability(range), isCode('CALENDAR_RESPONSE'));
   }
+});
+
+test('a Free all-day event on 24 October closes that whole WIB day without exposing its details', async () => {
+  const bounds = { timeMin: '2026-10-24T00:00:00+07:00', timeMax: '2026-10-25T00:00:00+07:00' };
+  const calendar = provider(async url => {
+    if (url.includes('oauth2')) return token();
+    if (url.endsWith('/freeBusy')) return json(freeBusy([], bounds));
+    const query = new URL(url).searchParams;
+    assert.equal(query.get('timeMin'), bounds.timeMin);
+    assert.equal(query.get('timeMax'), bounds.timeMax);
+    assert.equal(query.get('singleEvents'), 'true');
+    assert.equal(query.get('showDeleted'), 'false');
+    assert.equal(query.get('fields').includes('transparency'), false);
+    return json(events([{ status: 'confirmed', start: { date: '2026-10-24' }, end: { date: '2026-10-25' }, transparency: 'transparent', summary: 'Private birthday', id: 'private-id', attendees: [{ email: 'private@example.test' }] }]));
+  });
+  const result = await calendar.availability(bounds);
+  assert.deepEqual(result, { ...bounds, timeZone: 'Asia/Jakarta', busyIntervals: [{ start: Date.parse(bounds.timeMin), end: Date.parse(bounds.timeMax) }] });
+  for (const sensitive of ['Private birthday', 'private-id', 'private@example.test', env.GOOGLE_CALENDAR_ID, 'synthetic-token']) assert.equal(JSON.stringify(result).includes(sensitive), false);
+});
+
+test('multi-day all-day dates use WIB midnight, exclusive ends and clipped merged occupancy', async () => {
+  const bounds = { timeMin: '2026-10-23T08:00:00+07:00', timeMax: '2026-10-27T12:00:00+07:00' };
+  const busy = [{ start: '2026-10-26T00:00:00+07:00', end: '2026-10-26T09:00:00+07:00' }];
+  const calendar = provider(async url => {
+    if (url.includes('oauth2')) return token();
+    if (url.endsWith('/freeBusy')) return json(freeBusy(busy, bounds));
+    return json(events([
+      { status: 'confirmed', start: { date: '2026-10-22', timeZone: 'Pacific/Honolulu' }, end: { date: '2026-10-24', timeZone: 'Pacific/Honolulu' } },
+      { status: 'tentative', start: { date: '2026-10-24' }, end: { date: '2026-10-26' } },
+      { status: 'confirmed', start: { date: '2026-10-27' }, end: { date: '2026-10-29' } },
+    ]));
+  });
+  assert.deepEqual((await calendar.availability(bounds)).busyIntervals, [
+    { start: Date.parse(bounds.timeMin), end: Date.parse('2026-10-26T09:00:00+07:00') },
+    { start: Date.parse('2026-10-27T00:00:00+07:00'), end: Date.parse(bounds.timeMax) },
+  ]);
+});
+
+test('cancelled all-day events and ordinary Free timed events do not add occupancy', async () => {
+  const busy = [{ start: '2026-10-20T10:00:00+07:00', end: '2026-10-20T11:00:00+07:00' }];
+  const calendar = provider(async url => {
+    if (url.includes('oauth2')) return token();
+    if (url.endsWith('/freeBusy')) return json(freeBusy(busy));
+    return json(events([
+      { status: 'cancelled' },
+      { status: 'cancelled', start: { date: '2026-10-20' }, end: { date: '2026-10-21' } },
+      { status: 'confirmed', transparency: 'transparent', start: { dateTime: range.timeMin }, end: { dateTime: range.timeMax } },
+      { status: 'confirmed', start: { date: '2026-10-19' }, end: { date: '2026-10-20' } },
+      { status: 'confirmed', start: { date: '2026-10-21' }, end: { date: '2026-10-22' } },
+    ]));
+  });
+  assert.deepEqual((await calendar.availability(range)).busyIntervals, [{ start: Date.parse(busy[0].start), end: Date.parse(busy[0].end) }]);
+});
+
+test('expanded recurring all-day instances are read across bounded pages with the exact original range', async () => {
+  const bounds = { timeMin: '2026-10-20T00:00:00+07:00', timeMax: '2026-10-27T00:00:00+07:00' };
+  const pages = [];
+  const calendar = provider(async url => {
+    if (url.includes('oauth2')) return token();
+    if (url.endsWith('/freeBusy')) return json(freeBusy([], bounds));
+    const query = new URL(url).searchParams;
+    assert.equal(query.get('singleEvents'), 'true');
+    assert.equal(query.get('timeZone'), 'Asia/Jakarta');
+    assert.equal(query.get('timeMin'), bounds.timeMin);
+    assert.equal(query.get('timeMax'), bounds.timeMax);
+    pages.push(query.get('pageToken'));
+    return json(pages.length === 1 ? events([], { nextPageToken: 'opaque-page-token' }) : events([{ status: 'confirmed', start: { date: '2026-10-24' }, end: { date: '2026-10-25' } }]));
+  });
+  assert.deepEqual((await calendar.availability(bounds)).busyIntervals, [{ start: Date.parse('2026-10-24T00:00:00+07:00'), end: Date.parse('2026-10-25T00:00:00+07:00') }]);
+  assert.deepEqual(pages, [null, 'opaque-page-token']);
+});
+
+test('malformed or partial all-day dates fail closed rather than silently reopening the date', async () => {
+  for (const item of [null, {}, { status: 'unknown' },
+    { status: 'confirmed', start: { date: '2026-10-20' }, end: { dateTime: range.timeMax } },
+    { status: 'confirmed', start: { dateTime: range.timeMin }, end: { date: '2026-10-21' } },
+    { status: 'confirmed', start: { date: '2026-02-30' }, end: { date: '2026-03-01' } },
+    { status: 'confirmed', start: { date: '2026-10-20' }, end: { date: '2026-10-20' } },
+    { status: 'confirmed', start: { date: '2026-10-21' }, end: { date: '2026-10-20' } },
+    { status: 'confirmed', start: { date: '2026-10-20', dateTime: range.timeMin }, end: { date: '2026-10-21' } },
+    { status: 'confirmed', start: { date: '2026-10-20' }, end: { date: '2026-10-21', dateTime: range.timeMax } },
+  ]) {
+    const calendar = provider(async url => url.includes('oauth2') ? token() : url.endsWith('/freeBusy') ? json(freeBusy()) : json(events([item])));
+    await assert.rejects(calendar.availability(range), isCode('CALENDAR_RESPONSE'));
+  }
+});
+
+test('event pagination rejects incomplete, excessive and looping results without leaking page tokens', async () => {
+  const badPages = [{}, { kind: 'calendar#event', items: [] }, events(null), events({}), events(Array.from({ length: 2501 }, () => ({ status: 'cancelled' }))),
+    ...['', 'contains space', 'contains\nline', 'a'.repeat(8193), 1, null].map(nextPageToken => events([], { nextPageToken }))];
+  for (const page of badPages) {
+    const calendar = provider(async url => url.includes('oauth2') ? token() : url.endsWith('/freeBusy') ? json(freeBusy()) : json(page));
+    await assert.rejects(calendar.availability(range), isCode('CALENDAR_RESPONSE'));
+  }
+  for (const repeat of [true, false]) {
+    let pages = 0;
+    const calendar = provider(async url => {
+      if (url.includes('oauth2')) return token();
+      if (url.endsWith('/freeBusy')) return json(freeBusy());
+      pages++;
+      return json(events([], { nextPageToken: repeat ? 'private-page-token' : `private-page-${pages}` }));
+    });
+    await assert.rejects(calendar.availability(range), error => isCode('CALENDAR_RESPONSE')(error) && !error.message.includes('private-page'));
+    assert.equal(pages, repeat ? 2 : 4);
+  }
+  let pages = 0;
+  const complete = provider(async url => {
+    if (url.includes('oauth2')) return token();
+    if (url.endsWith('/freeBusy')) return json(freeBusy());
+    pages++;
+    return json(events([], pages < 4 ? { nextPageToken: `page-${pages}` } : {}));
+  });
+  assert.deepEqual((await complete.availability(range)).busyIntervals, []);
+  assert.equal(pages, 4);
+});
+
+test('a recognized empty partial collection may omit items, but each page must retain its collection kind', async () => {
+  const calendar = provider(async url => url.includes('oauth2') ? token() : url.endsWith('/freeBusy') ? json(freeBusy()) : json({ kind: 'calendar#events' }));
+  assert.deepEqual((await calendar.availability(range)).busyIntervals, []);
+  for (const page of [{}, { items: [] }, { kind: 'calendar#event' }, { kind: 'calendar#events', items: null }]) {
+    let pages = 0;
+    const invalidNext = provider(async url => {
+      if (url.includes('oauth2')) return token();
+      if (url.endsWith('/freeBusy')) return json(freeBusy());
+      pages++;
+      return json(pages === 1 ? events([], { nextPageToken: 'next-page' }) : page);
+    });
+    await assert.rejects(invalidNext.availability(range), isCode('CALENDAR_RESPONSE'));
+    assert.equal(pages, 2);
+  }
+});
+
+test('all-day lookup authorization, transport and body timeout failures never produce free availability', async () => {
+  for (const status of [401, 403, 429, 500]) {
+    const calendar = provider(async url => url.includes('oauth2') ? token() : url.endsWith('/freeBusy') ? json(freeBusy()) : json({ error: 'Private event details synthetic-token' }, status));
+    await assert.rejects(calendar.availability(range), error => isCode(status === 401 || status === 403 ? 'CALENDAR_AUTH' : 'CALENDAR_UNAVAILABLE')(error) && !error.message.includes('Private event'));
+  }
+  const never = () => new Promise(() => {});
+  const calendar = provider(async url => url.includes('oauth2') ? token() : url.endsWith('/freeBusy') ? json(freeBusy()) : { status: 200, ok: true, json: never }, { timeoutMs: 5 });
+  await assert.rejects(calendar.availability(range), isCode('CALENDAR_TIMEOUT'));
 });
 
 test('approved appointment writes a private, opaque WIB two-hour event without attendees', async () => {
@@ -200,12 +370,12 @@ test('default fetch preserves its Worker global receiver', async () => {
   globalThis.fetch = async function (url) {
     assert.equal(this, globalThis);
     count++;
-    return url.includes('oauth2') ? token() : json(freeBusy());
+    return url.includes('oauth2') ? token() : emptyCalendar(url);
   };
   try {
     const calendar = createGoogleCalendarProvider(env, { now: () => current });
     assert.equal((await calendar.availability(range)).busyIntervals.length, 0);
-    assert.equal(count, 2);
+    assert.equal(count, 3);
   } finally { globalThis.fetch = original; }
 });
 
@@ -419,10 +589,10 @@ test('a rejected cached token is cleared for a later retry without blind event r
   const calendar = provider(async url => {
     if (url.includes('oauth2')) { tokenCalls++; return token(); }
     calendarCalls++;
-    return calendarCalls === 1 ? json({}, 401) : json(freeBusy());
+    return calendarCalls === 1 ? json({}, 401) : emptyCalendar(url);
   });
   await assert.rejects(calendar.availability(range), isCode('CALENDAR_AUTH'));
-  assert.equal(calendarCalls, 1);
+  assert.equal(calendarCalls, 2);
   await calendar.availability(range);
   assert.equal(tokenCalls, 2);
 });
@@ -433,11 +603,11 @@ test('Worker-compatible manual redirects survive a constructor that rejects erro
     if (init.redirect === 'error') throw new TypeError('Invalid redirect value, must be follow or manual');
     calls++;
     assert.equal(init.redirect, 'manual');
-    return url.includes('oauth2') ? token() : json(freeBusy());
+    return url.includes('oauth2') ? token() : emptyCalendar(url);
   };
   await assert.rejects(workerFetch('https://synthetic.example', { redirect: 'error' }), TypeError);
   assert.equal((await provider(workerFetch).availability(range)).busyIntervals.length, 0);
-  assert.equal(calls, 2);
+  assert.equal(calls, 3);
   for (const status of [301, 302, 303, 307, 308]) {
     const visited = [];
     const redirected = provider(async (url, init) => {
@@ -446,7 +616,7 @@ test('Worker-compatible manual redirects survive a constructor that rejects erro
       return url.includes('oauth2') ? token() : new Response('', { status, headers: { Location: 'https://untrusted.example/collect' } });
     });
     await assert.rejects(redirected.availability(range), isCode('CALENDAR_UNAVAILABLE'));
-    assert.equal(visited.length, 2);
+    assert.equal(visited.length, 3);
     assert.equal(visited.some(url => url.includes('untrusted')), false);
   }
 });

@@ -12,6 +12,7 @@
  * References checked 2026-10-20:
  * https://developers.google.com/identity/protocols/oauth2/service-account
  * https://developers.google.com/workspace/calendar/api/v3/reference/freebusy/query
+ * https://developers.google.com/workspace/calendar/api/v3/reference/events/list
  * https://developers.google.com/workspace/calendar/api/v3/reference/events/insert
  * https://developers.google.com/workspace/calendar/api/v3/reference/events/get
  */
@@ -21,6 +22,9 @@ const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const API_URL = 'https://www.googleapis.com/calendar/v3';
 const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.events.freebusy';
 const DAY = 86400000;
+const EVENT_PAGE_SIZE = 2500;
+const EVENT_MAX_PAGES = 4;
+const AVAILABILITY_EVENT_FIELDS = 'kind,nextPageToken,items(status,start(date,dateTime,timeZone),end(date,dateTime,timeZone))';
 const encoder = new TextEncoder();
 const NOT_FOUND = Symbol('calendar-event-not-found');
 
@@ -53,6 +57,13 @@ function timestamp(value) {
   if (!Number.isFinite(midnight) || new Date(midnight).toISOString().slice(0, 10) !== match[1]) return null;
   const result = Date.parse(value);
   return Number.isFinite(result) ? result : null;
+}
+
+// Google all-day end.date is exclusive. Calendar dates follow Chii's fixed
+// business zone, so a Free all-day event still closes that whole WIB day.
+function businessMidnight(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  return timestamp(`${value}T00:00:00+07:00`);
 }
 
 async function sha256(value) {
@@ -178,7 +189,13 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     const end = timestamp(timeMax);
     const current = clock();
     if (start === null || end === null || end <= start || end - start > maxRangeDays * DAY || start < current - DAY || end > current + 91 * DAY) throw failure('CALENDAR_INPUT');
-    const payload = await api('/freeBusy', { timeMin, timeMax, timeZone: 'Asia/Jakarta', calendarExpansionMax: 1, items: [{ id: calendarId }] });
+    const query = new URLSearchParams({ timeMin, timeMax, timeZone: 'Asia/Jakarta', singleEvents: 'true', showDeleted: 'false', maxResults: String(EVENT_PAGE_SIZE), fields: AVAILABILITY_EVENT_FIELDS });
+    // Both occupancy sources use the same cached/pending authorization. Start
+    // their independent first requests together to avoid an extra round trip.
+    const [payload, firstPage] = await Promise.all([
+      api('/freeBusy', { timeMin, timeMax, timeZone: 'Asia/Jakarta', calendarExpansionMax: 1, items: [{ id: calendarId }] }),
+      api(`/calendars/${encodeURIComponent(calendarId)}/events?${query}`),
+    ]);
     const result = record(payload.calendars) && Object.hasOwn(payload.calendars, calendarId) ? payload.calendars[calendarId] : null;
     if (payload.kind !== 'calendar#freeBusy' || timestamp(payload.timeMin) !== start || timestamp(payload.timeMax) !== end || !record(result)
       || (result.errors !== undefined && (!Array.isArray(result.errors) || result.errors.length)) || !Array.isArray(result.busy) || result.busy.length > 10000) throw failure('CALENDAR_RESPONSE');
@@ -187,7 +204,37 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
       const busyEnd = timestamp(interval?.end);
       if (busyStart === null || busyEnd === null || busyEnd <= busyStart || busyEnd <= start || busyStart >= end) throw failure('CALENDAR_RESPONSE');
       return { start: Math.max(busyStart, start), end: Math.min(busyEnd, end) };
-    }).sort((a, b) => a.start - b.start);
+    });
+    // Free/busy omits transparent (Free) events. The owner does not need to
+    // manage that setting: every active all-day event closes its calendar dates.
+    // Request dates/status only, not titles, contacts, descriptions or event IDs.
+    const pageTokens = new Set();
+    for (let page = 0; page < EVENT_MAX_PAGES; page++) {
+      const events = page === 0 ? firstPage : await api(`/calendars/${encodeURIComponent(calendarId)}/events?${query}`);
+      // Google partial responses may omit an empty collection. Recognize the
+      // collection before treating that omission as empty; arbitrary {} fails.
+      const items = events.items === undefined ? [] : events.items;
+      if (events.kind !== 'calendar#events' || !Array.isArray(items) || items.length > EVENT_PAGE_SIZE) throw failure('CALENDAR_RESPONSE');
+      for (const event of items) {
+        if (!record(event) || !['confirmed', 'tentative', 'cancelled'].includes(event.status)) throw failure('CALENDAR_RESPONSE');
+        if (event.status === 'cancelled') continue;
+        if (!record(event.start) || !record(event.end)) throw failure('CALENDAR_RESPONSE');
+        const allDay = Object.hasOwn(event.start, 'date') || Object.hasOwn(event.end, 'date');
+        if (!allDay) continue; // Timed occupancy remains authoritative in free/busy.
+        const eventStart = businessMidnight(event.start.date);
+        const eventEnd = businessMidnight(event.end.date);
+        if (eventStart === null || eventEnd === null || eventEnd <= eventStart
+          || Object.hasOwn(event.start, 'dateTime') || Object.hasOwn(event.end, 'dateTime')) throw failure('CALENDAR_RESPONSE');
+        if (eventEnd > start && eventStart < end) busyIntervals.push({ start: Math.max(eventStart, start), end: Math.min(eventEnd, end) });
+      }
+      if (events.nextPageToken === undefined) break;
+      const next = events.nextPageToken;
+      if (typeof next !== 'string' || !next || next.length > 8192 || /[\u0000-\u0020\u007f]/.test(next)
+        || pageTokens.has(next) || page === EVENT_MAX_PAGES - 1) throw failure('CALENDAR_RESPONSE');
+      pageTokens.add(next);
+      query.set('pageToken', next);
+    }
+    busyIntervals.sort((a, b) => a.start - b.start);
     const merged = [];
     for (const interval of busyIntervals) {
       const previous = merged.at(-1);

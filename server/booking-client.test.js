@@ -5,6 +5,7 @@ import { webcrypto } from 'node:crypto';
 import test from 'node:test';
 import { BOOKING_DESIGNS, calculatePayment, getBookingDateBounds, listBookingSlots, normalizeBookingDesign, validateBooking } from './booking.js';
 import { PaymentProofError } from '../src/scripts/booking-proof.js';
+import { calendarMonthDays } from '../src/scripts/booking-calendar.js';
 
 // This deliberately small DOM/API fixture exercises the native controller without
 // adding jsdom or claiming layout, browser navigation or live-provider coverage.
@@ -28,7 +29,7 @@ function element() {
 }
 
 function harness(options = {}) {
-  const config = { enabled: true, statusFailure: false, requestFailures: 0, hold: false, availabilityFailures: 0, blockedTimes: [], holdAvailability: false, clipboardFailure: false, proofFailure: false, holdProof: false, ...options };
+  const config = { enabled: true, statusFailure: false, requestFailures: 0, hold: false, availabilityFailures: 0, blockedTimes: [], busyIntervals: [], holdAvailability: false, closedDates: [], closedByDesign: {}, monthFailures: 0, holdMonth: false, monthResponse: null, clipboardFailure: false, proofFailure: false, holdProof: false, ...options };
   const nodes = Object.fromEntries([...source.matchAll(/querySelector\('([^']+)'\)/g)].map(match => [match[1], element()]));
   const inputs = Object.fromEntries(['name', 'whatsapp', 'agreedPrice', 'paymentMode', 'deposit', 'serviceDuration', 'date', 'time', 'paymentProof'].map(name => {
     const node = element(); node.name = name; return [name, node];
@@ -70,6 +71,7 @@ function harness(options = {}) {
   });
   let release = () => {};
   const availabilityReleases = [];
+  const monthReleases = [];
   const window = {
     location: { href: 'https://chiinails.pages.dev/book', origin: 'https://chiinails.pages.dev', assign: url => redirects.push(url) },
     crypto: webcrypto, setTimeout(callback, milliseconds) { timeoutBudgets.push(milliseconds); return setTimeout(callback, milliseconds); }, clearTimeout, listeners: {},
@@ -85,15 +87,30 @@ function harness(options = {}) {
       if (config.statusFailure) throw new Error('synthetic offline');
       return { ok: true, status: 200, json: async () => ({ enabled: config.enabled }) };
     }
+    if (path === '/api/booking/calendar') {
+      assert.equal(request.method, 'POST');
+      const query = JSON.parse(request.body);
+      const { month } = query;
+      const design = normalizeBookingDesign(query.designType, query.durationMinutes);
+      assert(design, 'monthly requests include a canonical service and exact duration');
+      const dates = calendarMonthDays(month, getBookingDateBounds({ now: FixedDate.now() })).filter(day => day && !day.disabled).map(day => day.date);
+      const explicitlyClosed = [...config.closedDates, ...(config.closedByDesign[`${design.designType}:${design.durationMinutes}`] || [])];
+      const closedDates = dates.filter(date => explicitlyClosed.includes(date) || !listBookingSlots(date, { now: FixedDate.now(), ...design, busyIntervals: config.busyIntervals }).some(slot => !config.blockedTimes.includes(slot.time)));
+      if (config.holdMonth) await new Promise(resolve => monthReleases.push(resolve));
+      if (config.monthFailures-- > 0) throw new Error('synthetic calendar offline');
+      const result = { month, ...design, timeZone: 'Asia/Jakarta', minDate: dates[0], maxDate: dates.at(-1), closedDates };
+      return { ok: true, status: 200, json: async () => config.monthResponse ? config.monthResponse(result) : result };
+    }
     if (path === '/api/booking/availability') {
       assert.equal(request.method, 'POST');
       const query = JSON.parse(request.body);
       const date = query.date;
       const design = normalizeBookingDesign(query.designType, query.durationMinutes);
       const blocked = [...config.blockedTimes];
+      const freeTimes = new Set(listBookingSlots(date, { now: FixedDate.now(), ...design, busyIntervals: config.busyIntervals }).map(slot => slot.time));
       if (config.holdAvailability) await new Promise(resolve => availabilityReleases.push(resolve));
       if (config.availabilityFailures-- > 0) throw new Error('synthetic availability offline');
-      const slots = listBookingSlots(date, { now: FixedDate.now(), ...design, includeElapsed: true }).map(slot => ({ time: slot.time, available: slot.start > FixedDate.now() && !blocked.includes(slot.time) }));
+      const slots = listBookingSlots(date, { now: FixedDate.now(), ...design, includeElapsed: true }).map(slot => ({ time: slot.time, available: freeTimes.has(slot.time) && !blocked.includes(slot.time) }));
       return { ok: true, status: 200, json: async () => ({ date, ...design, timeZone: 'Asia/Jakarta', slots }) };
     }
     if (config.hold) await new Promise(resolve => { release = resolve; });
@@ -109,7 +126,22 @@ function harness(options = {}) {
     return { ok: true, status: 201, json: async () => data };
   };
   const Option = function (text, value) { return { text, value, disabled: false }; };
-  const calendar = { refresh() {}, setInvalid() {}, focus() {} };
+  let month = getBookingDateBounds({ now: FixedDate.now() }).minDate.slice(0, 7);
+  let lastCalendarValue = '';
+  let onMonthChange;
+  const calendar = {
+    state: null, applications: [],
+    refresh() {
+      if (inputs.date.value !== lastCalendarValue) { month = (inputs.date.value || inputs.date.min).slice(0, 7); lastCalendarValue = inputs.date.value; }
+    },
+    getMonth: () => month,
+    setAvailability(info) {
+      if (info.month !== month) return false;
+      this.state = info; this.applications.push(info); return true;
+    },
+    browse(value) { month = value; onMonthChange?.(month); },
+    setInvalid() {}, focus() {},
+  };
   const preparePaymentProof = async (file, { signal }) => {
     if (config.holdProof) await new Promise(resolve => proofReleases.push(resolve));
     if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
@@ -120,10 +152,11 @@ function harness(options = {}) {
   };
   vm.runInNewContext(source, {
     document, window, navigator, Intl, URL: TestURL, URLSearchParams, Date: FixedDate, Option, fetch, AbortController, DOMException, Uint8Array, PaymentProofError, preparePaymentProof,
-    BOOKING_DESIGNS, calculatePayment, getBookingDateBounds, listBookingSlots, normalizeBookingDesign, validateBooking, createBookingCalendar: () => calendar,
+    BOOKING_DESIGNS, calculatePayment, getBookingDateBounds, listBookingSlots, normalizeBookingDesign, validateBooking, calendarMonthDays,
+    createBookingCalendar: (root, input, options) => { onMonthChange = options?.onMonthChange; return calendar; },
   });
   return {
-    nodes, inputs, form, fieldsets, values, calls, redirects, window, document, config, availabilityReleases, copyButtons, clipboardWrites, proofReleases, objectUrls, revokedUrls, timeoutBudgets, intervals,
+    nodes, inputs, form, fieldsets, values, calls, redirects, window, document, config, calendar, monthReleases, availabilityReleases, copyButtons, clipboardWrites, proofReleases, objectUrls, revokedUrls, timeoutBudgets, intervals,
     tickRefresh() { [...intervals.values()].forEach(timer => timer.callback()); },
     visibility(value) { document.visibilityState = value; document.listeners.visibilitychange(); },
     release: () => release(),
@@ -439,11 +472,10 @@ test('weekend native choices follow each agreed duration and finish before noon'
   }
 });
 
-test('busy starts remain visible as disabled labelled options and forged selections cannot submit', async () => {
+test('busy starts are absent from the time dropdown and forged selections cannot submit', async () => {
   const page = harness({ blockedTimes: ['10:00'] }); await settle(); await page.fill();
   const blocked = page.inputs.time.options.find(option => option.value === '10:00');
-  assert.equal(blocked.disabled, true);
-  assert.match(blocked.text, /tidak tersedia/);
+  assert.equal(blocked, undefined);
   assert.equal(page.inputs.time.options.find(option => option.value === '12:00').disabled, false, 'a start at the end of the blocked 10:00–12:00 interval remains available');
   assert.equal(page.inputs.time.value, '14:00');
   assert.equal(page.nodes['#booking-review'].disabled, false);
@@ -460,6 +492,7 @@ test('availability loading or failure blocks Book and an explicit retry restores
   page.change('date', '2026-10-22'); await settle();
   assert.equal(page.nodes['#booking-review'].disabled, true);
   assert.equal(page.inputs.time.attrs['aria-busy'], 'true');
+  assert.deepEqual(page.inputs.time.options.filter(option => option.value), [], 'loading does not show unverified starts');
   page.availabilityReleases[0](); await settle();
   assert.equal(page.nodes['#booking-slot-retry'].hidden, false);
   assert.equal(page.nodes['#booking-review'].disabled, true);
@@ -570,7 +603,7 @@ test('fresh slot conflict refreshes availability, asks for another time, and kee
   page.config.blockedTimes = ['14:00']; await page.submit();
   assert.match(page.nodes['#booking-submit-status'].textContent, /Pilih tanggal atau jam lain/);
   assert.equal(page.inputs.time.value, '');
-  assert.equal(page.inputs.time.options.find(option => option.value === '14:00').disabled, true);
+  assert.equal(page.inputs.time.options.find(option => option.value === '14:00'), undefined);
   assert.equal(page.nodes['#booking-proof-preview'].hidden, false);
   assert.equal(page.nodes['#booking-review'].disabled, true);
 });
@@ -603,22 +636,20 @@ test('availability checks use same-origin JSON POST rather than a mutating GET',
   }
 });
 
-test('visible refresh frees cancelled slots while preserving selection, options and native control focus', async () => {
+test('visible refresh restores cancelled slots while preserving the selected value and native control focus', async () => {
   const page = harness({ blockedTimes: ['10:00'] }); await settle(); await page.fill();
   assert.equal(page.intervals.size, 1);
   assert.equal([...page.intervals.values()][0].milliseconds, 45000);
-  const selected = page.inputs.time.options.find(option => option.value === '14:00');
   const released = page.inputs.time.options.find(option => option.value === '10:00');
   page.inputs.time.focus();
-  assert.equal(released.disabled, true);
+  assert.equal(released, undefined);
   page.config.blockedTimes = [];
   page.tickRefresh();
   assert.equal(page.inputs.time.value, '14:00');
   assert.equal(page.nodes['#booking-review'].disabled, false);
   await settle();
-  assert.equal(page.inputs.time.options.find(option => option.value === '14:00'), selected);
   assert.equal(page.inputs.time.focused, true);
-  assert.equal(released.disabled, false);
+  assert.equal(page.inputs.time.options.find(option => option.value === '10:00').disabled, false);
   assert.equal(page.inputs.time.value, '14:00');
   assert.equal(page.intervals.size, 1);
 });
@@ -642,7 +673,7 @@ test('hidden page stops refresh and becoming visible checks again without duplic
   page.tickRefresh(); await settle();
   assert.equal(page.calls.length, before);
   page.visibility('visible'); await settle();
-  assert.equal(page.calls.length, before + 1);
+  assert.equal(page.calls.length, before + 2, 'returning checks one month summary and the selected day');
   assert.equal(page.intervals.size, 1);
   assert.equal(page.inputs.time.value, '14:00');
 });
@@ -666,13 +697,14 @@ test('receipt preparation and customer submission pause refresh traffic', async 
 });
 
 test('refresh never overlaps a pending check and date changes discard the stale refresh', async () => {
-  const page = harness(); await settle(); await page.fill(); page.config.holdAvailability = true;
+  const page = harness(); await settle(); await page.fill(); page.config.holdAvailability = true; page.config.holdMonth = true;
   page.tickRefresh(); await settle();
   const once = page.calls.length;
   page.tickRefresh(); assert.equal(page.calls.length, once);
   page.change('date', '2026-10-22'); await settle();
   const checks = page.calls.filter(call => call.path === '/api/booking/availability');
   assert.equal(checks.at(-2).request.signal.aborted, true);
+  page.monthReleases[0](); await settle();
   page.availabilityReleases[0](); await settle();
   assert.equal(page.nodes['#booking-review'].disabled, true);
   page.availabilityReleases[1](); await settle();
@@ -693,4 +725,249 @@ test('departure clears the refresh timer, aborts its request and restores one fr
   assert.equal(page.intervals.size, 1);
   assert.equal(page.posts().length, 0);
   assert.equal(page.redirects.length, 0);
+});
+
+test('calendar reads one clipped summary per service and duration, and reuses an unchanged choice', async () => {
+  const page = harness({ closedDates: ['2026-10-19', '2026-10-24', '2026-11-01'] }); await settle();
+  const checks = () => page.calls.filter(call => call.path === '/api/booking/calendar');
+  assert.equal(checks().length, 1);
+  assert.equal(page.calls.filter(call => call.path === '/api/booking/availability').length, 0, 'a month does not fan out into daily requests');
+  const call = checks()[0];
+  assert.equal(call.request.method, 'POST');
+  assert.equal(call.request.credentials, 'same-origin');
+  assert.equal(call.request.cache, 'no-store');
+  assert.equal(call.request.headers['Content-Type'], 'application/json');
+  assert.deepEqual(JSON.parse(call.request.body), { month: '2026-10', designType: 'simple', durationMinutes: '120' });
+  assert.equal(page.calendar.state.status, 'ready');
+  assert.deepEqual([...page.calendar.state.closedDates], ['2026-10-20', '2026-10-24']);
+  for (const choice of ['plain:60', 'simple:60', 'simple:120', 'full-art:180', 'full-art:240', 'full-art:300']) {
+    page.change('serviceDuration', choice); await settle();
+  }
+  assert.equal(checks().length, 6, 'each exact service has one cached monthly summary');
+  for (const check of checks()) {
+    const query = JSON.parse(check.request.body);
+    assert.deepEqual(Object.keys(query).sort(), ['designType', 'durationMinutes', 'month']);
+    assert.equal(typeof query.durationMinutes, 'string');
+  }
+  page.change('serviceDuration', 'simple:120'); await settle();
+  page.change('serviceDuration', 'simple:120'); await settle();
+  assert.equal(checks().length, 6, 'returning to a fresh same-choice summary does not refetch it');
+});
+
+test('pending month summary keeps Book disabled even when selected-day availability and proof are ready', async () => {
+  const page = harness({ holdMonth: true }); await settle(); await page.fill();
+  assert.equal(page.monthReleases.length, 1, 'field changes share the active monthly request');
+  assert.equal(page.calendar.state.status, 'loading');
+  assert.equal(page.nodes['#booking-review'].disabled, true);
+  await page.submit();
+  assert.equal(page.posts().length, 0);
+  assert.match(page.nodes['#error-date'].textContent, /selesai diperiksa/);
+  page.monthReleases[0](); await settle();
+  assert.equal(page.calendar.state.status, 'ready');
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+});
+
+test('failed month refresh fails closed and explicit retry restores retained customer details', async () => {
+  const page = harness(); await settle(); await page.fill();
+  page.config.monthFailures = 1;
+  page.nodes['#booking-calendar-retry'].listeners.click(); await settle();
+  assert.equal(page.calendar.state.status, 'error');
+  assert.equal(page.nodes['#booking-calendar-retry'].hidden, false);
+  assert.equal(page.nodes['#booking-review'].disabled, true);
+  assert.equal(page.inputs.name.value, 'Synthetic Customer');
+  assert.equal(page.inputs.time.value, '14:00');
+  assert.equal(page.inputs.paymentProof.files.length, 1);
+  page.nodes['#booking-calendar-retry'].listeners.click(); await settle();
+  assert.equal(page.calendar.state.status, 'ready');
+  assert.equal(page.nodes['#booking-calendar-retry'].hidden, true);
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+});
+
+test('month navigation aborts older summaries and late responses cannot replace the displayed month', async () => {
+  const page = harness({ holdMonth: true, closedDates: ['2026-10-24'] }); await settle();
+  const october = page.calls.find(call => call.path === '/api/booking/calendar');
+  page.config.closedDates = ['2026-11-05'];
+  page.calendar.browse('2026-11'); await settle();
+  assert.equal(october.request.signal.aborted, true);
+  assert.equal(page.calendar.state.month, '2026-11');
+  assert.equal(page.calendar.state.status, 'loading');
+  page.monthReleases[0](); await settle();
+  assert.equal(page.calendar.state.month, '2026-11');
+  assert.equal(page.calendar.state.status, 'loading');
+  page.monthReleases[1](); await settle();
+  assert.equal(page.calendar.state.status, 'ready');
+  assert.deepEqual([...page.calendar.state.closedDates], ['2026-11-05']);
+});
+
+test('malformed month summaries cannot imply availability or enable Book', async () => {
+  const page = harness(); await settle(); await page.fill();
+  const mutations = [
+    result => ({ ...result, month: '2026-11' }),
+    result => ({ ...result, timeZone: 'UTC' }),
+    result => ({ ...result, designType: 'plain' }),
+    result => ({ ...result, durationMinutes: 60 }),
+    result => ({ ...result, durationMinutes: '120' }),
+    result => ({ ...result, minDate: '2026-10-01' }),
+    result => ({ ...result, maxDate: '2026-11-01' }),
+    result => ({ ...result, closedDates: ['2026-10-24', '2026-10-24'] }),
+    result => ({ ...result, closedDates: ['2026-10-25', '2026-10-24'] }),
+    result => ({ ...result, closedDates: ['2026-10-19'] }),
+    result => ({ ...result, closedDates: [24] }),
+    result => ({ ...result, closedDates: null }),
+    result => ({ ...result, events: [] }),
+  ];
+  for (const mutate of mutations) {
+    page.config.monthResponse = mutate;
+    page.nodes['#booking-calendar-retry'].listeners.click(); await settle();
+    assert.equal(page.calendar.state.status, 'error');
+    assert.equal(page.nodes['#booking-review'].disabled, true);
+    assert.equal(page.inputs.time.value, '14:00');
+  }
+  page.config.monthResponse = null;
+  page.nodes['#booking-calendar-retry'].listeners.click(); await settle();
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+});
+
+test('a new full-day block clears selected time and removal reopens the date without silently choosing a time', async () => {
+  const page = harness(); await settle(); await page.fill();
+  page.config.closedDates = ['2026-10-21'];
+  page.tickRefresh(); await settle();
+  assert.equal(page.calendar.state.closedDates.includes('2026-10-21'), true);
+  assert.equal(page.inputs.date.value, '2026-10-21');
+  assert.equal(page.inputs.time.value, '');
+  assert.equal(page.nodes['#booking-review'].disabled, true);
+  page.config.closedDates = [];
+  page.tickRefresh(); await settle();
+  assert.equal(page.calendar.state.closedDates.includes('2026-10-21'), false);
+  assert.equal(page.inputs.time.value, '');
+  page.change('time', '14:00');
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+});
+
+test('a forged selected time cannot bypass a trusted closed-day summary', async () => {
+  const page = harness(); await settle(); await page.fill();
+  page.config.closedDates = ['2026-10-21'];
+  page.tickRefresh(); await settle();
+  page.change('time', '14:00'); await page.submit();
+  assert.equal(page.posts().length, 0);
+  assert.equal(page.nodes['#booking-review'].disabled, true);
+  assert.match(page.nodes['#error-date'].textContent, /tidak tersedia/);
+});
+
+test('hidden page aborts pending month work and resumes with one fresh month and one day check', async () => {
+  const page = harness(); await settle(); await page.fill();
+  page.config.holdMonth = true;
+  page.config.closedDates = ['2026-10-21'];
+  page.tickRefresh(); await settle();
+  const old = page.calls.filter(call => call.path === '/api/booking/calendar').at(-1);
+  page.visibility('hidden');
+  assert.equal(old.request.signal.aborted, true);
+  assert.equal(page.intervals.size, 0);
+  const before = page.calls.length;
+  page.config.closedDates = [];
+  page.config.holdMonth = false;
+  page.visibility('visible'); await settle();
+  assert.equal(page.calls.length, before + 2);
+  assert.equal(page.calendar.state.status, 'ready');
+  assert.equal(page.calendar.state.closedDates.includes('2026-10-21'), false);
+  page.monthReleases[0](); await settle();
+  assert.equal(page.calendar.state.closedDates.includes('2026-10-21'), false, 'late hidden-page block cannot replace fresh reopened state');
+  assert.equal(page.inputs.time.value, '14:00');
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+  assert.equal(page.intervals.size, 1);
+});
+
+test('each visible 45-second refresh uses at most one month summary and one selected-day request', async () => {
+  const page = harness(); await settle(); await page.fill();
+  const before = page.calls.length;
+  page.tickRefresh(); await settle();
+  const refresh = page.calls.slice(before);
+  assert.deepEqual(refresh.map(call => call.path).sort(), ['/api/booking/availability', '/api/booking/calendar']);
+  assert.equal(page.inputs.time.value, '14:00');
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+});
+
+test('an unchanged available-time list retains option nodes and native focus during quiet refresh', async () => {
+  const page = harness(); await settle(); await page.fill();
+  const options = [...page.inputs.time.options].filter(option => option.value);
+  page.inputs.time.focus();
+  page.tickRefresh(); await settle();
+  assert.deepEqual(page.inputs.time.options.filter(option => option.value), options);
+  options.forEach(option => assert.equal(page.inputs.time.options.find(current => current.value === option.value), option));
+  assert.equal(page.inputs.time.focused, true);
+  assert.equal(page.inputs.time.value, '14:00');
+});
+
+test('October 30 occupied 08:00–10:00 removes overlapping starts and keeps every later service-fitting start', async () => {
+  const page = harness({ busyIntervals: [{ start: '2026-10-30T08:00:00+07:00', end: '2026-10-30T10:00:00+07:00' }] });
+  await settle(); await page.fill();
+  page.change('date', '2026-10-30'); await settle();
+  for (const [choice, starts] of [
+    ['plain:60', ['10:00', '11:00', '12:00', '13:00', '14:00']],
+    ['simple:60', ['10:00', '11:00', '12:00', '13:00', '14:00']],
+    ['simple:120', ['10:00', '12:00', '14:00']],
+    ['full-art:180', ['11:00']],
+    ['full-art:240', ['12:00']],
+    ['full-art:300', []],
+  ]) {
+    page.change('serviceDuration', choice); await settle();
+    assert.deepEqual(page.inputs.time.options.filter(option => option.value).map(option => option.value), starts, choice);
+    assert.equal(page.calendar.state.closedDates.includes('2026-10-30'), starts.length === 0, choice);
+  }
+  page.change('serviceDuration', 'simple:120'); await settle();
+  page.config.busyIntervals = [];
+  page.tickRefresh(); await settle();
+  assert.deepEqual(page.inputs.time.options.filter(option => option.value).map(option => option.value), ['08:00', '10:00', '12:00', '14:00']);
+});
+
+test('rapid service changes abort old month checks and a late duration summary cannot close the new choice', async () => {
+  const page = harness({ holdMonth: true, closedByDesign: { 'full-art:300': ['2026-10-22'] } }); await settle();
+  page.change('serviceDuration', 'full-art:300'); await settle();
+  page.change('serviceDuration', 'plain:60'); await settle();
+  const checks = page.calls.filter(call => call.path === '/api/booking/calendar');
+  assert.equal(checks.length, 3);
+  assert.equal(checks[0].request.signal.aborted, true);
+  assert.equal(checks[1].request.signal.aborted, true);
+  assert.deepEqual(JSON.parse(checks[2].request.body), { month: '2026-10', designType: 'plain', durationMinutes: '60' });
+  page.monthReleases[2](); await settle();
+  assert.equal(page.calendar.state.status, 'ready');
+  assert.equal(page.calendar.state.closedDates.includes('2026-10-22'), false);
+  const applied = page.calendar.state;
+  page.monthReleases[1](); page.monthReleases[0](); await settle();
+  assert.equal(page.calendar.state, applied);
+  assert.equal(page.inputs.serviceDuration.value, 'plain:60');
+  assert.equal(page.calendar.state.closedDates.includes('2026-10-22'), false);
+});
+
+test('a duration-specific closed day reopens from the matching cached summary when the customer chooses a shorter service', async () => {
+  const page = harness({ closedByDesign: { 'full-art:300': ['2026-10-22'] } }); await settle(); await page.fill();
+  page.change('date', '2026-10-22'); await settle();
+  page.change('serviceDuration', 'full-art:300'); await settle();
+  assert.equal(page.calendar.state.closedDates.includes('2026-10-22'), true);
+  assert.equal(page.inputs.time.value, '');
+  assert.equal(page.nodes['#booking-review'].disabled, true);
+  const monthlyChecks = page.calls.filter(call => call.path === '/api/booking/calendar').length;
+  page.change('serviceDuration', 'simple:120'); await settle();
+  assert.equal(page.calendar.state.closedDates.includes('2026-10-22'), false);
+  assert.equal(page.calls.filter(call => call.path === '/api/booking/calendar').length, monthlyChecks);
+  page.change('time', '14:00');
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+});
+
+test('an older free-time snapshot cannot restore choices after a newer month summary closes the selected day', async () => {
+  const page = harness(); await settle(); await page.fill();
+  page.config.holdAvailability = true;
+  page.change('date', '2026-10-22'); await settle();
+  assert.equal(page.availabilityReleases.length, 1);
+  page.config.closedDates = ['2026-10-22'];
+  page.nodes['#booking-calendar-retry'].listeners.click(); await settle();
+  assert.equal(page.calendar.state.closedDates.includes('2026-10-22'), true);
+  assert.deepEqual(page.inputs.time.options.filter(option => option.value), []);
+  assert.equal(page.inputs.time.value, '');
+  assert.equal(page.nodes['#booking-review'].disabled, true);
+  page.availabilityReleases[0](); await settle();
+  assert.deepEqual(page.inputs.time.options.filter(option => option.value), [], 'the older day response must respect the newer date closure');
+  assert.equal(page.inputs.time.value, '');
+  assert.equal(page.nodes['#booking-review'].disabled, true);
+  assert.equal(page.posts().length, 0);
 });

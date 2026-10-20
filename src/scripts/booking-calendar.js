@@ -1,5 +1,5 @@
-// The date grid uses UTC calendar arithmetic; its allowed days come from the
-// shared WIB booking bounds. It never fetches or implies live availability.
+// UTC calendar arithmetic keeps the shared WIB bounds independent of device
+// time zones. The controller supplies one availability summary per month.
 const DAY = 86400000;
 const isoDay = value => new Date(value).toISOString().slice(0, 10);
 
@@ -53,7 +53,7 @@ export function moveCalendarDate(value, key, bounds, shift = false) {
   return isoDay(Math.max(min, Math.min(max, target)));
 }
 
-export function createBookingCalendar(root, input) {
+export function createBookingCalendar(root, input, { onMonthChange } = {}) {
   if (!root || !input) return null;
   const monthLabel = root.querySelector('#booking-calendar-month');
   const body = root.querySelector('tbody');
@@ -66,14 +66,50 @@ export function createBookingCalendar(root, input) {
   let month = '';
   let focusDate = '';
   let lastValue = '';
+  let renderedMonth = '';
+  let renderedBounds = '';
+  let availability = { month: '', status: 'loading', closedDates: new Set() };
   const valid = date => dayStamp(date) !== null && date >= bounds.minDate && date <= bounds.maxDate;
   const focusedButton = () => body.querySelector('button[tabindex="0"]');
+  const stateForDate = date => availability.month !== month ? 'loading'
+    : availability.status === 'ready' ? availability.closedDates.has(date) ? 'unavailable' : 'available'
+      : availability.status === 'preview' ? 'available' : availability.status;
+
+  function updateDays() {
+    root.setAttribute('aria-busy', String(availability.month !== month || availability.status === 'loading'));
+    body.querySelectorAll('button[data-date]').forEach(button => {
+      const date = button.dataset.date;
+      const state = valid(date) ? stateForDate(date) : 'outside';
+      const unavailable = ['unavailable', 'loading', 'error'].includes(state);
+      button.disabled = state === 'outside';
+      button.tabIndex = date === focusDate ? 0 : -1;
+      if (unavailable) {
+        button.dataset.availability = state;
+        button.setAttribute('aria-disabled', 'true');
+      } else {
+        delete button.dataset.availability;
+        button.removeAttribute('aria-disabled');
+      }
+      const suffix = state === 'unavailable' ? ', tidak tersedia' : state === 'loading' ? ', memeriksa jadwal' : state === 'error' ? ', jadwal belum dapat diperiksa' : '';
+      button.setAttribute('aria-label', `${dateFormat.format(new Date(`${date}T00:00:00Z`))}${suffix}`);
+      if (date === bounds.minDate) button.setAttribute('aria-current', 'date');
+      else button.removeAttribute('aria-current');
+      if (date === input.value) button.parentElement.setAttribute('aria-selected', 'true');
+      else button.parentElement.removeAttribute('aria-selected');
+    });
+    const selectedText = valid(input.value) ? dateFormat.format(new Date(`${input.value}T00:00:00Z`)) : 'Belum ada tanggal dipilih.';
+    if (selection.textContent !== selectedText) selection.textContent = selectedText;
+  }
 
   function render() {
     const monthText = monthFormat.format(new Date(`${month}-01T00:00:00Z`));
     if (monthLabel.textContent !== monthText) monthLabel.textContent = monthText;
     previous.disabled = month <= bounds.minDate.slice(0, 7);
     next.disabled = month >= bounds.maxDate.slice(0, 7);
+    if (renderedMonth === month && renderedBounds === `${bounds.minDate}|${bounds.maxDate}`) {
+      updateDays();
+      return;
+    }
     const fragment = document.createDocumentFragment();
     calendarMonthDays(month, bounds).forEach((day, index) => {
       if (index % 7 === 0) fragment.append(document.createElement('tr'));
@@ -83,18 +119,14 @@ export function createBookingCalendar(root, input) {
         button.type = 'button';
         button.dataset.date = day.date;
         button.textContent = String(day.day);
-        button.setAttribute('aria-label', dateFormat.format(new Date(`${day.date}T00:00:00Z`)));
-        button.disabled = day.disabled;
-        button.tabIndex = day.date === focusDate ? 0 : -1;
-        if (day.date === bounds.minDate) button.setAttribute('aria-current', 'date');
-        if (day.date === input.value) cell.setAttribute('aria-selected', 'true');
         cell.append(button);
       }
       fragment.lastChild.append(cell);
     });
     body.replaceChildren(fragment);
-    const selectedText = valid(input.value) ? dateFormat.format(new Date(`${input.value}T00:00:00Z`)) : 'Belum ada tanggal dipilih.';
-    if (selection.textContent !== selectedText) selection.textContent = selectedText;
+    renderedMonth = month;
+    renderedBounds = `${bounds.minDate}|${bounds.maxDate}`;
+    updateDays();
   }
 
   function refresh() {
@@ -117,12 +149,13 @@ export function createBookingCalendar(root, input) {
     const preferred = shiftMonth(focusDate, amount);
     focusDate = preferred < bounds.minDate ? bounds.minDate : preferred > bounds.maxDate ? bounds.maxDate : preferred;
     render();
+    onMonthChange?.(month);
   }
   previous.addEventListener('click', () => browse(-1));
   next.addEventListener('click', () => browse(1));
   body.addEventListener('click', event => {
     const button = event.target.closest('button[data-date]');
-    if (!button || button.disabled) return;
+    if (!button || button.disabled || button.getAttribute('aria-disabled') === 'true') return;
     input.value = button.dataset.date;
     focusDate = input.value;
     input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -131,17 +164,34 @@ export function createBookingCalendar(root, input) {
   body.addEventListener('keydown', event => {
     const button = event.target.closest('button[data-date]');
     if (!button || event.altKey || event.ctrlKey || event.metaKey) return;
+    if ((event.key === 'Enter' || event.key === ' ') && button.getAttribute('aria-disabled') === 'true') {
+      event.preventDefault();
+      return;
+    }
     const target = moveCalendarDate(button.dataset.date, event.key, bounds, event.shiftKey);
     if (!target) return;
     event.preventDefault();
+    const previousMonth = month;
     focusDate = target;
     month = target.slice(0, 7);
     render();
     focusedButton()?.focus({ preventScroll: true });
+    if (previousMonth !== month) onMonthChange?.(month);
   });
   refresh();
   input.hidden = true;
   document.querySelector('#booking-date-label')?.removeAttribute('for');
   root.hidden = false;
-  return { refresh, focus: () => focusedButton()?.focus(), setInvalid: invalid => root.setAttribute('aria-invalid', String(invalid)) };
+  return {
+    refresh,
+    getMonth: () => month,
+    setAvailability(value) {
+      if (!value || value.month !== month || !['loading', 'ready', 'error', 'preview'].includes(value.status) || !Array.isArray(value.closedDates)) return false;
+      availability = { month, status: value.status, closedDates: new Set(value.closedDates.filter(date => dayStamp(date) !== null && date.slice(0, 7) === month)) };
+      updateDays();
+      return true;
+    },
+    focus: () => focusedButton()?.focus(),
+    setInvalid: invalid => root.setAttribute('aria-invalid', String(invalid)),
+  };
 }

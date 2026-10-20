@@ -41,6 +41,7 @@ function fixture(extra = {}) {
     getBookingRequest: async (config, token, settings) => { calls.push(['read', config, token, settings]); return summary; },
     decideBookingRequest: async (config, token, action, settings) => { calls.push(['decide', config, token, action, settings]); return { ...summary, status: action === 'accept' ? 'accepted' : 'cancelled' }; },
     getBookingAvailability: async (config, selection, settings) => { calls.push(['availability', config, selection, settings]); return { ...selection, timeZone: 'Asia/Jakarta', slots: [{ time: '08:00', available: true }, { time: '08:30', available: false }] }; },
+    getBookingCalendarMonth: async (config, selection, settings) => { calls.push(['calendarMonth', config, selection, settings]); return { ...selection, durationMinutes: Number(selection.durationMinutes), timeZone: 'Asia/Jakarta', minDate: '2026-10-20', maxDate: '2026-10-31', closedDates: ['2026-10-24'] }; },
     getBookingPaymentProof: async (config, token, settings) => { calls.push(['proof', config, token, settings]); return proofBytes; },
     requireBookingOwner: async (incoming, config, settings) => { calls.push(['owner', incoming, config, settings]); return identity; },
     getAuthChallenge: async () => { calls.push(['challenge']); return Response.json({ authenticated: false, csrfToken: 'C'.repeat(43), clientId: env.GOOGLE_OAUTH_CLIENT_ID, nonce: 'N'.repeat(43) }); },
@@ -72,7 +73,7 @@ test('readiness requires exact activation and every binding without revealing co
     assert.equal(status.status, 200);
     assert.deepEqual(await status.json(), { enabled: false });
     secure(status);
-    for (const route of ['requests', 'review', 'session', 'availability', 'proof']) {
+    for (const route of ['requests', 'review', 'session', 'availability', 'calendar', 'proof']) {
       const response = await item.handlers[route](request(route, { method: route === 'requests' ? 'POST' : 'GET', ...(route === 'requests' ? { body: input } : {}) }), missing);
       assert.equal(response.status, 503);
       assert.equal((await response.json()).code, 'BOOKING_DISABLED');
@@ -165,9 +166,53 @@ test('public availability uses bounded same-origin POST JSON and returns only oc
   assert.equal('slots' in await failure.json(), false);
 });
 
+test('month Calendar route returns only bounded closure dates through same-origin POST without owner authentication', async () => {
+  const item = fixture();
+  const body = { month: '2026-10', designType: 'simple', durationMinutes: '120' };
+  const response = await item.handlers.calendar(request('calendar', { method: 'POST', body }), env);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { month: '2026-10', designType: 'simple', durationMinutes: 120, timeZone: 'Asia/Jakarta', minDate: '2026-10-20', maxDate: '2026-10-31', closedDates: ['2026-10-24'] });
+  secure(response);
+  assert.deepEqual(item.calls.map(call => call[0]), ['calendar', 'calendarMonth']);
+  assert.deepEqual(item.calls[1][2], body);
+  assert.equal(item.calls[1][3].calendar, item.provider);
+  const bad = fixture();
+  for (const changed of [{}, { month: '2026-10' }, { ...body, extra: true }, { ...body, designType: 'plain' }, { ...body, durationMinutes: 120 }, { ...body, designType: 'legacy' }, ...[202610, '2026-1', '2026-13', '0000-10', '2026-10\n', '2026-09', '2027-02'].map(month => ({ ...body, month }))]) {
+    assert.equal((await bad.handlers.calendar(request('calendar', { method: 'POST', body: changed }), env)).status, 400);
+  }
+  assert.equal((await bad.handlers.calendar(request('calendar?extra=1', { method: 'POST', body }), env)).status, 400);
+  assert.equal((await bad.handlers.calendar(request('calendar', { method: 'POST', body, origin: null }), env)).status, 403);
+  assert.equal((await bad.handlers.calendar(request('calendar', { method: 'POST', body, origin: 'https://other.example' }), env)).status, 403);
+  assert.equal((await bad.handlers.calendar(request('calendar', { method: 'POST', body, base: 'https://other.example' }), env)).status, 403);
+  assert.equal((await bad.handlers.calendar(request('calendar', { method: 'POST', body, headers: { 'Sec-Fetch-Site': 'cross-site' } }), env)).status, 403);
+  assert.equal((await bad.handlers.calendar(request('calendar', { method: 'POST', body, headers: { 'Content-Type': 'text/plain' } }), env)).status, 415);
+  assert.equal((await bad.handlers.calendar(request('calendar', { method: 'POST', body, headers: { 'Content-Length': '1025' } }), env)).status, 413);
+  assert.equal(bad.calls.length, 0);
+});
+
+test('month Calendar rejects private, mismatched or malformed internal response shapes and redacts failures', async () => {
+  const monthInput = { month: '2026-10', designType: 'simple', durationMinutes: '120' };
+  const valid = { ...monthInput, durationMinutes: 120, timeZone: 'Asia/Jakarta', minDate: '2026-10-20', maxDate: '2026-10-31', closedDates: ['2026-10-24'] };
+  for (const result of [null, { ...valid, eventName: 'private-event' }, { ...valid, month: '2026-11' }, { ...valid, designType: 'plain' }, { ...valid, durationMinutes: '120' }, { ...valid, durationMinutes: 60 }, { ...valid, minDate: '2026-10-01' }, { ...valid, maxDate: '2026-11-01' }, { ...valid, timeZone: 'UTC' }, { ...valid, closedDates: null }, { ...valid, closedDates: ['2026-10-24', '2026-10-24'] }, { ...valid, closedDates: ['2026-10-25', '2026-10-24'] }, { ...valid, closedDates: ['2026-10-19'] }, { ...valid, closedDates: ['2026-10-32'] }, { ...valid, closedDates: ['2026-10-24\n'] }, { ...valid, closedDates: Array(32).fill('2026-10-24') }]) {
+    const item = fixture({ getBookingCalendarMonth: async () => result });
+    const response = await item.handlers.calendar(request('calendar', { method: 'POST', body: monthInput }), env);
+    assert.equal(response.status, 503);
+    assert.equal(JSON.stringify(await response.json()).includes('private-event'), false);
+    secure(response);
+  }
+  for (const error of [new Error('private token event email'), new BookingRequestError('CALENDAR_UNAVAILABLE')]) {
+    const item = fixture({ getBookingCalendarMonth: async () => { throw error; } });
+    const response = await item.handlers.calendar(request('calendar', { method: 'POST', body: monthInput }), env);
+    assert.equal(response.status, 503);
+    const body = await response.json();
+    assert.equal('closedDates' in body, false);
+    assert.equal(JSON.stringify(body).includes('private token'), false);
+  }
+});
+
 test('method and CORS preflight fallthrough fail closed with explicit allowed methods', async () => {
   const item = fixture();
-  for (const [handler, route, method, allowed] of [['status', 'status', 'POST', 'GET'], ['requests', 'requests', 'GET', 'POST'], ['review', `review?token=${reviewToken}`, 'DELETE', 'GET, POST'], ['session', 'auth/session', 'PUT', 'GET, POST, DELETE'], ['requests', 'requests', 'OPTIONS', 'POST']]) {
+  for (const [handler, route, method, allowed] of [['status', 'status', 'POST', 'GET'], ['requests', 'requests', 'GET', 'POST'], ['review', `review?token=${reviewToken}`, 'DELETE', 'GET, POST'], ['session', 'auth/session', 'PUT', 'GET, POST, DELETE'], ['requests', 'requests', 'OPTIONS', 'POST'], ['calendar', 'calendar', 'GET', 'POST'], ['calendar', 'calendar', 'OPTIONS', 'POST']]) {
     const response = await item.handlers[handler](request(route, { method }), env);
     assert.equal(response.status, 405);
     assert.equal(response.headers.get('Allow'), allowed);
@@ -365,7 +410,7 @@ test('typed failures preserve safe status/code while untrusted details and unkno
 });
 
 test('Pages wrappers resolve correctly and remain disabled without configuration', async () => {
-  for (const [path, method, status] of [['status', 'GET', 200], ['requests', 'POST', 503], ['review', 'GET', 503], ['auth/session', 'GET', 503], ['availability', 'GET', 503], ['proof', 'GET', 503]]) {
+  for (const [path, method, status] of [['status', 'GET', 200], ['requests', 'POST', 503], ['review', 'GET', 503], ['auth/session', 'GET', 503], ['availability', 'GET', 503], ['calendar', 'POST', 503], ['proof', 'GET', 503]]) {
     const wrapper = await import(`../functions/api/booking/${path}.js`);
     const response = await wrapper.onRequest({ request: request(path, { method }), env: {} });
     assert.equal(response.status, status);

@@ -1,0 +1,273 @@
+{
+  "measuredAt": "2026-10-20T18:48:10.150Z",
+  "dist": "D:\\Chii-Nails\\webchiinails\\dist",
+  "compression": "Node zlib.gzipSync default options; sum each unique file once per route; deterministic file-size estimate, not observed CDN transfer",
+  "method": "Static HTML entry scripts plus recursive static ES module import closure; no real API calls or browser timing",
+  "pages": [
+    {
+      "route": "/",
+      "entries": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "initialAssets": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+        "/_astro/client.50lT8FtM.js"
+      ],
+      "initialRawBytes": 12396,
+      "initialGzipBytes": 5022,
+      "potentialLazyAssets": [],
+      "potentialLazyRawBytes": 0,
+      "potentialLazyGzipBytes": 0,
+      "executableInlineScriptCount": 0,
+      "executableInlineRawBytes": 0
+    },
+    {
+      "route": "/services",
+      "entries": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "initialAssets": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+        "/_astro/client.50lT8FtM.js"
+      ],
+      "initialRawBytes": 12396,
+      "initialGzipBytes": 5022,
+      "potentialLazyAssets": [],
+      "potentialLazyRawBytes": 0,
+      "potentialLazyGzipBytes": 0,
+      "executableInlineScriptCount": 0,
+      "executableInlineRawBytes": 0
+    },
+    {
+      "route": "/custom-sets",
+      "entries": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "initialAssets": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+        "/_astro/client.50lT8FtM.js"
+      ],
+      "initialRawBytes": 12396,
+      "initialGzipBytes": 5022,
+      "potentialLazyAssets": [],
+      "potentialLazyRawBytes": 0,
+      "potentialLazyGzipBytes": 0,
+      "executableInlineScriptCount": 0,
+      "executableInlineRawBytes": 0
+    },
+    {
+      "route": "/visit",
+      "entries": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "initialAssets": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+        "/_astro/client.50lT8FtM.js"
+      ],
+      "initialRawBytes": 12396,
+      "initialGzipBytes": 5022,
+      "potentialLazyAssets": [],
+      "potentialLazyRawBytes": 0,
+      "potentialLazyGzipBytes": 0,
+      "executableInlineScriptCount": 0,
+      "executableInlineRawBytes": 0
+    },
+    {
+      "route": "/about",
+      "entries": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "initialAssets": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+        "/_astro/client.50lT8FtM.js"
+      ],
+      "initialRawBytes": 12396,
+      "initialGzipBytes": 5022,
+      "potentialLazyAssets": [],
+      "potentialLazyRawBytes": 0,
+      "potentialLazyGzipBytes": 0,
+      "executableInlineScriptCount": 0,
+      "executableInlineRawBytes": 0
+    },
+    {
+      "route": "/book",
+      "entries": [
+        "/_astro/book.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+        "/_astro/book.astro_astro_type_script_index_1_lang.CWNxlggG.js"
+      ],
+      "initialAssets": [
+        "/_astro/book.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+        "/_astro/book.astro_astro_type_script_index_1_lang.CWNxlggG.js",
+        "/_astro/booking.C_plcNN2.js",
+        "/_astro/client.50lT8FtM.js"
+      ],
+      "initialRawBytes": 49280,
+      "initialGzipBytes": 18083,
+      "potentialLazyAssets": [],
+      "potentialLazyRawBytes": 0,
+      "potentialLazyGzipBytes": 0,
+      "executableInlineScriptCount": 0,
+      "executableInlineRawBytes": 0
+    },
+    {
+      "route": "/book/approve",
+      "entries": [
+        "/_astro/approve.astro_astro_type_script_index_0_lang.Bup1gieE.js"
+      ],
+      "initialAssets": [
+        "/_astro/approve.astro_astro_type_script_index_0_lang.Bup1gieE.js",
+        "/_astro/booking.C_plcNN2.js"
+      ],
+      "initialRawBytes": 19421,
+      "initialGzipBytes": 7533,
+      "potentialLazyAssets": [],
+      "potentialLazyRawBytes": 0,
+      "potentialLazyGzipBytes": 0,
+      "executableInlineScriptCount": 0,
+      "executableInlineRawBytes": 0
+    }
+  ],
+  "assets": [
+    {
+      "path": "/_astro/approve.astro_astro_type_script_index_0_lang.Bup1gieE.js",
+      "bytes": 12352,
+      "gzipBytes": 4559,
+      "sha256": "24798bc5ae485a34640195b16ac9a5c20a535d727d5885e296953d4a181de58e",
+      "imports": [
+        "/_astro/booking.C_plcNN2.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "path": "/_astro/book.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+      "bytes": 29,
+      "gzipBytes": 49,
+      "sha256": "8889426bcaffb1cb8e3208eed2f47bfb4b9c4d06a55b9c36b50b9b6df3b617db",
+      "imports": [
+        "/_astro/client.50lT8FtM.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "path": "/_astro/book.astro_astro_type_script_index_1_lang.CWNxlggG.js",
+      "bytes": 29815,
+      "gzipBytes": 10087,
+      "sha256": "de209e2f71423784d13f9821c7754b5dd25fe02ba1bbdc48ae5ac6ce00ef6fb9",
+      "imports": [
+        "/_astro/booking.C_plcNN2.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "path": "/_astro/booking.C_plcNN2.js",
+      "bytes": 7069,
+      "gzipBytes": 2974,
+      "sha256": "1203590aced23d0a24d4268af14899159036e23afe9e87f3d97699d575dc41d5",
+      "imports": [],
+      "dynamicImports": []
+    },
+    {
+      "path": "/_astro/client.50lT8FtM.js",
+      "bytes": 12367,
+      "gzipBytes": 4973,
+      "sha256": "c4087f228f0819337e20278c40e0464e29eca9d92a220123a8878ba299ddc7e5",
+      "imports": [],
+      "dynamicImports": []
+    },
+    {
+      "path": "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+      "bytes": 29,
+      "gzipBytes": 49,
+      "sha256": "8889426bcaffb1cb8e3208eed2f47bfb4b9c4d06a55b9c36b50b9b6df3b617db",
+      "imports": [
+        "/_astro/client.50lT8FtM.js"
+      ],
+      "dynamicImports": []
+    }
+  ],
+  "wholeBuild": {
+    "files": 6,
+    "rawBytes": 61661,
+    "gzipBytes": 22691
+  },
+  "priorReleasedBaseline": {
+    "commit": "bccc3a887f0f6b7ddba827cf27c2f08042a4cdbf",
+    "checkedAt": "2026-10-20T15:55:27.004Z",
+    "evidence": "C:\\Users\\User\\.codex\\.chatgpt-projects\\g-p-6acb421dfbfc8191b4b991c366585b61\\tmp\\booking-approval-live-2026-10-20.json",
+    "gzipEvidence": "C:\\Users\\User\\.codex\\.chatgpt-projects\\g-p-6acb421dfbfc8191b4b991c366585b61\\chii-nails-astro\\docs\\BOOKING-APPROVAL-2026-10-20.md",
+    "baselineType": "Historical released approval UI before latest payment, duration, availability and receipt changes; not a fresh network benchmark",
+    "totalRawBytes": 39769,
+    "totalGzipBytes": 15456
+  },
+  "comparisons": [
+    {
+      "route": "/",
+      "priorRawBytes": 12396,
+      "currentRawBytes": 12396,
+      "rawDelta": 0,
+      "priorGzipBytes": 5022,
+      "currentGzipBytes": 5022,
+      "gzipDelta": 0
+    },
+    {
+      "route": "/services",
+      "priorRawBytes": 12396,
+      "currentRawBytes": 12396,
+      "rawDelta": 0,
+      "priorGzipBytes": 5022,
+      "currentGzipBytes": 5022,
+      "gzipDelta": 0
+    },
+    {
+      "route": "/custom-sets",
+      "priorRawBytes": 12396,
+      "currentRawBytes": 12396,
+      "rawDelta": 0,
+      "priorGzipBytes": 5022,
+      "currentGzipBytes": 5022,
+      "gzipDelta": 0
+    },
+    {
+      "route": "/visit",
+      "priorRawBytes": 12396,
+      "currentRawBytes": 12396,
+      "rawDelta": 0,
+      "priorGzipBytes": 5022,
+      "currentGzipBytes": 5022,
+      "gzipDelta": 0
+    },
+    {
+      "route": "/about",
+      "priorRawBytes": 12396,
+      "currentRawBytes": 12396,
+      "rawDelta": 0,
+      "priorGzipBytes": 5022,
+      "currentGzipBytes": 5022,
+      "gzipDelta": 0
+    },
+    {
+      "route": "/book",
+      "priorRawBytes": 30563,
+      "currentRawBytes": 49280,
+      "rawDelta": 18717,
+      "priorGzipBytes": 11870,
+      "currentGzipBytes": 18083,
+      "gzipDelta": 6213
+    },
+    {
+      "route": "/book/approve",
+      "priorRawBytes": 9177,
+      "currentRawBytes": 19421,
+      "rawDelta": 10244,
+      "priorGzipBytes": 3537,
+      "currentGzipBytes": 7533,
+      "gzipDelta": 3996
+    }
+  ],
+  "limitations": [
+    "Byte budgets do not establish loading time, LCP or responsiveness.",
+    "No real Safari, older Android, Indonesian carrier, CPU or live network measurements.",
+    "Google Maps iframe and explicit-owner-click Google Identity Services are third party and excluded.",
+    "Historical baseline gzip values are from the recorded file estimates; old raw artifacts were not rebuilt or downloaded."
+  ]
+}

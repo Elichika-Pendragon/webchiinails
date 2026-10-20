@@ -1,5 +1,5 @@
 import { calculatePayment, getBookingDateBounds, listBookingSlots, normalizeBookingDesign, validateBooking } from '../../server/booking.js';
-import { createBookingCalendar } from './booking-calendar.js';
+import { createBookingCalendar, calendarMonthDays } from './booking-calendar.js';
 import { PaymentProofError, preparePaymentProof } from './booking-proof.js';
 
 const form = document.querySelector('#booking-form');
@@ -18,6 +18,8 @@ if (form) {
   const paymentAmountLabel = document.querySelector('#booking-payment-amount-label');
   const slotStatus = document.querySelector('#booking-slot-status');
   const slotRetry = document.querySelector('#booking-slot-retry');
+  const calendarStatus = document.querySelector('#booking-calendar-status');
+  const calendarRetry = document.querySelector('#booking-calendar-retry');
   const proofInput = document.querySelector('#booking-paymentProof');
   const proofPreview = document.querySelector('#booking-proof-preview');
   const proofImage = document.querySelector('#booking-proof-image');
@@ -44,6 +46,10 @@ if (form) {
   let proofSequence = 0;
   let proofController = null;
   let refreshTimer = null;
+  const monthCache = new Map();
+  let monthController = null;
+  let monthRequest = '';
+  let monthSequence = 0;
   const designLabels = { plain: 'Plain / Nail gel / Removal', simple: 'Simple art', 'full-art': 'Full art' };
   const selectedDesign = () => {
     const value = input('serviceDuration').value;
@@ -51,6 +57,7 @@ if (form) {
     return match && match[0] === value ? normalizeBookingDesign(match[1], match[2]) : null;
   };
   const currentSlotKey = () => JSON.stringify([input('date').value, selectedDesign()]);
+  const monthSelectionKey = month => JSON.stringify([month, selectedDesign()]);
   const stopRefresh = () => {
     if (refreshTimer !== null) window.clearInterval(refreshTimer);
     refreshTimer = null;
@@ -62,11 +69,18 @@ if (form) {
     if (availability === 'loading') availability = 'idle';
     input('time').setAttribute('aria-busy', 'false');
   };
+  const pauseMonthCheck = () => {
+    monthSequence++;
+    monthController?.abort();
+    monthController = null;
+    monthRequest = '';
+  };
   const startRefresh = () => {
     if (refreshTimer !== null || !active || document.visibilityState !== 'visible' || form.hidden || service !== 'enabled' || submitting || proofState === 'processing') return;
     refreshTimer = window.setInterval(() => {
-      if (!active || document.visibilityState !== 'visible' || form.hidden || service !== 'enabled' || submitting || proofState === 'processing' || slotController || !input('date').value || !selectedDesign()) return;
-      fillTimes({ quiet: true });
+      if (!active || document.visibilityState !== 'visible' || form.hidden || service !== 'enabled' || submitting || proofState === 'processing') return;
+      if (!monthController) refreshMonth({ force: true, quiet: true });
+      if (!slotController && input('date').value && selectedDesign()) fillTimes({ quiet: true });
     }, 45000);
   };
   const formatMoney = value => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
@@ -83,6 +97,10 @@ if (form) {
       result.errors.serviceDuration = 'Pilih layanan dan durasi yang sudah disepakati dengan Chii.';
     }
     if (result.valid && proofState !== 'ready') return { valid: false, errors: { paymentProof: proofState === 'processing' ? 'Tunggu sampai bukti pembayaran selesai disiapkan.' : 'Unggah bukti pembayaran yang valid.' }, value: null, preview: null };
+    const month = monthCache.get(monthSelectionKey(input('date').value.slice(0, 7)));
+    if (result.valid && service === 'enabled' && (month?.status !== 'ready' || month.closedDates.includes(input('date').value))) {
+      return { valid: false, errors: { date: month?.closedDates.includes(input('date').value) ? 'Tanggal ini tidak tersedia. Pilih tanggal lain.' : 'Tunggu sampai jadwal bulan ini selesai diperiksa.' }, value: null, preview: null };
+    }
     if (result.valid && service === 'enabled' && (availability !== 'ready' || availabilityKey !== currentSlotKey() || !availableTimes.has(result.value.time))) {
       return { valid: false, errors: { time: 'Pilih jam yang tersedia setelah pemeriksaan jadwal selesai.' }, value: null, preview: null };
     }
@@ -129,14 +147,14 @@ if (form) {
           : `Simple art menggunakan slot ${design.durationMinutes / 60} jam sesuai konsultasi. Pilihan ini tidak menentukan harga.`;
   };
   const renderSlots = (slots, selected, preserveOptions = false) => {
-    availableTimes = new Set(slots.filter(slot => slot.available).map(slot => slot.time));
+    const visible = slots.filter(slot => slot.available);
+    availableTimes = new Set(visible.map(slot => slot.time));
     const previousOptions = new Map([...input('time').options].filter(option => option.value).map(option => [option.value, option]));
-    const reuseOptions = preserveOptions && previousOptions.size === slots.length && slots.every(slot => previousOptions.has(slot.time));
-    if (!reuseOptions) input('time').replaceChildren(new Option(slots.length ? 'Pilih jam mulai' : 'Tidak ada jam untuk pilihan ini', ''));
-    slots.forEach(slot => {
+    const reuseOptions = preserveOptions && previousOptions.size === visible.length && visible.every(slot => previousOptions.has(slot.time));
+    if (!reuseOptions) input('time').replaceChildren(new Option(!slots.length ? 'Tidak ada jam untuk pilihan ini' : visible.length ? 'Pilih jam mulai' : 'Tidak ada jam yang tersedia', ''));
+    visible.forEach(slot => {
       const option = reuseOptions ? previousOptions.get(slot.time) : new Option('', slot.time);
-      option.text = `${slot.label}${slot.available ? '' : ' · tidak tersedia'}`;
-      option.disabled = !slot.available;
+      option.text = slot.label;
       if (!reuseOptions) input('time').add(option);
     });
     input('time').value = availableTimes.has(selected) ? selected : '';
@@ -150,6 +168,7 @@ if (form) {
     const previousBounds = `${input('date').min}|${input('date').max}`;
     setBounds();
     if (!quietUpdate || previousBounds !== `${input('date').min}|${input('date').max}`) calendar?.refresh();
+    if (calendar && service === 'enabled') refreshMonth();
     const selected = input('time').value || lastSelectedTime;
     const design = selectedDesign();
     const date = input('date').value;
@@ -173,7 +192,7 @@ if (form) {
       renderSlots(candidates.map(slot => ({ ...slot, available: slot.start > Date.now() })), selected);
       availability = 'preview';
       document.querySelector('#hint-time').textContent = 'Pratinjau jam studio; ketersediaan tetap diperiksa langsung oleh Chii.';
-      slotStatus.textContent = candidates.length ? 'Pilih jam mulai. Pilihan tidak tersedia tidak dapat dipilih.' : 'Durasi ini tidak muat dalam jam studio. Pilih tanggal atau durasi lain sesuai konsultasi.';
+      slotStatus.textContent = candidates.length ? 'Pilih jam mulai sesuai durasi layanan.' : 'Durasi ini tidak muat dalam jam studio. Pilih tanggal atau durasi lain sesuai konsultasi.';
       input('time').setAttribute('aria-busy', 'false');
       updateButton();
       return;
@@ -194,11 +213,12 @@ if (form) {
       if (response?.date !== date || response.designType !== design.designType || response.durationMinutes !== design.durationMinutes || response.timeZone !== 'Asia/Jakarta' || !Array.isArray(response.slots) || response.slots.length !== candidates.length) throw new Error('availability');
       const options = new Map(candidates.map(slot => [slot.time, slot]));
       const seen = new Set();
+      const closedByMonth = monthCache.get(monthSelectionKey(date.slice(0, 7)))?.closedDates.includes(date);
       const slots = response.slots.map(slot => {
         const candidate = options.get(slot?.time);
         if (!candidate || seen.has(slot.time) || typeof slot.available !== 'boolean') throw new Error('availability');
         seen.add(slot.time);
-        return { ...candidate, available: slot.available && candidate.start > Date.now() };
+        return { ...candidate, available: !closedByMonth && slot.available && candidate.start > Date.now() };
       });
       availability = 'ready';
       availabilityKey = JSON.stringify([date, design]);
@@ -207,7 +227,7 @@ if (form) {
       lastSelectedTime = input('time').value;
       const message = quietUpdate && latestSelected && !availableTimes.has(latestSelected)
         ? 'Jam yang dipilih tidak lagi tersedia. Pilih jam lain.'
-        : !slots.length ? 'Durasi ini tidak muat dalam jam studio. Pilih tanggal atau durasi lain sesuai konsultasi.' : availableTimes.size ? 'Pilih jam mulai. Jam bertanda tidak tersedia tidak dapat dipilih.' : 'Semua jam pada tanggal ini tidak tersedia. Pilih tanggal lain.';
+        : !slots.length ? 'Durasi ini tidak muat dalam jam studio. Pilih tanggal atau durasi lain sesuai konsultasi.' : availableTimes.size ? 'Pilihan hanya menampilkan jam yang tersedia.' : 'Semua jam pada tanggal ini tidak tersedia. Pilih tanggal lain.';
       if (slotStatus.textContent !== message) slotStatus.textContent = message;
     } catch {
       if (!active || sequence !== slotSequence) return;
@@ -222,6 +242,68 @@ if (form) {
         updateButton();
         startRefresh();
       }
+    }
+  };
+  const applyMonth = (month, info) => {
+    monthCache.set(info.selectionKey, info);
+    if (calendar?.getMonth() === month && info.selectionKey === monthSelectionKey(month)) {
+      calendar.setAvailability({ month, status: info.status, closedDates: info.closedDates });
+      calendarStatus.textContent = info.status === 'ready'
+        ? 'Tanggal gelap tidak tersedia. Jam kosong diperiksa setelah memilih tanggal.'
+        : info.status === 'loading' ? 'Memeriksa jadwal bulan ini…' : 'Jadwal bulan ini belum dapat diperiksa. Coba lagi sebelum memilih tanggal.';
+      calendarRetry.hidden = info.status !== 'error';
+    }
+    if (input('date').value.slice(0, 7) === month && info.selectionKey === monthSelectionKey(month) && info.status === 'ready' && info.closedDates.includes(input('date').value)) {
+      input('time').value = '';
+      lastSelectedTime = '';
+      renderSlots([], '');
+      input('time').options[0].text = 'Tanggal ini tidak tersedia';
+      slotStatus.textContent = 'Tanggal ini tidak tersedia. Pilih tanggal lain.';
+    }
+    updateButton();
+  };
+  const refreshMonth = async ({ force = false, quiet = false } = {}) => {
+    const month = calendar?.getMonth();
+    if (!month || !active || form.hidden || submitting || proofState === 'processing') return;
+    if (service !== 'enabled') {
+      calendar.setAvailability({ month, status: service === 'preview' ? 'preview' : 'loading', closedDates: [] });
+      calendarStatus.textContent = service === 'preview' ? 'Pratinjau tanggal; jadwal tetap diperiksa langsung oleh Chii.' : 'Memeriksa jadwal bulan ini…';
+      calendarRetry.hidden = true;
+      return;
+    }
+    const design = selectedDesign();
+    if (!design) {
+      pauseMonthCheck();
+      calendar.setAvailability({ month, status: 'loading', closedDates: [] });
+      calendarStatus.textContent = 'Pilih layanan dan durasi untuk memeriksa tanggal.';
+      updateButton();
+      return;
+    }
+    const selectionKey = monthSelectionKey(month);
+    const cached = monthCache.get(selectionKey);
+    const key = `${selectionKey}|${input('date').min}|${input('date').max}`;
+    if (monthController && monthRequest === key) return;
+    if (!force && cached?.status === 'ready' && Date.now() - cached.checkedAt < 45000 && cached.key === key) {
+      applyMonth(month, cached);
+      return;
+    }
+    pauseMonthCheck();
+    const sequence = ++monthSequence;
+    const controller = new AbortController();
+    monthController = controller;
+    monthRequest = key;
+    if (!quiet || cached?.status !== 'ready') applyMonth(month, { status: 'loading', closedDates: cached?.closedDates || [], key, selectionKey });
+    try {
+      const response = await api('/api/booking/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ month, designType: design.designType, durationMinutes: String(design.durationMinutes) }) }, controller);
+      if (!active || sequence !== monthSequence || calendar.getMonth() !== month) return;
+      const dates = calendarMonthDays(month, { minDate: input('date').min, maxDate: input('date').max }).filter(day => day && !day.disabled).map(day => day.date);
+      if (!response || Object.keys(response).sort().join(',') !== 'closedDates,designType,durationMinutes,maxDate,minDate,month,timeZone' || response.month !== month || response.designType !== design.designType || response.durationMinutes !== design.durationMinutes || response.timeZone !== 'Asia/Jakarta' || response.minDate !== dates[0] || response.maxDate !== dates.at(-1) || !Array.isArray(response.closedDates) || response.closedDates.length > dates.length || response.closedDates.some((date, index) => typeof date !== 'string' || !dates.includes(date) || (index > 0 && date <= response.closedDates[index - 1]))) throw new Error('calendar');
+      applyMonth(month, { status: 'ready', closedDates: response.closedDates, checkedAt: Date.now(), key, selectionKey });
+    } catch {
+      if (!active || sequence !== monthSequence || calendar.getMonth() !== month) return;
+      applyMonth(month, { status: 'error', closedDates: cached?.closedDates || [], key, selectionKey });
+    } finally {
+      if (sequence === monthSequence) { monthController = null; monthRequest = ''; }
     }
   };
   const showErrors = issues => {
@@ -294,6 +376,7 @@ if (form) {
         ? 'Book menyimpan detail permintaan untuk diperiksa Chii. Kamu tetap perlu menekan Kirim di WhatsApp. Pembayaran diperiksa langsung oleh Chii.'
         : 'Detail hanya disiapkan di halaman ini sebelum dibuka di WhatsApp. Kamu tetap perlu menekan Kirim. Kalender tidak diperbarui oleh pratinjau ini.';
       setStatus('Lengkapi nama, nomor WhatsApp, harga total, tanggal, dan jam untuk melanjutkan.');
+      refreshMonth();
       fillTimes();
       startRefresh();
     } catch {
@@ -373,6 +456,7 @@ if (form) {
     submitting = true;
     stopRefresh();
     pauseSlotCheck();
+    pauseMonthCheck();
     form.setAttribute('aria-busy', 'true');
     form.querySelectorAll('fieldset').forEach(fieldset => { fieldset.disabled = true; });
     bookButton.textContent = service === 'enabled' ? 'Mengirim…' : 'Menyiapkan…';
@@ -415,6 +499,7 @@ if (form) {
   document.querySelector('#booking-edit').addEventListener('click', () => {
     review.hidden = true;
     form.hidden = false;
+    refreshMonth({ force: true });
     fillTimes();
     updateDeposit();
     updateButton();
@@ -443,6 +528,7 @@ if (form) {
   });
   statusRetry.addEventListener('click', () => { if (service !== 'checking' && !submitting) checkService(); });
   slotRetry.addEventListener('click', () => { if (!submitting) fillTimes(); });
+  calendarRetry.addEventListener('click', () => { if (!submitting) refreshMonth({ force: true }); });
   const revokeProofPreview = () => {
     if (proofUrl) URL.revokeObjectURL(proofUrl);
     proofUrl = '';
@@ -521,6 +607,7 @@ if (form) {
     active = false;
     stopRefresh();
     pauseSlotCheck();
+    pauseMonthCheck();
     proofSequence++;
     proofController?.abort();
     proofController = null;
@@ -539,7 +626,7 @@ if (form) {
     }
     if (!form.hidden) {
       if (event.persisted) checkService();
-      else fillTimes();
+      else { refreshMonth(); fillTimes(); }
     }
     updateDeposit();
     updateButton();
@@ -549,15 +636,18 @@ if (form) {
     if (document.visibilityState !== 'visible') {
       stopRefresh();
       pauseSlotCheck();
+      pauseMonthCheck();
       return;
     }
     if (!active || form.hidden || service !== 'enabled' || submitting || proofState === 'processing') return;
+    refreshMonth({ force: true, quiet: true });
     fillTimes({ quiet: true });
     startRefresh();
   });
   setBounds();
   updateServiceHint();
-  calendar = createBookingCalendar(document.querySelector('#booking-calendar'), input('date'));
+  calendar = createBookingCalendar(document.querySelector('#booking-calendar'), input('date'), { onMonthChange: () => refreshMonth() });
+  refreshMonth();
   fillTimes();
   updateDeposit();
   form.querySelectorAll('fieldset').forEach(fieldset => { fieldset.disabled = false; });
