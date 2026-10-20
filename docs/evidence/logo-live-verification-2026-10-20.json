@@ -1,0 +1,66 @@
+{
+  "checkedAt": "2026-10-20T11:05:44.133Z",
+  "origin": "https://chiinails.pages.dev",
+  "baseline": false,
+  "commit": "e4b025fb0eee9b7a962dde4b330ff50e72b071b1",
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/",
+      "cssBytes": 26115,
+      "cssGzipBytes": 5930,
+      "js": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+      "htmlGzipBytes": 12785
+    },
+    {
+      "route": "/services",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/services",
+      "cssBytes": 26115,
+      "cssGzipBytes": 5930,
+      "js": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+      "htmlGzipBytes": 9266
+    },
+    {
+      "route": "/custom-sets",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/custom-sets",
+      "cssBytes": 26115,
+      "cssGzipBytes": 5930,
+      "js": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+      "htmlGzipBytes": 9962
+    },
+    {
+      "route": "/visit",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/visit",
+      "cssBytes": 26115,
+      "cssGzipBytes": 5930,
+      "js": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+      "htmlGzipBytes": 8843
+    },
+    {
+      "route": "/about",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/about",
+      "cssBytes": 26115,
+      "cssGzipBytes": 5930,
+      "js": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+      "htmlGzipBytes": 9372
+    }
+  ],
+  "javascript": {
+    "path": "/_astro/Page.astro_astro_type_script_index_0_lang.BFdNkk6T.js",
+    "bytes": 12126,
+    "gzipBytes": 4879,
+    "sha256": "9ae45f27012afc64f79f86faad57a307eda16a6656a812d4336c644e029dcd21"
+  },
+  "logo": {
+    "path": "/images/logo-brand.webp",
+    "bytes": 15486,
+    "sha256": "b2624d6dd51a8607d9fbb9a265b83b6789eec1cd01326ecb39ff3316b5701080",
+    "matchesOriginalBasedExport": true
+  },
+  "seo": "5 production canonicals/indexable HTML/H1s; sitemap/robots/ownership file intact"
+}
