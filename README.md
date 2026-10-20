@@ -30,8 +30,20 @@ pnpm.cmd preview
 - `src/content.js`: contacts, hours, booking rules, services, and owner-supplied prices.
 - `src/pages/`, `src/layouts/Page.astro`: static routes and document metadata.
 - `src/scripts/client.js`: native browser interactions and five-minute public feed refresh.
+- `src/pages/book.astro`, `src/booking.css`, `src/scripts/booking-client.js`, `server/booking.js`: six-field consultation-first booking preview; review/edit and explicit WhatsApp summary only. No header/menu link, storage, payment verification or Calendar write. The prepared message includes contact details, total, DP, requested date/time range and a pending-approval note; the remaining balance is shown in the on-page review. The owner authorized publishing this static preview on 20 October 2026. Read [docs/BOOKING.md](docs/BOOKING.md) before activating any automation.
+- `server/google-calendar.js`: isolated trusted-server Calendar adapter under implementation, unactivated and without a booking route. Its presence does not authorize writes or verify payment.
 - `scripts/seo.mjs`: unique metadata, canonical URLs, WebSite/NailSalon schema, robots and sitemap helpers.
-- `functions/api/instagram.js`, `server/`, `workers/`: unchanged server-side Instagram API and encrypted token renewal system.
+- `functions/api/instagram.js`, Instagram handlers in `server/`, `workers/`: server-side Instagram API and encrypted token renewal system.
+
+## Private booking preview and Calendar status
+
+Jessica shares the same `/book` link privately after consultation; do not add a Book/Booking section or header/menu link. The customer supplies exactly name, WhatsApp, agreed total, DP, date and time; appointments default to two hours in WIB. E-wallet transfer and Jessica's manual check of the actual incoming DP in WhatsApp are selected. **Latest direction:** the future website prepares a message containing an approval link, the customer explicitly taps Send in WhatsApp, Jessica checks the quote/actual DP and approves through her authenticated Google identity, then one Calendar appointment is created after a fresh conflict check. No owner dashboard or booking-detail re-entry is required. This supersedes the earlier zero-extra-clicks constraint. QRIS/ShopeePay integration remains rejected; neither a payment API nor Meta/WhatsApp API is required for this chosen handoff.
+
+**Current preview remains narrower:** it prepares only the customer-clicked WhatsApp summary. It does not persist data, generate an authenticated approval link, check live availability, reserve, verify payment or write Calendar. No draft database, Google sign-in/owner authorization flow or approval endpoint is implemented yet.
+
+The owner selected the **existing Nail Art calendar**. Keep its exact account address, Calendar ID and embed URL in private setup state. On 20 October 2026 the owner accepted Google's first-use terms and Google Calendar API became enabled in the existing **My First Project**. The credential wizard is open, but no credentials, Calendar sharing grant or working site authorization exists; no billing/free-trial action was taken. An embed URL and API enablement are not API-write credentials.
+
+The customer also sees the approval URL, so its bearer token alone must never authorize approval. Future **GET** review/link previews have no booking effects; only Jessica's Google-authenticated, CSRF-protected explicit **POST Approve** may trigger a fresh full-interval conflict check, durable claim and one idempotent Calendar event. The isolated adapter is unactivated and has no booking route. The earlier automatic **request / DP unverified** Calendar proposal is superseded: no event is created before approval. Google sign-in identity and Calendar write permissions are separate, both unfinished. [BOOKING.md](docs/BOOKING.md) records the precise boundary, service-account/OAuth alternatives, official sources and remaining implementation work.
 
 ## Instagram and hosting
 

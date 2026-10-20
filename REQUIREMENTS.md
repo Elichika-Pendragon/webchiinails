@@ -6,6 +6,7 @@ This is the consolidated record of the website conversation. Owner corrections t
 | --- | --- |
 | Brand | White/blush/rose theme, Cormorant Garamond headings and DM Sans copy; English headlines with clear Indonesian practical details. Preserve fixed image frames and object-fit cropping. |
 | Booking | Booking only; no walk-ins. DP required, amount confirmed through WhatsApp. Cancellation forfeits DP. No home service or rescheduling. Late fee Rp10.000 per 10 minutes. No customer database/payment gateway introduced. |
+| Booking preview | Separate privately shared /book with exactly name, WhatsApp, agreed total, DP, date and time; 2-hour WIB sessions. Never add booking to the header/menu. E-wallet transfer and Jessica's manual WhatsApp check replace QRIS. Local preview has review/edit and an explicit WhatsApp handoff; no reservation, payment verification or Calendar write yet. See docs/BOOKING.md. |
 | Hours | Mon–Fri 08.00–17.00, last booking 15.00. Sat–Sun 08.00–12.00, last booking 10.00. WIB. Opening hours and booking cutoffs remain distinct in visible text and schema. |
 | Services | Custom nail art, extensions, basic manicure/vitamin oil, custom press-on shipping across Indonesia. No invented medical treatment claims. |
 | Prices | All 21 nail-art/cat-eye/extras/removal rows transcribed from owner screenshots. Finished press-on total Rp25.000–155.000. Rp22.000 base kit plus chosen design, example Cat Eye total Rp62.000; optional MXBON glue Rp13.000. Confirm final quote/shipping via WhatsApp. |

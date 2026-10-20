@@ -12,7 +12,7 @@ function LinkButton({ href = salon.custom, children, secondary = false, ...props
   return <a className={`button${secondary ? ' button-secondary' : ''}`} href={href} {...external} {...props}>{children}</a>;
 }
 
-function Header() {
+export function Header() {
   const [open, setOpen] = useState(false);
   const toggle = useRef(null);
   useEffect(() => {
@@ -254,7 +254,7 @@ function MobileHomeVisit() {
   return <section className="mobile-home-visit section container" aria-labelledby="home-visit-title"><p className="eyebrow">FIND US IN PALEMBANG</p><h2 id="home-visit-title">Your next nail date, right here.</h2><h3>Dewi Salon &amp; Chii.Nails</h3><address>{salon.address}</address><StudioHours /><MapArea /><a className="text-link" href="/visit">Lihat studio &amp; petunjuk lengkap →</a></section>;
 }
 
-function Footer({ year }) {
+export function Footer({ year }) {
   return <footer className="container footer"><div><a className="footer-brand" href="/">Chii Nails_ · Nail Art Studio</a><a href="/about">About & booking rules</a><a href={salon.instagram} {...external}>Instagram ↗</a><a href={salon.whatsapp} {...external}>WhatsApp ↗</a></div><p>© {year} Chii Nails · Palembang. Made for your little moments.</p></footer>;
 }
 

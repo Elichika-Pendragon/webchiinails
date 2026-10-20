@@ -2,6 +2,8 @@
 
 Source memuat feed API, token store terenkripsi dan Worker renewal harian. Belum ada akun yang diotorisasi atau deployment produksi. Pengujian memakai respons terkontrol; end-to-end Meta/Cloudflare tetap perlu diverifikasi.
 
+Status akses Meta per 20 Oktober 2026: SMS registrasi developer belum terselesaikan dan pembuatan app di Business Suite dinonaktifkan pada sesi yang diperiksa. [Riset, bukti, langkah gratis dan draft laporan dukungan](docs/META-DEVELOPER-ACCESS.md). Belum ada workaround yang diverifikasi untuk akun ini; jangan mengaktifkan billing atau mengubah 2FA untuk mencoba saran forum.
+
 ## Cara kerja
 
 Halaman utama meminta `GET /api/instagram` segera untuk empat foto/cover hero terbaru, lalu setiap lima menit selama tab terlihat. Galeri memakai feed yang sama; embed post tetap dimuat mendekati viewport. Foto baru dari format portrait, landscape atau square selalu di-crop ke frame tetap dengan object-fit: cover, tidak mengubah tinggi layout. Pages memakai cache lima menit dan membaca token KV terbaru. Feed mengurutkan maksimal 12 post yang dikembalikan API. Foto/thumbnail Reel menjadi preview/fallback; situs tidak menambahkan autoplay video.

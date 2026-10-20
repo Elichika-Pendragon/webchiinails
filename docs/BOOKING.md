@@ -1,0 +1,203 @@
+# Booking deposits and Google Calendar
+
+Decisions and primary-source checks: **20 October 2026**. This document separates the authorized local booking preview from the proposed production integration. It does not record a live payment or Calendar deployment.
+
+**Latest owner direction:** customer form → website prepares a WhatsApp message containing an approval link → customer explicitly sends that message → Jessica checks the actual e-wallet DP, opens the link and explicitly approves → only then create the Google Calendar appointment. The link must require **Jessica's authenticated Google identity**; possession alone is insufficient because the customer also sees it. This latest direction supersedes the earlier zero-extra-clicks constraint. It does not introduce a staff administration dashboard or extra customer fields. Jessica does **not** want QRIS because of per-transaction deductions; QRIS/ShopeePay API integration remains rejected. No specific wallet brand, recipient or account details have been supplied. The constant `/book` URL remains privately shared after consultation: **do not add a Book/Booking section, header link or navigation entry**. Earlier ShopeePay research is retained solely as a rejected option.
+
+## Current account and implementation status
+
+The owner selected the **existing Nail Art calendar** on the Google account supplied privately. Do not replace it with a new calendar by assumption. Its address/Calendar ID and the supplied embed URL remain in private local setup state and must not be copied into distributable documentation, client bundles or evidence screenshots.
+
+On 20 October 2026 the owner accepted Google's first-use terms herself. Google Cloud shows **Google Calendar API enabled** in the existing **My First Project**; the credential wizard is open. **No credentials, service-account Calendar sharing grants or working application authorization exist yet.** No billing or free-trial action was taken. API enablement is a setup milestone, not proof that the site can read or write this calendar.
+
+| Capability | Current status and honest meaning |
+| --- | --- |
+| Local six-field `/book` preview and customer-initiated WhatsApp summary | Current implementation scope. No server persistence, live availability, reservation, payment check or Calendar write. |
+| WhatsApp message with authenticated approval link | Latest implementation direction, **not implemented**. The preview does not generate an authenticated link; no database, Google sign-in/authorization flow or approval endpoint exists yet. |
+| Confirmed-appointment Calendar adapter | `server/google-calendar.js` is prepared and tested as an isolated trusted-server adapter. It is unactivated, has no booking route and is not called by the preview. Future invocation must follow Jessica's authenticated explicit approval, a fresh conflict check and an idempotent booking transition. |
+| Automatic Calendar **request** labelled **DP unverified** | Earlier unaccepted proposal, **superseded by approval before Calendar insertion**. Do not activate it or create a Calendar event merely because a customer submitted the form. |
+
+Enabling the Google API or implementing an adapter does not activate booking or approval. **No Meta/WhatsApp API is needed for the chosen handoff:** the website prepares a message, and the customer sends it in ordinary WhatsApp. Jessica's authenticated approval page supplies the trusted signal; the website does not read her chat or infer payment from a screenshot. Google account identity/Calendar permission setup remains unfinished and has not been granted by this direction alone.
+
+## Current scope and release boundary
+
+The lightweight `/book` preview has been built and reviewed; the owner authorized pushing it on 20 October 2026. Its useful first phase is a customer-initiated WhatsApp handoff for Jessica's manual e-wallet DP check; it does not require a payment API. Keep the existing website, Instagram access work and booking automation separable. Publishing the static preview does not activate reservations, approvals, payments or Calendar automation. See [the preview report](BOOKING-PREVIEW-2026-10-20.md) for verification scope.
+
+Keep entered values in page memory only: no local/session storage, analytics capture, form POST or server persistence. The explicitly authorized exception is a **customer-clicked WhatsApp link containing the completed summary**; the customer reviews it and taps Send in WhatsApp. Do not put personal data in the website's address or send it automatically. State clearly that this action shares the summary with WhatsApp/Jessica. The current local preview must not generate a real payment request, reserve an appointment, write to Calendar, contact a payment API or activate additional cloud resources. The separately observed API-enablement step above does not change this runtime boundary. Selected times are requests, not checked live availability. Do not portray a handoff, sample confirmation or customer payment claim as a real booking or verified DP. No dependencies, subscriptions or billing changes are required for this documentation/preview phase.
+
+Existing source decisions remain in [REQUIREMENTS.md](../REQUIREMENTS.md); hours and rules currently come from `src/content.js`. This plan adds a future workflow and does not silently rewrite the deployed booking policy.
+
+## Agreed customer experience
+
+Jessica consults with the customer in ordinary WhatsApp first. Every order is custom: she agrees the design, service price and required deposit. She shares the same `/book` link, receives the customer's details/screenshot in WhatsApp, checks the actual incoming e-wallet payment, then uses the proposed authenticated approval link. The approval page reviews the immutable request and offers one explicit approval action; it is not a website-management dashboard or new data-entry form. The intended staff calendar view is the existing Nail Art calendar. The integration does not read ordinary WhatsApp conversations.
+
+All customers use the same constant **`https://chiinails.pages.dev/book`** address, shared privately by Jessica after consultation. Keep it out of the header, menu and public Book/Booking sections. An unlisted URL is still publicly reachable and is not authentication or proof of consultation. The form has exactly six visible inputs:
+
+| Input | Meaning and validation |
+| --- | --- |
+| Name | Customer's booking name; bounded plain text. |
+| WhatsApp | Customer's reachable number; normalize/validate server-side when production exists. |
+| Agreed total | Total custom-service price agreed in consultation, in whole rupiah. |
+| DP | Deposit agreed in consultation, in whole rupiah; positive and no greater than the total. |
+| Date | Appointment date interpreted in Palembang's time zone. |
+| Time | Appointment start time; show WIB explicitly. |
+
+Do not add service, design, duration, customer email or an editable invoice-name field. The deposit can differ per order; no fixed DP percentage is agreed. Remaining balance equals agreed total minus DP. A future server may generate each order reference and a neutral custom-item name, for example `DP custom nail art — CHII-<reference>`; the current preview must not imply that a persistent invoice exists. A descriptive item name is not proof of payment.
+
+**Phase 1:** consultation → Jessica shares `/book` → customer completes and reviews the six inputs → customer opens/sends the summary in WhatsApp → e-wallet transfer and Jessica's manual check of the actual incoming DP. The prepared WhatsApp message includes the name, WhatsApp number, agreed total, DP, requested date/time range and a pending-approval note. Remaining balance appears in the on-page review, not currently in that prepared message. The screenshot/payment check stays in the existing WhatsApp workflow. This is a request for Jessica's review; the form does not charge, reserve, mark DP paid or create a Calendar event.
+
+**Latest future flow, not yet implemented:** the server validates and stores a draft of the six declared fields, generates its unique reference and approval link, and prepares the WhatsApp message. The customer explicitly taps Send and supplies payment evidence in WhatsApp. Jessica checks both the agreed quote and actual incoming DP, opens the link, signs in as the authorized Google identity when needed, and explicitly approves. A fresh availability check and atomic booking claim precede one idempotent Calendar insertion. Only after the event is successfully created may the website show the appointment confirmed. No Calendar request/event is created on customer submission or link opening. A later customer-initiated WhatsApp return can report the actual result; automatic WhatsApp sending is not included. Manual Calendar entry has not been accepted as a substitute for this automation.
+
+## Quote review and the remaining Calendar approval signal
+
+**Customer-entered price and DP do not prove that Jessica agreed to them.** Arithmetic validation and a genuine payment cannot establish the agreed quote. A public form is also not evidence that consultation happened.
+
+Jessica's manual WhatsApp review is the chosen phase-1 check of the quoted amounts and payment. The customer's summary lets her compare those details with the consultation and actual receiving-wallet transaction. A screenshot or an **I have paid** claim alone is not an independently verified incoming transaction.
+
+The website cannot infer that Jessica completed that check inside ordinary WhatsApp. The latest owner direction supplies a trusted signal through **Jessica-only Google-authenticated explicit approval**. Preserve the six-input form and constant `/book` URL. The approval UI reviews the stored request rather than asking Jessica to enter booking details again. This replaces the earlier proposed need to infer approval from WhatsApp or wait for Meta access. Google authentication, the draft database and the approval endpoints are not implemented yet.
+
+Until Jessica approves through that authenticated server flow, form prices and payment claims remain **customer-declared, unverified**. An approval attests that she checked the quote and actual deposit; it is manual verification, not a payment-provider API result. Bind approval to an immutable snapshot of the exact name, contact, total, DP, date/time and default duration. Subsequent edits require a new draft/link and invalidate the old approval. Price-list changes must not alter an approved request. The appointment is still not confirmed until the fresh slot check, durable claim and Calendar operation succeed.
+
+### Approval-link security and effects
+
+- The customer sees the same approval URL in the prepared message. Its opaque, expiring reference identifies a draft but **does not authorize approval**. Store token hashes, not raw link tokens, where applicable; redact tokens and personal data from logs. Keep request details behind the authorized review session rather than exposing them to anyone holding the link.
+- **GET has no booking/payment effects.** Opening, previewing, prefetching or rescanning the link must not approve, claim a slot, write Calendar or consume a single-use approval. This also applies to WhatsApp link previews and security scanners.
+- Verify Jessica's Google sign-in server-side against the explicitly allowed account identity from private configuration. Validate the Google signature, audience, issuer, expiry, CSRF/session and verified account identity as applicable; use the validated stable `sub` as the account identifier. Do not trust a browser-supplied email or a hidden customer flag. Google sign-in for identity is separate from Calendar API write authorization; one does not grant the other. [Google server-side ID-token verification](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token).
+- Only an authenticated, CSRF-protected **POST Approve** may record Jessica's verification and initiate the booking transaction. Require the exact valid draft version, owner identity and idempotency key. Enforce expiry, rate/abuse limits, replay protection and safe session handling. A customer or a different signed-in Google account must be refused.
+- Recheck the entire two-hour interval against current business hours, durable website claims and Calendar busy periods **at approval time**. Draft creation or an earlier availability result cannot guarantee the slot. If it is now occupied, do not write an overlapping event or report success; retain the declared/verified DP facts and return an honest conflict for consultation.
+- Create at most **one Calendar event per approved booking**, using a stable event ID and persisted operation/result. Repeated approval clicks, browser reloads and uncertain API responses must reconcile/retry that same operation. If Calendar is unavailable after Jessica's verified approval, preserve that fact and show processing rather than confirmed; do not request another deposit.
+
+No approval GET/POST route, Google sign-in session, database or authenticated link is present in the current local preview. The Google permissions needed for Calendar access have not been granted.
+
+## Duration, hours and availability
+
+The owner selected **two hours per appointment by default**. Derive the end time on the server; the customer does not enter a duration. Use `Asia/Jakarta` / WIB (UTC+07:00), regardless of the customer's device time zone. Store UTC instants plus the selected business time zone for audit/display.
+
+| Days | Studio hours | Latest permitted start | Two-hour latest end |
+| --- | --- | --- | --- |
+| Monday–Friday | 08.00–17.00 WIB | 15.00 WIB | 17.00 WIB |
+| Saturday–Sunday | 08.00–12.00 WIB | 10.00 WIB | 12.00 WIB |
+
+A start must be inside service hours, at or before the booking cutoff, with its full two-hour interval ending by closing. The start-time increment, booking horizon, minimum notice, buffer, holidays and payment-hold expiry remain configurable decisions before production. Do not accidentally exclude the weekday 15.00 start by offering only an 08/10/12/14 grid.
+
+Start conservatively with one simultaneous Jessica appointment unless capacity is explicitly changed. A service that needs longer than two hours must be resolved in consultation before automatic booking; future availability must respect any staff-entered busy blocks. No manual Calendar-entry workflow is approved by this exception. Do not collect duration through an extra form field.
+
+The local preview validates these hours but does **not** check live availability or reserve the selected interval. Future availability combines configured hours, active database holds/confirmed bookings and all selected Calendar busy intervals. Include staff-entered busy events, recurring exceptions and all-day closures. An unavailable Calendar is an error, not an empty/free schedule. Existing rules remain: booking only, DP required, no walk-ins, no home service, no rescheduling, cancellation forfeits DP, and Rp10.000 per ten minutes late. Unpaid hold expiry is distinct from cancellation of a paid booking.
+
+## Production architecture proposed
+
+This later backend phase is **not a dependency for the current preview's WhatsApp summary and manual e-wallet check**. No booking route, persistent store, scheduler or Calendar-write connection is configured by the local preview. The Calendar API itself has separately been enabled in Google Cloud, but credentials and sharing remain unconfigured. The latest authenticated-approval workflow is planned rather than implemented; its only new Jessica action is reviewing and explicitly approving the linked request after her WhatsApp/payment check.
+
+| Component | Responsibility |
+| --- | --- |
+| Static Astro `/book` | Six-input form, review and status display; load booking JS only on this route. |
+| Pages Functions `/api/booking/*` and approval route | Proposed draft validation/storage, private status, Google-authenticated read-only review GET and explicit CSRF-protected approval POST. No routes exist yet. Use server secrets only. |
+| D1 | Authoritative booking/payment records, atomic interval claims, unique booking/payment references and durable retry/outbox records. |
+| Small scheduled Worker | Proposed expiry of unapproved drafts and bounded retries/reconciliation after authenticated approval; not a payment checker. |
+| Google Calendar API / isolated adapter | API enabled in Cloud; `server/google-calendar.js` is being implemented without a calling booking route. Future access targets the existing Nail Art calendar. Do not infer activation, payment verification or confirmed appointments from the adapter's presence. |
+| Manual deposit check and explicit approval | Jessica checks the actual e-wallet transaction and quote in WhatsApp, then approves the stored request through her authenticated link. No booking details need re-entry. This future approval is the trusted signal; it is not payment-API verification. |
+
+This is a design proposal, not an activated service. Keep existing static pages outside Function invocation routes so normal browsing does not spend booking Function quota. No Calendar/payment SDK or iframe belongs on Home. Do not couple booking deployment to Instagram activation. Separate credentials, routes and a booking kill switch preserve the existing site if either integration fails.
+
+### Calendar identity and authorization
+
+The chosen target is the **existing Nail Art calendar**, whose exact ID/account address is kept in private local state. It can be independent of the account managing the Maps listing; no Maps ownership change is required. An embed URL identifies a calendar but is not API-write authorization. Do not switch to a new secondary calendar, expose the supplied account address or publish the existing calendar to simplify setup. Calendar ACLs grant event-write access; Workspace policies can restrict sharing. [Google Calendar sharing](https://developers.google.com/workspace/calendar/api/concepts/sharing), [authorized event creation](https://developers.google.com/workspace/calendar/api/v3/reference/events/insert).
+
+Two authentication options remain unconfigured:
+
+- **Dedicated backend service account with an explicit Calendar sharing grant:** an engineering candidate for this fixed-calendar/no-attendees use case. Its Calendar `writer` permission allows event read/write, including private event details; the current UI equivalent is **Make changes and see event details**, distinct from `writerWithoutPrivateAccess`. Grant access only to the chosen calendar and verify actual read/write access before claiming success. A Cloud IAM role or enabled API does not by itself grant access to Jessica's Calendar. Do not create a replacement calendar as the service account: Google warns of data-ownership and transfer limitations. Keep its private key server-side, never in Git or browser code. [Server-to-server authentication](https://developers.google.com/identity/protocols/oauth2/service-account), [Calendar ACL roles](https://developers.google.com/workspace/calendar/api/v3/reference/acl), [Calendar ownership](https://developers.google.com/workspace/calendar/api/concepts/events-calendars).
+- **Owner OAuth with offline access:** a fallback requiring the owner's consent and securely retained refresh token. External OAuth apps left in **Testing** receive seven-day refresh tokens when requesting Calendar scopes. Production consent configuration, any verification requirements and revocation recovery must be resolved before claiming low maintenance. [Google OAuth token lifecycle](https://developers.google.com/identity/protocols/oauth2).
+
+For the service-account candidate, use the explicit private `calendarId`; `primary` would refer to the authenticated identity, not necessarily Jessica. Scope candidates are `calendar.events` and `calendar.events.freebusy`; `calendar.events.owned` is not appropriate when Jessica owns the shared calendar. Keep access tokens and credentials server-side. Domain-wide delegation is for impersonating Workspace users and is not the proposed explicitly shared single-calendar model. A service account has short-lived access tokens obtained by its server credentials rather than an owner refresh token subject to the seven-day Testing rule; access can still be revoked or credentials invalidated. [Calendar scopes](https://developers.google.com/workspace/calendar/api/auth), [service-account flow](https://developers.google.com/identity/protocols/oauth2/service-account).
+
+Once separately authorized and tested, `freebusy.query` can check selected calendars over the requested window, and `events.insert`/`events.patch` can create/update the appropriate event in the explicit target calendar. Supply RFC3339 start/end with `Asia/Jakarta`, store a stable, correctly formatted event ID derived from the booking, and reconcile uncertain results before retrying. These API capabilities do not establish a trustworthy payment/quote signal or make Calendar an atomic booking database. [Free/busy](https://developers.google.com/workspace/calendar/api/v3/reference/freebusy/query), [event creation](https://developers.google.com/workspace/calendar/api/v3/reference/events/insert), [event updates](https://developers.google.com/workspace/calendar/api/v3/reference/events/patch).
+
+Do not add customer attendees or send Calendar invitations: the agreed form has no email input, and no invitation feature is requested. Service accounts need domain-wide delegation to populate attendee lists; it is unnecessary scope for the requested owner-calendar view. Return only available start times to the customer, never private event names or other clients' details. A chosen calendar does not automatically include busy periods from the owner's other calendars; any additional calendar checks require explicit access and scope decisions. [Event attendee restrictions](https://developers.google.com/workspace/calendar/api/v3/reference/events).
+
+### Superseded unverified Calendar request proposal
+
+An earlier possible **REQUEST — DP unverified** Calendar entry was never accepted or activated. It is **superseded by the latest approval-before-Calendar direction**. Do not create a Calendar event on customer submission, screenshot upload, WhatsApp handoff or link GET. Drafts remain website-side unverified requests until Jessica's authenticated explicit approval.
+
+The isolated confirmed-appointment adapter must accept only trusted server input and reject missing/unverified confirmation data. Do not expose it directly to the browser or accept a customer-controlled `paid`, `approved` or `confirmed` flag. A Google event/API success status alone is not evidence that a business booking or DP is confirmed. The planned approval POST will supply Jessica's verified check only after authorized identity/session validation; it is not implemented yet.
+
+### Atomic holds and cross-service races
+
+Never implement reservation as a JavaScript read-then-write or a unique start timestamp alone: 09.00–11.00 and 10.00–12.00 overlap despite different starts. A practical D1 design claims all fixed subslots covered by the two-hour interval, including any configured buffer, with a unique `(resource, subslot)` constraint. Every claim, booking row and required outbox operation must commit together. Use bound statements and a D1 transaction-capable batch with constraint failures rolling back the sequence. Test the actual schema under simultaneous requests. [D1 batch semantics](https://developers.cloudflare.com/d1/worker-api/d1-database/#batch).
+
+Future approval-time creation flow, after the database, authentication and Calendar prerequisites are implemented and authorized; do not represent these as current preview capabilities:
+
+1. On explicit POST only, authenticate/authorize Jessica, verify CSRF and the unexpired immutable draft/version, and validate the stored six inputs, total/DP and two-hour interval. Record that she checked the actual DP; do not infer it from customer fields.
+2. Freshly check Calendar busy time and all current interval/hours rules. Atomically claim all database subslots, store the approved quote/DP facts and enqueue the single Calendar operation. Reject conflicts without claiming that payment disappeared or that an appointment was created.
+3. Insert the appointment in the existing Nail Art calendar using the booking's stable event ID. No pending-DP Calendar event is created before approval. Recover an uncertain result by the same ID and reconcile external conflicts while excluding this booking's own event.
+4. If Calendar creation fails or is uncertain, preserve the verified approval/DP and occupied processing claim, then retry/reconcile safely. Show **approval received; Calendar processing**, not confirmed. Never ask the customer to pay DP again or silently move the time.
+5. Store the successful event ID/result, transition the booking to confirmed once, and expose a private result/optional customer-initiated WhatsApp return. Repeated approval POSTs return the existing processing/confirmed result rather than inserting another event.
+
+D1 and Google Calendar cannot share one transaction. Database claims serialize competing website bookings, but a person can still add a conflicting Calendar event during payment. Agree staff-edit rules, recheck before payment/confirmation, and route a discovered conflict to manual review. Do not promise that Calendar itself prevents overlaps or silently move the paid customer's time.
+
+## Selected deposit method: e-wallet transfer and manual verification
+
+The owner selected **e-wallet transfer**, with **Jessica manually checking the incoming DP in WhatsApp**. QRIS is excluded because she rejected transaction deductions. No specific wallet brand, recipient, account details or actual fee schedule has been supplied. Do not invent those details, generate a QR, integrate a bank or claim a no-fee route. Jessica can supply transfer instructions through the existing consultation until any website display is explicitly configured.
+
+The phase-1 form produces a clear summary and customer-initiated WhatsApp handoff. Jessica checks the agreed quote and actual receiving-wallet record before treating DP as received. Opening WhatsApp, sending the summary, returning from a wallet or supplying a screenshot does not let the website mark payment received. Display the amount as **DP to transfer / awaiting Jessica's check**, not **paid**. No payment API, gateway onboarding or commercial agreement is required for this manual flow.
+
+The planned authenticated **POST Approve** supplies Jessica's check without reading WhatsApp or connecting a payment API. She reviews the stored request and attests to the actual DP after checking the receiving wallet; booking details need no re-entry. This is the latest direction, not a deployed capability. No draft database, sign-in or approval endpoint exists yet. The earlier unverified-Calendar-request idea is superseded, and manual Calendar entry is not recorded as an approved substitute.
+
+Do **not** automatically match the latest transaction by amount/time: different customers may owe identical deposits. A future booking reference helps only if it can be reliably associated with Jessica's actual check; do not assume a wallet exposes invoice references or add random rupiah to manufacture unique amounts. A normal wallet does not itself grant API access. Any later API proposal would need separate owner approval and provider-specific authentication/reconciliation; it is outside the selected manual phase. After a trusted verification bridge exists, show **DP received**, agreed total and remaining balance, not a claim that the whole service is paid.
+
+## Rejected option record: ShopeePay/QRIS research
+
+This section preserves earlier research for traceability. **It is not an activation plan, provider recommendation or an instruction to resume QRIS onboarding.**
+
+The owner earlier reported **ordinary QRIS merchant access, not API credentials or confirmed API approval**. Access to [Shopee Partner](https://partner.shopee.co.id/) or a Shopee shop is not evidence that dynamic-payment APIs are enabled. ShopeePay's onboarding guide begins with contacting its team for an NDA/commercial agreement, followed by integration credentials and signature/callback setup. Eligibility, onboarding terms, transaction fees, settlement/refund rules and any setup/monthly charges were not confirmed for Chii. No Shopee contact, agreement, credentials or billing activation is part of the active work. [Official onboarding](https://product.shopeepay.co.id/integration/get-started/go).
+
+The researched dynamic-QR API supports the **exact DP**, a unique `partnerReferenceNo`, merchant/store identity, `IDR` and explicit expiry. Its twenty-minute default QR validity is **not an agreed Chii hold duration**. An existing static merchant QR would not establish an invoice-specific API payment. These capabilities do not remove the owner's objection to transaction cuts. [Merchant Presented Mode](https://product.shopeepay.co.id/integration/api/merchant-presented-mode).
+
+ShopeePay documents callback `X-SIGNATURE` verification using its public key and raw-body/full-callback-URL/timestamp construction, original partner/merchant references and successful status (`latestTransactionStatus: "00"`). A successful query response is not itself payment success. This provider-specific verification research is retained as historical evidence only. [Official callback verification](https://product.shopeepay.co.id/integration/api/notify-transaction-status).
+
+The earlier proposal to query the latest payment by amount/time was rejected in favor of exact reference reconciliation. No ShopeePay live or sandbox calls, payment callbacks or merchant resources were activated.
+
+## Durable states, retries and expiry
+
+These are proposed production states; the local preview does not create persistent records. Its review/handoff screen may say the summary is ready for WhatsApp and that Jessica's payment check and Calendar integration are pending. It must not transition to paid, reserved or confirmed merely because a customer clicked a button.
+
+| State | Meaning |
+| --- | --- |
+| `awaiting_jessica_approval` | Stored customer-declared draft with an expiring approval reference; no Calendar event or guaranteed reservation. Opening the link cannot approve it. |
+| `paid_calendar_pending` | Jessica's authenticated explicit approval records her quote/actual-DP check; interval claim protected; the one Calendar insertion is queued/retrying. |
+| `confirmed` | Required trusted quote, verified DP and Calendar confirmation have all succeeded. |
+| `expired` | Unapproved draft/link expired; never use expiry to erase a verified DP/approval or silently release an approved processing booking. |
+| `manual_review` | Late payment, amount/reference anomaly, external Calendar conflict or unresolved verification needs attention. |
+
+Store the unique booking/reference and client-request idempotency key; immutable draft/version; start/end; draft/link expiry and hashed token; Jessica's authenticated identity and explicit approval timestamp; her manual quote/DP verification provenance; Calendar event ID; interval claims; and outbox operation/retry state. Retain no more personal data than needed under an agreed retention policy. Keep customer status access separate and limited to that customer's minimal result. The approval link cannot authorize the holder or expose the full draft before Jessica's authorized session.
+
+The planned authorized approval POST must atomically record Jessica's verified DP/quote check, claim the fresh available interval and enqueue Calendar work. The preceding GET must remain read-only. No customer-controlled identity, email or paid/approved flag can perform that transition. Retry failed Calendar calls with bounded exponential backoff/jitter. An outbox worker must claim jobs with a lease and deduplicate each operation; a process crash cannot lose a verified deposit or create duplicate Calendar entries. An unknown write result is reconciled, not blindly repeated. Signed payment-provider webhook handling is not part of this manual-verification flow.
+
+A draft/link can expire, but an ordinary e-wallet transfer can still arrive and cannot be cancelled by the website. If DP is checked after a draft expired or its interval became occupied, return an explicit conflict/review outcome through consultation; do not reclaim another customer's interval, auto-reschedule or promise an automatic refund. An already authenticated approved/processing booking must not be removed by draft-expiry cleanup. Calendar outages after Jessica's verified approval must show **DP checked by Jessica; Calendar confirmation processing**, preserve the claim and retry without collecting DP again. Recovery that needs staff attention can be surfaced through the authenticated review/result page; an additional notification channel is not configured or promised.
+
+## Free-plan fit and limits
+
+Checked against official documentation on 20 October 2026. The owner has now enabled the Calendar API in the existing project; no billing/free-trial action, credentials or Calendar sharing grant was completed. The phase-1 static form and customer-initiated WhatsApp summary do not require D1, a scheduled Worker, a payment API or active Calendar credentials. The following limits concern the proposed later backend.
+
+| Platform | Current documented allowance/limit | Implication |
+| --- | --- | --- |
+| Pages static assets | Free/unlimited requests when Functions are not invoked. | Keep normal Astro browsing static. |
+| Pages Functions / Workers Free | Shared 100,000 requests/day per account; 10 ms CPU/invocation. Daily request reset is midnight UTC, 07.00 WIB. | Future booking, Instagram and scheduled work share capacity. Measure validation/Calendar-auth CPU and bound polling; no paid upgrade is authorized. |
+| D1 Free | 5 million rows read/day, 100,000 rows written/day; 500 MB/database, ten databases and 5 GB total account storage. | Index queries, retain minimal data and bounded retry/audit history. Free-limit exhaustion returns errors; fail safely. |
+| Worker scheduling | Five Cron Triggers/account on Free; cron time is UTC. | Inspect existing triggers and share/batch scheduled work if appropriate; do not assume unlimited cron jobs or continuous execution. |
+| Google Calendar API | Standard use at no additional cost. For new projects the documented limits are 10,000 requests/min/project and 600/min/user/project, with a 1,000,000/day billing threshold. | Google currently announces later-2026 overage charges with at least ninety days' notice; verify again before activation. No unlimited-free or permanent-pricing promise. |
+
+Sources: [Pages Functions pricing](https://developers.cloudflare.com/pages/functions/pricing/), [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/), [Workers limits](https://developers.cloudflare.com/workers/platform/limits/), [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/), [D1 limits](https://developers.cloudflare.com/d1/platform/limits/), [Cron Triggers](https://developers.cloudflare.com/workers/configuration/cron-triggers/), [Calendar quotas/pricing](https://developers.google.com/workspace/calendar/api/guides/quota).
+
+Free hosting does not establish free wallet transfers. The owner has explicitly rejected QRIS transaction cuts; do not reactivate that proposal or choose another fee-bearing method by assumption. No paid plan, billing attachment or commercial payment agreement is authorized. Confirm the selected wallet's actual transfer/receiving costs with the owner before publishing payment instructions. Future API quotas and errors must never turn into an apparently successful booking. Apply route-level failure protection to booking APIs while keeping static pages usable; do not rely on a fail-open approval endpoint. [Pages Function routing/failure behavior](https://developers.cloudflare.com/pages/functions/routing/).
+
+## Implementation sequence and acceptance
+
+1. **Useful local phase 1 now:** six inputs, WIB/two-hour validation, review totals/balance, requested-time wording, keyboard/mobile usability and a customer-clicked WhatsApp summary. Keep data in page memory until that explicit handoff; no backend persistence, payment API, reservation, fake paid status or Calendar write. Keep `/book` out of the header/menu and public booking sections. Measure this route separately from Home; do not claim sub-one-second loading without comparable lab results.
+2. **Phase-1 review/release boundary:** confirm the recipient WhatsApp destination and selected wallet's real instructions/costs; verify the owner can read the complete request and manually check DP through her existing WhatsApp workflow. Review the concrete preview before publishing. This does not complete automatic Calendar booking or approve manual Calendar entry as its replacement.
+3. **Calendar and identity setup boundary:** retain the existing Nail Art calendar; finish the owner's chosen Calendar credential/permission setup separately without billing or trial activation. Configure Google sign-in and a private Jessica-only identity allowlist for approval as a distinct authorization concern. Use server-only credentials and verify actual access. Do not replace the target or make it public. API enablement alone grants neither site writes nor permission to act as Jessica. Preserve the six inputs and constant privately shared URL; QRIS/ShopeePay remains excluded.
+4. **Draft storage and authenticated approval implementation:** design the durable schema, immutable/versioned drafts, expiring opaque approval references, private review, owner session and CSRF-protected explicit POST. Keep GET side-effect-free even under link preview/prefetch. Add the approval link to the prepared message only when this real server flow exists; customer taps Send in WhatsApp. No Meta or payment API is required. Agree retention, abuse controls, expiry and honest conflict/recovery messaging before release. No such database/authentication/approval endpoint is implemented yet.
+5. **Adapter tests and guarded activation:** use synthetic data and fake authenticated-owner/Calendar adapters first; test fresh full-interval conflicts, unauthorized/customer approval attempts, scanner GETs, duplicate clicks, token expiry, changed drafts, Calendar timeouts and idempotent recovery. Any real read/write acceptance check needs appropriate account authorization and a clearly identified test event. Connect the isolated Calendar adapter only behind the trusted approval POST and durable claim/outbox; insert one event only after Jessica checks DP and approves. Activate only the concrete reviewed workflow with required permissions, record the deployed commit/configuration and rollback, and do not claim completion from API enablement or a preview alone.
+
+Current-preview checks cover the exact six fields, weekday 15.00/weekend 10.00 boundaries, timezone-independent requested times, positive DP not exceeding total, correct on-page remaining balance, actual prepared-message content, safe WhatsApp URL encoding, customer-controlled handoff, no header/menu booking link, no persistence, and no false paid/reserved/confirmed claims. Before later automation, also test overlapping intervals with different starts, changed/unapproved quotes, identical DP amounts on different requests, expired/duplicate approvals, owner identity/token validation, GET/preview with zero effects, CSRF/replay/forged approval, denied/revoked Calendar authorization, Calendar conflict/outage, Worker/D1 quotas and restart-safe outbox retries. Use synthetic fixtures and redact secrets/PII in logs and evidence.
+
+Future automation rollback must stop new reservations while preserving verified-DP records and continuing Calendar reconciliation. Existing customers must not be sent back to pay again. The existing WhatsApp consultation route remains the fallback. Low maintenance is the goal; revoked Calendar access, outages, late payments and disputes can still require an owner decision.

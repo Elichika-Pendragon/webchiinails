@@ -1,0 +1,14 @@
+Meta for Developers registration SMS never arrives (Indonesia) — app creation blocked
+
+I manage the Nail Art Palembang business portfolio using Jessica’s Facebook profile, linked to @chii.nails_.
+
+On 20 October 2026:
+• Accounts Center listed the existing email/phone contacts with no pending-confirmation warning or Confirm button visible. This does not establish completed developer verification.
+• Developer registration shows Register complete, Verify account incomplete, and Contact info/About you pending. No email or WhatsApp alternative was visible on the current verification screen.
+• The SMS code never arrived; the account owner confirmed non-delivery. Earlier attempts displayed a slow-down/frequency restriction.
+• Business Settings > Accounts > Apps > Add > Create new app ID is disabled, including after a fresh Facebook login.
+• Before the fresh login, developers.facebook.com/apps redirected to Business Suite. Afterwards it reached the developer homepage/registration, but SMS still failed.
+
+Please investigate developer-account eligibility and SMS delivery, explain why app creation is disabled, and provide an available alternative verification or recovery route. This concerns Facebook/Instagram developer registration, not WhatsApp phone-number onboarding or Meta Quest.
+
+The disabled app-creation option was observed directly in Business Settings. We have not added billing or changed account security settings.
