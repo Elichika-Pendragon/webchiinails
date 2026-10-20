@@ -17,3 +17,8 @@ No new package, framework runtime, font or third-party dropdown is added. The ex
 - Booking JavaScript import graph: **16,891 B gzip**, down from the preceding release's 16,945 B. Public pages remain **5,022 B** each. Whole-build JavaScript is 57,008 B raw / 21,500 B gzip across six files. These are deterministic size estimates, not loading-time measurements.
 
 No real customer request, WhatsApp message or Calendar event was created for this UI revision. Existing end-to-end limitations remain documented in [the combined booking report](BOOKING-RELEASE-2026-10-21.md): native receipt-chooser completion and Calendar insertion are not newly verified. Final publication evidence is recorded separately after Cloudflare reports success and exact production artifacts match this build.
+
+
+## Publication
+
+**Published and verified.** Code commit `f91d3d6b1c4940aa3362735a9a79dc0f113fb0f7` succeeded in Cloudflare Pages deployment `94797a3d-aabe-4689-9408-0a9d4b844663`. The GET-only probe at 18:09:12 UTC (01:09 WIB on 21 October) matched all seven routes and six exact JavaScript assets, booking enabled status, five public SEO pages, sitemap/robots/ownership and private noindex boundaries. [Sanitized production evidence](evidence/booking-approval/dropdown-live-2026-10-21.json). The published browser form also displayed the combined choice and live two-hour time options; no Book submission was made.
