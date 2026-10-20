@@ -1,0 +1,46 @@
+{
+  "documentedAt": "2026-10-20T17:44:01.822Z",
+  "evidenceType": "Sanitized operator-recorded production verification summary; exact execution timestamps omitted",
+  "target": "Production booking APIs and authenticated owner review",
+  "fixture": {
+    "syntheticTestOnly": true,
+    "contentType": "image/jpeg",
+    "width": 960,
+    "height": 640
+  },
+  "booking": {
+    "agreedPriceIdr": 150000,
+    "upfrontIdr": 20000,
+    "firstHttpStatus": 201,
+    "firstStatus": "pending",
+    "identicalRetryHttpStatus": 201,
+    "identicalRetrySameBooking": true,
+    "bookingRequestsPersisted": 1
+  },
+  "ownerImage": {
+    "existingVerifiedSession": true,
+    "imageComplete": true,
+    "naturalWidth": 960,
+    "naturalHeight": 640
+  },
+  "cancellation": {
+    "syntheticTestOnly": true,
+    "status": "cancelled",
+    "displayedLabel": "Dibatalkan",
+    "persistedOnReload": true
+  },
+  "whatsappMessagesSent": 0,
+  "calendarEventWrites": 0,
+  "verified": [
+    "Receipt API persistence with synthetic JPEG",
+    "Idempotent duplicate suppression",
+    "Authenticated private image rendering",
+    "TEST-only cancellation persisted after reload"
+  ],
+  "unverified": [
+    "Native browser client file chooser/re-encoding/submission path",
+    "Authenticated acceptance and Calendar insertion",
+    "Scheduled receipt-cleanup deployment/run"
+  ],
+  "privacy": "No customer identity, booking/event identifier, token, review URL, session/cookie, receipt bytes or private probe copied."
+}

@@ -1,0 +1,52 @@
+{
+  "documentedAt": "2026-10-20T17:48:04.803Z",
+  "evidenceType": "Sanitized operator-verified Cloudflare deployment summary",
+  "worker": "chii-booking-cleanup",
+  "sourceCommit": "a2ec169850f56294baab4e7b2cdb12c1cf9dbfa7",
+  "buildId": "f67c5cd6-b7e2-4884-98a5-937e354dcb55",
+  "workerVersion": "eb650530-a417-40be-a6b7-b4e9e53b773c",
+  "buildStatus": "success",
+  "completedAt": "2026-10-21T00:40:18+07:00",
+  "buildDurationSeconds": 34,
+  "uploadSeconds": 5.33,
+  "triggerDeploymentSeconds": 1.82,
+  "totalUploadKiB": 1.31,
+  "gzipUploadKiB": 0.67,
+  "wranglerVersion": "4.151.3",
+  "databaseBinding": {
+    "name": "BOOKING_DB",
+    "type": "D1",
+    "verifiedInDeployment": true
+  },
+  "cron": {
+    "expression": "15 0 * * *",
+    "timeZone": "UTC",
+    "localSchedule": "07:15 Asia/Jakarta daily",
+    "configured": true,
+    "nextExpectedWindow": "2026-10-21T07:15:00+07:00",
+    "firstScheduledRunObserved": false
+  },
+  "buildAccess": {
+    "productionEnabledAfterTokenRestriction": true,
+    "permissions": [
+      "D1 Read",
+      "Workers Scripts Edit"
+    ],
+    "scope": "one account; identifier omitted",
+    "activeProfileVerified": true,
+    "previewBuilds": false
+  },
+  "futureWorkerBuildEnvironment": {
+    "SKIP_DEPENDENCY_INSTALL": "true",
+    "pagesEnvironmentChanged": false,
+    "runtimeFunctionalityChanged": false
+  },
+  "realExpiredReceiptDeletionObserved": false,
+  "failedBuildOrRetryOccurred": false,
+  "boundaries": [
+    "Deployment, D1 binding and daily cron configuration verified; first scheduled execution not yet observed.",
+    "No expired real receipt was deleted/tested in the recorded production verification.",
+    "Only expired receipt images are targeted; booking metadata, claims and Calendar events are preserved.",
+    "No tokens, private database/account identifiers, credentials, receipt bytes or customer data included."
+  ]
+}
