@@ -29,3 +29,11 @@ Local screenshots at 1280, 390 and 320px show no document overflow. Calendar hei
 The final exact-checkout production build and static SEO/asset guards pass. Four browser-JS files across all routes total **24,650 bytes raw / 9,856 bytes gzip estimate**, up 4,222 raw / 1,391 gzip from the prior DP/Last book correction. Most added code is the booking-only calendar; ordinary pages do not import it. No runtime framework is hydrated. These are asset estimates and responsive browser checks, not physical-device or sub-one-second loading benchmarks. Reduced-motion opt-out is verified in CSS/source; it was not emulated in this UI session.
 
 Evidence: [calendar functionality](evidence/navigation-calendar/calendar-functional.json), [mobile route changes](evidence/navigation-calendar/navigation-mobile.json), [desktop routes](evidence/navigation-calendar/navigation-desktop.json), [1280px calendar](evidence/navigation-calendar/calendar-1280.png), [390px](evidence/navigation-calendar/calendar-390.png), [320px](evidence/navigation-calendar/calendar-320.png). Source/deployment identity is checked separately after the authorized push.
+
+## Published release
+
+Code commit **`f8d76ce6e496a7a097f28b6eb9efd53591bfb5d6`** is pushed to GitHub main and live in successful Cloudflare deployment **`542f4099-7808-4a41-8e77-9b2413a4122c`**, completed at **21:27 WIB** in 48 seconds. This duration is deployment time, not visitor loading time.
+
+All six production routes return 200 with the exact tested inline CSS and JavaScript bytes. Production checks confirm the inline-calendar markup, concise DP label, native page-transition CSS and stable scrollbar rule. Five public routes retain their canonicals/index directives, sitemap/robots and Google ownership file; `/book` remains noindex and outside the sitemap/header. [Live artifact/SEO evidence](evidence/navigation-calendar/live-verification.json).
+
+Connected Chrome displays the new Indonesian calendar and DP label. Its final click check was interrupted by the browser-control connection before date selection, so the live interaction check is not claimed as passing. Functional selection/month/keyboard/review results above are from the exact locally tested build. This does not establish physical Safari, older Android or a new loading-time result.

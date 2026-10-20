@@ -1,0 +1,123 @@
+{
+  "checkedAt": "2026-10-20T14:27:38.574Z",
+  "commit": "f8d76ce6e496a7a097f28b6eb9efd53591bfb5d6",
+  "origin": "https://chiinails.pages.dev",
+  "pages": [
+    {
+      "path": "/",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/",
+      "noBookingHeaderLink": true,
+      "scriptPaths": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "server": "cloudflare",
+      "ray": "a4d8b4593dac1bdd-CGK"
+    },
+    {
+      "path": "/services",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/services",
+      "noBookingHeaderLink": true,
+      "scriptPaths": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "server": "cloudflare",
+      "ray": "a4d8b4598e83394e-CGK"
+    },
+    {
+      "path": "/custom-sets",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/custom-sets",
+      "noBookingHeaderLink": true,
+      "scriptPaths": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "server": "cloudflare",
+      "ray": "a4d8b45979e83c91-CGK"
+    },
+    {
+      "path": "/visit",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/visit",
+      "noBookingHeaderLink": true,
+      "scriptPaths": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "server": "cloudflare",
+      "ray": "a4d8b45998ee471b-CGK"
+    },
+    {
+      "path": "/about",
+      "status": 200,
+      "canonical": "https://chiinails.pages.dev/about",
+      "noBookingHeaderLink": true,
+      "scriptPaths": [
+        "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js"
+      ],
+      "server": "cloudflare",
+      "ray": "a4d8b4597c18e5ce-CGK"
+    },
+    {
+      "path": "/book",
+      "status": 200,
+      "canonical": null,
+      "noBookingHeaderLink": true,
+      "scriptPaths": [
+        "/_astro/book.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+        "/_astro/book.astro_astro_type_script_index_1_lang.DfJp2IBb.js"
+      ],
+      "server": "cloudflare",
+      "ray": "a4d8b4596a598194-CGK"
+    }
+  ],
+  "assets": [
+    {
+      "path": "/_astro/Page.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+      "bytes": 29,
+      "sha256": "8889426bcaffb1cb8e3208eed2f47bfb4b9c4d06a55b9c36b50b9b6df3b617db"
+    },
+    {
+      "path": "/_astro/book.astro_astro_type_script_index_0_lang.CIZ1zBFn.js",
+      "bytes": 29,
+      "sha256": "8889426bcaffb1cb8e3208eed2f47bfb4b9c4d06a55b9c36b50b9b6df3b617db"
+    },
+    {
+      "path": "/_astro/client.50lT8FtM.js",
+      "bytes": 12367,
+      "sha256": "c4087f228f0819337e20278c40e0464e29eca9d92a220123a8878ba299ddc7e5"
+    },
+    {
+      "path": "/_astro/book.astro_astro_type_script_index_1_lang.DfJp2IBb.js",
+      "bytes": 12225,
+      "sha256": "f2ad8cb2b709994a2e9360fb9309696cd6de8358664117aeab2e9806000c5fe0"
+    }
+  ],
+  "seo": {
+    "indexablePages": 5,
+    "bookingNoindex": true,
+    "bookingExcludedFromSitemap": true,
+    "ownershipFileMatches": true,
+    "robotsValid": true
+  },
+  "automation": {
+    "approvalLinkActive": false,
+    "calendarSyncActive": false,
+    "paymentVerificationActive": false
+  },
+  "rules": {
+    "depositPercent": 10,
+    "depositReadonly": true,
+    "manualPayments": "transfer atau QRIS",
+    "contactLabel": "Chii",
+    "weekdayLastBook": "14:00",
+    "weekendLastBook": "10:00"
+  },
+  "features": {
+    "inlineDateCalendar": true,
+    "conciseDepositLabel": true,
+    "nativePageFadeMs": 200,
+    "stableScrollbar": true,
+    "noNewDependency": true
+  }
+}
