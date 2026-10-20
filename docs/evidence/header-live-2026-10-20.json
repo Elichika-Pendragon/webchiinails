@@ -1,0 +1,1057 @@
+{
+  "checkedAt": "2026-10-20T09:05:47.309Z",
+  "origin": "https://chiinails.pages.dev",
+  "browser": "Chrome 156.0.8078.12",
+  "mode": "headless, responsive viewport checks; third-party requests blocked",
+  "widths": [
+    390,
+    768,
+    1280
+  ],
+  "routes": [
+    "/",
+    "/services",
+    "/custom-sets",
+    "/visit",
+    "/about"
+  ],
+  "combinations": 15,
+  "pageErrors": [],
+  "results": [
+    {
+      "width": 390,
+      "route": "/",
+      "viewport": 390,
+      "documentWidth": 390,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 64,
+        "visible": true
+      },
+      "logo": {
+        "x": 20,
+        "y": 6,
+        "width": 52,
+        "height": 52,
+        "visible": true
+      },
+      "menu": {
+        "x": 301.90625,
+        "y": 10,
+        "width": 68.09375,
+        "height": 44,
+        "visible": true
+      },
+      "booking": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "links": [],
+      "h1Count": 1,
+      "openLinks": [
+        {
+          "text": "Services",
+          "href": "/services",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Custom sets & prices",
+          "href": "/custom-sets",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Visit us",
+          "href": "/visit",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Kirim desain inspirasimu ↗",
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "route": "/services",
+      "viewport": 390,
+      "documentWidth": 390,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 64,
+        "visible": true
+      },
+      "logo": {
+        "x": 20,
+        "y": 6,
+        "width": 52,
+        "height": 52,
+        "visible": true
+      },
+      "menu": {
+        "x": 301.90625,
+        "y": 10,
+        "width": 68.09375,
+        "height": 44,
+        "visible": true
+      },
+      "booking": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "links": [],
+      "h1Count": 1,
+      "openLinks": [
+        {
+          "text": "Services",
+          "href": "/services",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Custom sets & prices",
+          "href": "/custom-sets",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Visit us",
+          "href": "/visit",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Kirim desain inspirasimu ↗",
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "route": "/custom-sets",
+      "viewport": 390,
+      "documentWidth": 390,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 64,
+        "visible": true
+      },
+      "logo": {
+        "x": 20,
+        "y": 6,
+        "width": 52,
+        "height": 52,
+        "visible": true
+      },
+      "menu": {
+        "x": 301.90625,
+        "y": 10,
+        "width": 68.09375,
+        "height": 44,
+        "visible": true
+      },
+      "booking": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "links": [],
+      "h1Count": 1,
+      "openLinks": [
+        {
+          "text": "Services",
+          "href": "/services",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Custom sets & prices",
+          "href": "/custom-sets",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Visit us",
+          "href": "/visit",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Kirim desain inspirasimu ↗",
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "route": "/visit",
+      "viewport": 390,
+      "documentWidth": 390,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 64,
+        "visible": true
+      },
+      "logo": {
+        "x": 20,
+        "y": 6,
+        "width": 52,
+        "height": 52,
+        "visible": true
+      },
+      "menu": {
+        "x": 301.90625,
+        "y": 10,
+        "width": 68.09375,
+        "height": 44,
+        "visible": true
+      },
+      "booking": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "links": [],
+      "h1Count": 1,
+      "openLinks": [
+        {
+          "text": "Services",
+          "href": "/services",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Custom sets & prices",
+          "href": "/custom-sets",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Visit us",
+          "href": "/visit",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Kirim desain inspirasimu ↗",
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "route": "/about",
+      "viewport": 390,
+      "documentWidth": 390,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 64,
+        "visible": true
+      },
+      "logo": {
+        "x": 20,
+        "y": 6,
+        "width": 52,
+        "height": 52,
+        "visible": true
+      },
+      "menu": {
+        "x": 301.90625,
+        "y": 10,
+        "width": 68.09375,
+        "height": 44,
+        "visible": true
+      },
+      "booking": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "links": [],
+      "h1Count": 1,
+      "openLinks": [
+        {
+          "text": "Services",
+          "href": "/services",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Custom sets & prices",
+          "href": "/custom-sets",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Visit us",
+          "href": "/visit",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        },
+        {
+          "text": "Kirim desain inspirasimu ↗",
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "height": 48,
+          "x": 20,
+          "right": 370
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "route": "/",
+      "viewport": 768,
+      "documentWidth": 768,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 768,
+        "height": 64,
+        "visible": true
+      },
+      "logo": {
+        "x": 40,
+        "y": 6,
+        "width": 52,
+        "height": 52,
+        "visible": true
+      },
+      "menu": {
+        "x": 659.90625,
+        "y": 10,
+        "width": 68.09375,
+        "height": 44,
+        "visible": true
+      },
+      "booking": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "links": [],
+      "h1Count": 1,
+      "openLinks": [
+        {
+          "text": "Services",
+          "href": "/services",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Custom sets & prices",
+          "href": "/custom-sets",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Visit us",
+          "href": "/visit",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Kirim desain inspirasimu ↗",
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "route": "/services",
+      "viewport": 768,
+      "documentWidth": 768,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 768,
+        "height": 64,
+        "visible": true
+      },
+      "logo": {
+        "x": 40,
+        "y": 6,
+        "width": 52,
+        "height": 52,
+        "visible": true
+      },
+      "menu": {
+        "x": 659.90625,
+        "y": 10,
+        "width": 68.09375,
+        "height": 44,
+        "visible": true
+      },
+      "booking": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "links": [],
+      "h1Count": 1,
+      "openLinks": [
+        {
+          "text": "Services",
+          "href": "/services",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Custom sets & prices",
+          "href": "/custom-sets",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Visit us",
+          "href": "/visit",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Kirim desain inspirasimu ↗",
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "route": "/custom-sets",
+      "viewport": 768,
+      "documentWidth": 768,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 768,
+        "height": 64,
+        "visible": true
+      },
+      "logo": {
+        "x": 40,
+        "y": 6,
+        "width": 52,
+        "height": 52,
+        "visible": true
+      },
+      "menu": {
+        "x": 659.90625,
+        "y": 10,
+        "width": 68.09375,
+        "height": 44,
+        "visible": true
+      },
+      "booking": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "links": [],
+      "h1Count": 1,
+      "openLinks": [
+        {
+          "text": "Services",
+          "href": "/services",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Custom sets & prices",
+          "href": "/custom-sets",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Visit us",
+          "href": "/visit",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Kirim desain inspirasimu ↗",
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "route": "/visit",
+      "viewport": 768,
+      "documentWidth": 768,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 768,
+        "height": 64,
+        "visible": true
+      },
+      "logo": {
+        "x": 40,
+        "y": 6,
+        "width": 52,
+        "height": 52,
+        "visible": true
+      },
+      "menu": {
+        "x": 659.90625,
+        "y": 10,
+        "width": 68.09375,
+        "height": 44,
+        "visible": true
+      },
+      "booking": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "links": [],
+      "h1Count": 1,
+      "openLinks": [
+        {
+          "text": "Services",
+          "href": "/services",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Custom sets & prices",
+          "href": "/custom-sets",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Visit us",
+          "href": "/visit",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Kirim desain inspirasimu ↗",
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "route": "/about",
+      "viewport": 768,
+      "documentWidth": 768,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 768,
+        "height": 64,
+        "visible": true
+      },
+      "logo": {
+        "x": 40,
+        "y": 6,
+        "width": 52,
+        "height": 52,
+        "visible": true
+      },
+      "menu": {
+        "x": 659.90625,
+        "y": 10,
+        "width": 68.09375,
+        "height": 44,
+        "visible": true
+      },
+      "booking": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "links": [],
+      "h1Count": 1,
+      "openLinks": [
+        {
+          "text": "Services",
+          "href": "/services",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Custom sets & prices",
+          "href": "/custom-sets",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Visit us",
+          "href": "/visit",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        },
+        {
+          "text": "Kirim desain inspirasimu ↗",
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "height": 48,
+          "x": 40,
+          "right": 728
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "route": "/",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 76,
+        "visible": true
+      },
+      "logo": {
+        "x": 72,
+        "y": 6,
+        "width": 64,
+        "height": 64,
+        "visible": true
+      },
+      "menu": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "booking": {
+        "x": 1008,
+        "y": 16,
+        "width": 200,
+        "height": 44,
+        "visible": true
+      },
+      "links": [
+        {
+          "text": "Services",
+          "href": "/#services",
+          "x": 452.875,
+          "right": 509.046875
+        },
+        {
+          "text": "Custom sets",
+          "href": "/#gallery",
+          "x": 541.046875,
+          "right": 624.3125
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "x": 656.3125,
+          "right": 746.765625
+        },
+        {
+          "text": "Visit us",
+          "href": "/#visit",
+          "x": 778.765625,
+          "right": 827.109375
+        }
+      ],
+      "h1Count": 1
+    },
+    {
+      "width": 1280,
+      "route": "/services",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 76,
+        "visible": true
+      },
+      "logo": {
+        "x": 72,
+        "y": 6,
+        "width": 64,
+        "height": 64,
+        "visible": true
+      },
+      "menu": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "booking": {
+        "x": 1008,
+        "y": 16,
+        "width": 200,
+        "height": 44,
+        "visible": true
+      },
+      "links": [
+        {
+          "text": "Services",
+          "href": "/#services",
+          "x": 452.875,
+          "right": 509.046875
+        },
+        {
+          "text": "Custom sets",
+          "href": "/#gallery",
+          "x": 541.046875,
+          "right": 624.3125
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "x": 656.3125,
+          "right": 746.765625
+        },
+        {
+          "text": "Visit us",
+          "href": "/#visit",
+          "x": 778.765625,
+          "right": 827.109375
+        }
+      ],
+      "h1Count": 1
+    },
+    {
+      "width": 1280,
+      "route": "/custom-sets",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 76,
+        "visible": true
+      },
+      "logo": {
+        "x": 72,
+        "y": 6,
+        "width": 64,
+        "height": 64,
+        "visible": true
+      },
+      "menu": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "booking": {
+        "x": 1008,
+        "y": 16,
+        "width": 200,
+        "height": 44,
+        "visible": true
+      },
+      "links": [
+        {
+          "text": "Services",
+          "href": "/#services",
+          "x": 452.875,
+          "right": 509.046875
+        },
+        {
+          "text": "Custom sets",
+          "href": "/#gallery",
+          "x": 541.046875,
+          "right": 624.3125
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "x": 656.3125,
+          "right": 746.765625
+        },
+        {
+          "text": "Visit us",
+          "href": "/#visit",
+          "x": 778.765625,
+          "right": 827.109375
+        }
+      ],
+      "h1Count": 1
+    },
+    {
+      "width": 1280,
+      "route": "/visit",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 76,
+        "visible": true
+      },
+      "logo": {
+        "x": 72,
+        "y": 6,
+        "width": 64,
+        "height": 64,
+        "visible": true
+      },
+      "menu": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "booking": {
+        "x": 1008,
+        "y": 16,
+        "width": 200,
+        "height": 44,
+        "visible": true
+      },
+      "links": [
+        {
+          "text": "Services",
+          "href": "/#services",
+          "x": 452.875,
+          "right": 509.046875
+        },
+        {
+          "text": "Custom sets",
+          "href": "/#gallery",
+          "x": 541.046875,
+          "right": 624.3125
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "x": 656.3125,
+          "right": 746.765625
+        },
+        {
+          "text": "Visit us",
+          "href": "/#visit",
+          "x": 778.765625,
+          "right": 827.109375
+        }
+      ],
+      "h1Count": 1
+    },
+    {
+      "width": 1280,
+      "route": "/about",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 76,
+        "visible": true
+      },
+      "logo": {
+        "x": 72,
+        "y": 6,
+        "width": 64,
+        "height": 64,
+        "visible": true
+      },
+      "menu": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "visible": false
+      },
+      "booking": {
+        "x": 1008,
+        "y": 16,
+        "width": 200,
+        "height": 44,
+        "visible": true
+      },
+      "links": [
+        {
+          "text": "Services",
+          "href": "/#services",
+          "x": 452.875,
+          "right": 509.046875
+        },
+        {
+          "text": "Custom sets",
+          "href": "/#gallery",
+          "x": 541.046875,
+          "right": 624.3125
+        },
+        {
+          "text": "About & rules",
+          "href": "/about",
+          "x": 656.3125,
+          "right": 746.765625
+        },
+        {
+          "text": "Visit us",
+          "href": "/#visit",
+          "x": 778.765625,
+          "right": 827.109375
+        }
+      ],
+      "h1Count": 1
+    }
+  ]
+}

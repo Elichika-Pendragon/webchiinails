@@ -1,0 +1,56 @@
+{
+  "checkedAt": "2026-10-20T09:05:32.521Z",
+  "origin": "https://chiinails.pages.dev",
+  "commit": "36a27c47e1f3398da3ccf9e91fa4c64d7e4cb3c3",
+  "routes": [
+    {
+      "route": "/",
+      "status": 200,
+      "compactHeader": true,
+      "indexable": true,
+      "h1Count": 1
+    },
+    {
+      "route": "/services",
+      "status": 200,
+      "compactHeader": true,
+      "indexable": true,
+      "h1Count": 1
+    },
+    {
+      "route": "/custom-sets",
+      "status": 200,
+      "compactHeader": true,
+      "indexable": true,
+      "h1Count": 1
+    },
+    {
+      "route": "/visit",
+      "status": 200,
+      "compactHeader": true,
+      "indexable": true,
+      "h1Count": 1
+    },
+    {
+      "route": "/about",
+      "status": 200,
+      "compactHeader": true,
+      "indexable": true,
+      "h1Count": 1
+    }
+  ],
+  "browserEntry": {
+    "path": "/_astro/Page.astro_astro_type_script_index_0_lang.BWXv9FTS.js",
+    "bytes": 11829,
+    "sha256": "7cfa696640e2dda8d23023b73722c27e9042d2df3c0167c163e49951a6dc2b7f"
+  },
+  "sitemap": {
+    "status": 200,
+    "urls": 5
+  },
+  "robots": {
+    "status": 200,
+    "sitemap": true
+  },
+  "published": true
+}
