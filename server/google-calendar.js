@@ -27,6 +27,7 @@ const EVENT_MAX_PAGES = 4;
 const AVAILABILITY_EVENT_FIELDS = 'kind,nextPageToken,items(status,start(date,dateTime,timeZone),end(date,dateTime,timeZone))';
 const encoder = new TextEncoder();
 const NOT_FOUND = Symbol('calendar-event-not-found');
+const escapeHtml = value => value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 
 export class GoogleCalendarError extends Error {
   constructor(code) {
@@ -276,15 +277,27 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     if ((!legacy && appointment.paymentMode !== paymentMode) || (appointment.paymentAmount !== undefined && appointment.paymentAmount !== paymentAmount)) throw failure('CALENDAR_INPUT');
     const { startISO, endISO } = checked.preview;
     const eventId = `chii${await sha256(`chiinails:booking:v1:${bookingId}`)}`;
-    const summary = `Chii Nails · ${value.name}`;
+    const previousSummary = `Chii Nails · ${value.name}`;
     const sharedDescription = `Booking: ${bookingId}\nNama: ${value.name}\nWhatsApp: ${legacySchedule ? `+${value.whatsapp}` : `https://wa.me/${value.whatsapp}`}\nHarga disepakati: Rp${value.agreedPrice}`;
     const financialDescription = legacy
       ? `${sharedDescription}\nDP 10%: Rp${paymentAmount}\nNominal dan pembayaran diperiksa terpisah oleh operator.`
       : `${sharedDescription}\nPilihan pembayaran: ${paymentMode === 'full' ? 'Full payment' : 'DP 10%, minimal Rp20000'}\nNominal pembayaran: Rp${paymentAmount}\nSisa pembayaran: Rp${value.agreedPrice - paymentAmount}\nNominal dan pembayaran diperiksa terpisah oleh operator.`;
-    const description = legacySchedule ? financialDescription : `${financialDescription}\nJenis desain: ${BOOKING_DESIGNS[design.designType].label}\nDurasi: ${design.durationMinutes} menit`;
-    const version = legacySchedule ? legacy ? 1 : 2 : 3;
+    const previousDescription = legacySchedule ? financialDescription : `${financialDescription}\nJenis desain: ${BOOKING_DESIGNS[design.designType].label}\nDurasi: ${design.durationMinutes} menit`;
+    const previousVersion = legacySchedule ? legacy ? 1 : 2 : 3;
+    const previousFingerprint = await sha256(JSON.stringify({ version: previousVersion, calendarId, bookingId, summary: previousSummary, description: previousDescription, startISO, endISO }));
+    const localPhone = `0${value.whatsapp.slice(2)}`;
+    const whatsappUrl = `https://wa.me/${value.whatsapp}`;
+    // New snapshots show the complete contact and service at a glance. Google
+    // Calendar supports HTML descriptions; only this validated digits-only URL
+    // becomes a link, and customer-supplied text is always escaped.
+    const summary = legacySchedule ? previousSummary : `${value.name} · ${localPhone} · ${BOOKING_DESIGNS[design.designType].label}`;
+    const description = legacySchedule ? previousDescription : escapeHtml(previousDescription).replace(
+      `\nWhatsApp: ${whatsappUrl}\n`,
+      `\nNomor WhatsApp: ${localPhone} (+${value.whatsapp})\nWhatsApp: <a href="${whatsappUrl}">${whatsappUrl}</a>\n`,
+    );
+    const version = legacySchedule ? previousVersion : 4;
     const source = `chiinails-booking-v${version}`;
-    const fingerprint = await sha256(JSON.stringify({ version, calendarId, bookingId, summary, description, startISO, endISO }));
+    const fingerprint = legacySchedule ? previousFingerprint : await sha256(JSON.stringify({ version, calendarId, bookingId, summary, description, startISO, endISO }));
     const body = {
       id: eventId, summary, description,
       start: { dateTime: startISO, timeZone: 'Asia/Jakarta' },
@@ -292,16 +305,22 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
       status: 'confirmed', visibility: 'private', transparency: 'opaque',
       extendedProperties: { private: { source, bookingId, fingerprint } },
     };
-    return { body, bookingId, eventId, summary, description, fingerprint, source, startISO, endISO, past: requestedStart <= current };
+    // A write may have completed before this display revision was deployed.
+    // Recognize its exact previous payload on read-only recovery; never change
+    // the event ID, relax identity checks, or insert a duplicate appointment.
+    const previousPresentation = legacySchedule ? null : { summary: previousSummary, description: previousDescription, fingerprint: previousFingerprint, source: 'chiinails-booking-v3' };
+    return { body, bookingId, eventId, summary, description, fingerprint, source, previousPresentation, startISO, endISO, past: requestedStart <= current };
   }
 
   function verifyEvent(event, expected, reconciled) {
-    const { bookingId, eventId, summary, description, fingerprint, source, startISO, endISO } = expected;
+    const { bookingId, eventId, startISO, endISO } = expected;
     const metadata = event.extendedProperties?.private;
-    if (event.id !== eventId || event.status !== 'confirmed' || event.summary !== summary || event.description !== description
+    const presentations = reconciled && expected.previousPresentation ? [expected, expected.previousPresentation] : [expected];
+    const matchingPresentation = record(metadata) && presentations.some(item => event.summary === item.summary && event.description === item.description && metadata.source === item.source && metadata.fingerprint === item.fingerprint);
+    if (event.id !== eventId || event.status !== 'confirmed' || !matchingPresentation
       || event.visibility !== 'private' || event.transparency !== 'opaque'
       || timestamp(event.start?.dateTime) !== timestamp(startISO) || timestamp(event.end?.dateTime) !== timestamp(endISO)
-      || !record(metadata) || metadata.source !== source || metadata.bookingId !== bookingId || metadata.fingerprint !== fingerprint
+      || !record(metadata) || metadata.bookingId !== bookingId
       || (event.attendees !== undefined && (!Array.isArray(event.attendees) || event.attendees.length))) throw failure(reconciled ? 'CALENDAR_CONFLICT' : 'CALENDAR_RESPONSE');
     return { eventId, startISO, endISO, reconciled };
   }
@@ -343,7 +362,7 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     const end = timestamp(event.end?.dateTime);
     const metadata = event.extendedProperties?.private;
     if (start === null || end === null || end <= start || !record(metadata) || metadata.bookingId !== input.bookingId
-      || !['chiinails-booking-v1', 'chiinails-booking-v2', 'chiinails-booking-v3'].includes(metadata.source)) throw failure('CALENDAR_RESPONSE');
+      || !['chiinails-booking-v1', 'chiinails-booking-v2', 'chiinails-booking-v3', 'chiinails-booking-v4'].includes(metadata.source)) throw failure('CALENDAR_RESPONSE');
     return { state: 'active' };
   }
 

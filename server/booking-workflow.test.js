@@ -133,9 +133,10 @@ test('real adapter and ledger couple pending/read-only review to one private ack
   assert.equal(event.start.dateTime, '2026-10-21T14:00:00+07:00');
   assert.equal(event.end.dateTime, '2026-10-21T16:00:00+07:00');
   assert.match(event.description, /DP 10%, minimal Rp20000\nNominal pembayaran: Rp20000/);
-  assert.equal(event.extendedProperties.private.source, 'chiinails-booking-v3');
+  assert.equal(event.extendedProperties.private.source, 'chiinails-booking-v4');
+  assert.equal(event.summary, 'Workflow Test · 081234567890 · Simple nail art');
   assert.equal(event.extendedProperties.private.bookingId, created.requestId);
-  assert.match(event.description, /WhatsApp: https:\/\/wa.me\/6281234567890\n/);
+  assert.match(event.description, /WhatsApp: <a href="https:\/\/wa.me\/6281234567890">https:\/\/wa.me\/6281234567890<\/a>\n/);
   assert.equal(event.description.includes(proof.base64), false);
   const callCount = f.calls.length;
   assert.deepEqual(await decideBookingRequest(f.env, tokenOf(created), 'accept', { owner, now: f.now, calendar: f.calendar }), accepted);
@@ -193,7 +194,7 @@ test('full-payment snapshot reaches the real adapter with zero remaining balance
   assert.equal(accepted.deposit, 100001);
   const event = [...f.events.values()][0];
   assert.match(event.description, /Pilihan pembayaran: Full payment\nNominal pembayaran: Rp100001\nSisa pembayaran: Rp0/);
-  assert.equal(event.extendedProperties.private.source, 'chiinails-booking-v3');
+  assert.equal(event.extendedProperties.private.source, 'chiinails-booking-v4');
   assert.equal(f.insertCount(), 1);
 });
 
@@ -230,7 +231,7 @@ test('five-hour full-art flows through real free/busy and Calendar with ten clai
   const event = [...f.events.values()][0];
   assert.equal(event.end.dateTime, '2026-10-21T13:00:00+07:00');
   assert.match(event.description, /Durasi: 300 menit/);
-  assert.match(event.description, /WhatsApp: https:\/\/wa.me\/6281234567890\n/);
+  assert.match(event.description, /WhatsApp: <a href="https:\/\/wa.me\/6281234567890">https:\/\/wa.me\/6281234567890<\/a>\n/);
   const occupancy = await getBookingAvailability(f.env, { date: '2026-10-21', designType: 'plain', durationMinutes: 60 }, { now: f.now, calendar: f.calendar });
   assert.equal(occupancy.slots.find(slot => slot.time === '12:00').available, false);
   assert.equal(occupancy.slots.find(slot => slot.time === '13:00').available, true);

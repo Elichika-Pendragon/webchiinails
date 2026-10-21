@@ -459,9 +459,9 @@ test('explicit design snapshot writes its actual duration and preserves all prev
     await calendar.createApprovedAppointment({ ...appointment, designType, durationMinutes, paymentMode: 'deposit', paymentAmount: 20000 });
     const body = bodies.at(-1);
     assert.equal(Date.parse(body.end.dateTime) - Date.parse(body.start.dateTime), durationMinutes * 60000);
-    assert.equal(body.extendedProperties.private.source, 'chiinails-booking-v3');
+    assert.equal(body.extendedProperties.private.source, 'chiinails-booking-v4');
     assert.match(body.description, new RegExp(`Durasi: ${durationMinutes} menit`));
-    assert.match(body.description, /WhatsApp: https:\/\/wa.me\/6281234567890\n/);
+    assert.match(body.description, /WhatsApp: <a href="https:\/\/wa.me\/6281234567890">https:\/\/wa.me\/6281234567890<\/a>\n/);
   }
   await calendar.createApprovedAppointment({ ...appointment, paymentMode: 'full', paymentAmount: 155000 });
   const previous = bodies.at(-1);
@@ -506,7 +506,16 @@ test('trusted historical half-hour starts retain all Calendar fingerprints and s
     const created = await calendar.createApprovedAppointment(snapshot);
     assert.equal(stored.start.dateTime, '2026-10-20T08:30:00+07:00');
     assert.equal(stored.end.dateTime, '2026-10-20T10:30:00+07:00');
-    assert.deepEqual(stored.extendedProperties.private, { source, bookingId: snapshot.bookingId, fingerprint });
+    if (source === 'chiinails-booking-v3') {
+      assert.equal(stored.extendedProperties.private.source, 'chiinails-booking-v4');
+      // A prior deployed writer may have finished just before this release.
+      // Restore that immutable old payload and check its golden fingerprint.
+      stored = { ...stored, summary: `Chii Nails · ${snapshot.name}`,
+        description: stored.description.replace(/^Nomor WhatsApp: .*\n/m, '').replace(/<a href="(https:\/\/wa.me\/\d+)">\1<\/a>/, '$1'),
+        extendedProperties: { private: { source, bookingId: snapshot.bookingId, fingerprint } } };
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify({ version: 3, calendarId: env.GOOGLE_CALENDAR_ID, bookingId: snapshot.bookingId, summary: stored.summary, description: stored.description, startISO: stored.start.dateTime, endISO: stored.end.dateTime })));
+      assert.equal(Buffer.from(digest).toString('hex'), fingerprint);
+    } else assert.deepEqual(stored.extendedProperties.private, { source, bookingId: snapshot.bookingId, fingerprint });
     assert.deepEqual(await calendar.reconcileApprovedAppointment(snapshot), { found: true, ...created, reconciled: true });
     assert.equal(posts, 1);
     assert.equal(gets, 1);
