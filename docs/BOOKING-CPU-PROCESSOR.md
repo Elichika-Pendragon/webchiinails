@@ -3,6 +3,12 @@
 Prepared 21 October 2026. Production activation and complete production-path
 verification must be recorded separately; synthetic fixtures are not live bookings.
 
+**Activated 22 October 2026, 00:05 WIB.** Code `5e7ea7a` is live in Pages
+deployment `48306b4a-617b-4b5f-a6b4-8dc3d9dab2a1`. The private processor,
+production namespace binding and additive migrations are installed. See
+[release verification](BOOKING-CPU-RELEASE-2026-10-22.md) for measured results,
+preserved-data checks and the limits of production verification.
+
 ## Effect on the website
 
 The customer uses the existing booking form and WhatsApp handoff. The selected

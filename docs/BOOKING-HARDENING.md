@@ -3,6 +3,9 @@
 Implementation authorized on 21 October 2026. Publication and edge CPU checks
 are separate release gates; local tests alone do not prove Cloudflare capacity.
 
+Production activation completed on 22 October 2026 after those gates were
+checked. See [the release evidence](BOOKING-CPU-RELEASE-2026-10-22.md).
+
 ## Identity and request compatibility
 
 Only the exact, Google-verified `BOOKING_OWNER_EMAIL` may review receipts or

@@ -1,0 +1,67 @@
+{
+  "checkedAt": "2026-10-21T17:06:41.860Z",
+  "commit": "5e7ea7a2ec7baa7b8d1fbff40de8fff4fde48ad3",
+  "deployment": "48306b4a-617b-4b5f-a6b4-8dc3d9dab2a1",
+  "scope": "Live production readiness, private processor rejection, owner-access rejection and public Calendar reads. Deliberately invalid challenge prevents a booking or receipt INSERT. Anonymous admission/accounting/cache writes only. No CAPTCHA interaction, valid booking or Calendar event.",
+  "checks": [
+    {
+      "test": "booking ready after binding activation",
+      "status": 200
+    },
+    {
+      "test": "production anonymous session and real Turnstile site key",
+      "status": 200,
+      "siteKey": "0x4AAAAAAFfMZZXt-mvPmWeA",
+      "httpOnlyCookie": true
+    },
+    {
+      "test": "live512000-byte Request RPC reaches real admission and rejects invalid challenge before booking write",
+      "status": 403,
+      "code": "ADMISSION_CHALLENGE",
+      "wallMs": 649.6495
+    },
+    {
+      "test": "older JSON tab receives recoverable update response",
+      "status": 409,
+      "code": "BOOKING_UPDATE_REQUIRED"
+    },
+    {
+      "test": "cross-origin submission rejected before private call",
+      "status": 403
+    },
+    {
+      "test": "anonymous review denied",
+      "status": 401
+    },
+    {
+      "test": "anonymous proof denied",
+      "status": 401
+    },
+    {
+      "test": "public month availability through real Google Calendar and private cache",
+      "status": 200,
+      "closedDates": [
+        "2026-10-24",
+        "2026-10-25",
+        "2026-10-26"
+      ],
+      "wallMs": 779.0581999999999
+    },
+    {
+      "test": "four-hour service retains duration spacing and cutoff",
+      "status": 200,
+      "slots": [
+        {
+          "time": "08:00",
+          "available": true
+        },
+        {
+          "time": "12:00",
+          "available": true
+        }
+      ],
+      "wallMs": 86.53450000000021
+    }
+  ],
+  "passed": true
+}
