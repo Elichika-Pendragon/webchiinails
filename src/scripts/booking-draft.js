@@ -6,6 +6,25 @@ const STORAGE_KEY = 'chii.booking.draft.v1';
 const FIELD_LIMITS = { name: 80, whatsapp: 40, agreedPrice: 16, paymentMode: 12, deposit: 16, serviceDuration: 24, date: 10, time: 5 };
 const token = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 const live = (value, now) => value?.version === 1 && token(value.id) && Number.isFinite(value.createdAt) && value.createdAt <= now && value.expiresAt === value.createdAt + BOOKING_DRAFT_TTL && value.expiresAt > now;
+const PROOF_LIMIT = 512000;
+
+// Only the recovery reader accepts the old base64 representation. All new
+// receipt writes retain the prepared Blob and avoid synchronous image strings.
+function legacyReceiptBlob(value) {
+  if (typeof value !== 'string' || value.length < 8 || value.length > 682668 || value.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(value)) return null;
+  try {
+    const binary = atob(value);
+    if (btoa(binary) !== value || !binary.length || binary.length > PROOF_LIMIT) return null;
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
+    return new Blob([bytes], { type: 'image/jpeg' });
+  } catch { return null; }
+}
+
+function receiptBlob(value) {
+  const blob = value?.version === undefined ? legacyReceiptBlob(value?.base64) : value?.version === 2 ? value.blob : null;
+  return blob instanceof Blob && blob.type === 'image/jpeg' && blob.size >= 4 && blob.size <= PROOF_LIMIT ? blob : null;
+}
 
 function cleanFields(values = {}) {
   return Object.fromEntries(Object.entries(FIELD_LIMITS).map(([name, limit]) => [name, typeof values[name] === 'string' ? values[name].slice(0, limit) : '']));
@@ -121,12 +140,14 @@ export function createBookingDraft(options = {}) {
     } catch { publish({ metadataSaved: false }); return false; }
   };
   const saveProof = async proof => {
-    if (!state.metadataSaved || !metadata || !live(metadata, now()) || !token(proof?.digest) || proof.contentType !== 'image/jpeg' || typeof proof.base64 !== 'string' || proof.base64.length > 682668 || !/^[A-Za-z0-9+/]+={0,2}$/.test(proof.base64)) return false;
+    const blob = proof?.blob instanceof Blob ? proof.blob : legacyReceiptBlob(proof?.base64);
+    if (!state.metadataSaved || !metadata || !live(metadata, now()) || !token(proof?.digest) || proof.contentType !== 'image/jpeg'
+      || !(blob instanceof Blob) || blob.type !== 'image/jpeg' || blob.size < 4 || blob.size > PROOF_LIMIT) return false;
     if (receiptPending && pendingDigest === proof.digest) return pendingOperation;
     if (receiptDigest === proof.digest && !receiptPending) return true;
     const current = generation;
     const revision = ++receiptRevision;
-    const record = { id: metadata.id, expiresAt: metadata.expiresAt, digest: proof.digest, contentType: proof.contentType, base64: proof.base64 };
+    const record = { version: 2, id: metadata.id, expiresAt: metadata.expiresAt, digest: proof.digest, contentType: proof.contentType, blob };
     receiptPending = true;
     pendingDigest = proof.digest;
     const operation = queue.catch(() => {}).then(() => bounded(() => receipts.put(record)));
@@ -147,16 +168,17 @@ export function createBookingDraft(options = {}) {
     const expected = metadata.proofDigest;
     try {
       const record = await bounded(() => receipts.get(metadata.id));
-      if (current !== generation || record?.expiresAt !== metadata?.expiresAt || record.expiresAt <= now() || record.digest !== expected || record.contentType !== 'image/jpeg' || typeof record.base64 !== 'string' || record.base64.length > 682668 || !/^[A-Za-z0-9+/]+={0,2}$/.test(record.base64)) throw new Error('draft-proof');
-      const binary = atob(record.base64);
-      const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
-      if (!bytes.length || bytes.length > 512000 || bytes[0] !== 255 || bytes[1] !== 216 || bytes[2] !== 255) throw new Error('draft-proof');
+      if (current !== generation || record?.expiresAt !== metadata?.expiresAt || record.expiresAt <= now() || record.digest !== expected || record.contentType !== 'image/jpeg') throw new Error('draft-proof');
+      const blob = receiptBlob(record);
+      if (!blob) throw new Error('draft-proof');
+      const bytes = new Uint8Array(await bounded(() => blob.arrayBuffer()));
+      if (bytes[0] !== 255 || bytes[1] !== 216 || bytes[2] !== 255 || bytes.at(-2) !== 255 || bytes.at(-1) !== 217) throw new Error('draft-proof');
       const hash = await bounded(() => crypto.subtle.digest('SHA-256', bytes));
       const digest = Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('');
       if (current !== generation || digest !== expected) throw new Error('draft-proof');
       receiptDigest = digest;
       publish({ receiptSaved: true });
-      return { contentType: record.contentType, base64: record.base64, digest, blob: new Blob([bytes], { type: record.contentType }) };
+      return { contentType: record.contentType, digest, blob };
     } catch { if (current === generation) publish({ receiptSaved: false }); return null; }
   };
   const removeProof = () => {

@@ -1,3 +1,3 @@
-import { handleBookingRequests } from '../../../server/booking-http.js';
+import { forwardBookingSubmission } from '../../../server/booking-processor.js';
 
-export const onRequest = ({ request, env }) => handleBookingRequests(request, env);
+export const onRequest = ({ request, env }) => forwardBookingSubmission(request, env);

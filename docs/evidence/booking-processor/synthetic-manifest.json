@@ -1,0 +1,11 @@
+{
+  "preparedAt": "2026-10-21T16:46:11.212Z",
+  "scope": "Production forwarder and processor RPC methods; synthetic subclass replaces Google/Turnstile, clock, and optional identity normalizer. Real D1 and Images when configured. Never production credentials or customer data.",
+  "origin": "https://chiinails.pages.dev",
+  "sourceSha256": {
+    "server/booking-http.js": "2a55a5f8c77a7f0a08d69f42ce7c2067047bc69c16fdb5cd32776add50286143",
+    "server/booking-processor.js": "0d536d22273d65a4eb3dd2a022f311ed43c4de102f4a4981eb4f82ccee42cf99",
+    "workers/booking-processor.js": "2e231767e9cb8321b16d871b30c10ef03bf1bbb8496fff1541f284bc8a918324"
+  },
+  "bundleSha256": "0136bbc75abcb297879bea263bb5379faa52743c91d430402c117c72a7a8dc20"
+}

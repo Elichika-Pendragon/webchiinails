@@ -7,9 +7,11 @@ import { proof, proofBytes } from './fixtures/payment-proof.js';
 import { cleanupExpiredPaymentProofs, PAYMENT_PROOF_RETENTION_MS } from './booking-proofs.js';
 import { getBookingCalendarMonth } from './booking-month.js';
 import { createGoogleCalendarProvider } from './google-calendar.js';
+import { syntheticAdmission, syntheticNormalization } from './fixtures/synthetic-admission.js';
+import { createPublicBookingCalendar } from './booking-occupancy-cache.js';
 
 const fixtureCalendars = new WeakMap();
-const createBookingRequest = (env, input, options = {}) => createRequest(env, input, { calendar: fixtureCalendars.get(env), ...options });
+const createBookingRequest = (env, input, options = {}) => createRequest(env, input, { calendar: fixtureCalendars.get(env), admission: syntheticAdmission, normalizeProof: syntheticNormalization, ...options });
 
 // Real SQLite constraints and transactions, wrapped in the D1 statement shape.
 // No real D1 binding, Calendar, credential, customer or network call is used.
@@ -22,6 +24,7 @@ class D1TestDatabase {
     this.sqlite.exec(readFileSync(new URL('../migrations/0004-booking-payment-proofs.sql', import.meta.url), 'utf8'));
     this.sqlite.exec(readFileSync(new URL('../migrations/0005-booking-calendar-sync-index.sql', import.meta.url), 'utf8'));
     this.sqlite.exec(readFileSync(new URL('../migrations/0006-booking-manual-payment.sql', import.meta.url), 'utf8'));
+    this.sqlite.exec(readFileSync(new URL('../migrations/0008-booking-occupancy-cache.sql', import.meta.url), 'utf8'));
     this.fail = null;
   }
   prepare(sql) {
@@ -47,10 +50,14 @@ class D1TestDatabase {
       const results = [];
       for (const statement of statements) {
         this.check(statement.sql);
-        const result = this.sqlite.prepare(statement.sql).run(...statement.values);
-        results.push({ success: true, meta: { changes: Number(result.changes) } });
+        const before = this.sqlite.prepare('SELECT total_changes() AS count').get().count;
+        const prepared = this.sqlite.prepare(statement.sql);
+        const rows = /\bRETURNING\b/i.test(statement.sql) ? prepared.all(...statement.values) : (prepared.run(...statement.values), []);
+        const after = this.sqlite.prepare('SELECT total_changes() AS count').get().count;
+        results.push({ success: true, results: rows, meta: { changes: Number(after - before) } });
       }
       this.sqlite.exec('COMMIT');
+      this.lastBatchResults = results;
       return results;
     } catch (error) { this.sqlite.exec('ROLLBACK'); throw error; }
   }
@@ -125,6 +132,19 @@ test('idempotent retries normalize the same input and return the same request an
   assert.equal(db.rows().length, 1);
   await assert.rejects(createBookingRequest(env, customer({ agreedPrice: '100002' }), { now: initial }), isCode('IDEMPOTENCY_CONFLICT', 409));
   assert.equal(db.rows().length, 1);
+});
+
+test('a lost-ack retry after appointment start and on the next WIB day returns the original without admission, Images or Calendar work',async()=>{
+  const {env,db,calls}=setup();
+  const one=await createBookingRequest(env,customer(),{now:initial});
+  const before={...calls};let admissionCalls=0,normalizationCalls=0;
+  for(const now of [Date.parse('2026-10-21T15:00:00+07:00'),Date.parse('2026-10-22T00:10:00+07:00')]){
+    const two=await createBookingRequest(env,customer(),{now,admission:{async authorizeNew(){admissionCalls++;throw new Error('must not run');}},normalizeProof:async()=>{normalizationCalls++;throw new Error('must not run');},calendar:{availability(){throw new Error('must not run');}}});
+    assert.equal(two.requestId,one.requestId);assert.equal(two.reviewUrl,one.reviewUrl);assert.equal(two.status,'expired');
+    assert.equal(two.booking.date,one.booking.date);assert.equal(two.booking.time,one.booking.time);
+  }
+  assert.equal(admissionCalls,0);assert.equal(normalizationCalls,0);assert.deepEqual(calls,before);
+  assert.equal(db.rows().length,1);assert.equal(db.rows('SELECT * FROM booking_payment_proofs').length,1);
 });
 
 test('payment choice persists the canonical amount and participates in request idempotency', async () => {
@@ -395,13 +415,13 @@ test('invalid mobile prefix, length or letters cannot reach Calendar or save a b
   assert.deepEqual(calls, { availability: 0, insert: 0, lookup: 0 });
 });
 
-test('daily per-number creation cap is enforced; matching retry remains available', async () => {
+test('an unverified supplied phone number no longer controls another customer creation quota', async () => {
   const { env, db } = setup();
   const firstResult = await createBookingRequest(env, customer(), { now: initial });
   for (let index = 1; index < 10; index++) await createBookingRequest(env, customer({ idempotencyKey: `synthetic_idempotency_${String(index).padStart(4, '0')}` }), { now: initial });
-  await assert.rejects(createBookingRequest(env, customer({ idempotencyKey: 'synthetic_idempotency_limit' }), { now: initial }), isCode('BOOKING_RATE_LIMIT', 429));
+  await createBookingRequest(env, customer({ idempotencyKey: 'synthetic_idempotency_limit' }), { now: initial });
   assert.equal((await createBookingRequest(env, customer(), { now: initial })).reviewUrl, firstResult.reviewUrl);
-  assert.equal(db.rows().length, 10);
+  assert.equal(db.rows().length, 11);
 });
 
 test('configuration fails closed without a private binding, strong secret, HTTPS origin and owner', async () => {
@@ -1108,6 +1128,24 @@ test('confirmed Calendar deletion releases the entire actual duration, retains h
   assert.equal(reviewed.status, 'cancelled');
   await assert.rejects(decideBookingRequest(env, tokenOf(one), 'accept', { owner, calendar, now: initial }), isCode('REQUEST_STATE', 409));
   assert.equal(calls.insert, 1);
+});
+
+test('deleting an accepted event reopens the slot on the first read when status invalidation updates a warm cache',async()=>{
+  const {env,db,calendar,events,calls}=setup();
+  env.GOOGLE_CALENDAR_ID='synthetic-cache-regression@group.calendar.google.com';
+  const one=await createBookingRequest(env,customer({designType:'full-art',durationMinutes:'300',time:'08:00'}),{now:initial});
+  await decideBookingRequest(env,tokenOf(one),'accept',{owner,calendar,now:initial});
+  const cached=createPublicBookingCalendar(env,{calendar,now:()=>initial});
+  await cached.availability({timeMin:'2026-10-21T08:00:00+07:00',timeMax:'2026-10-21T17:00:00+07:00'});
+  const warmed=db.rows('SELECT * FROM booking_occupancy_cache')[0];assert.ok(warmed.expires_at>initial);
+  events.delete(one.requestId);
+  const result=await getBookingAvailability(env,{date:'2026-10-21',designType:'plain',durationMinutes:'60'},{now:initial,calendar:cached});
+  assert.ok(result.slots.every(slot=>slot.available),'first request must reopen without a transient503');
+  assert.equal(db.rows()[0].status,'cancelled');assert.equal(db.rows('SELECT * FROM booking_slot_claims').length,0);
+  assert.equal(db.lastBatchResults[1].meta.changes,2,'fixture includes one status row plus one cache-trigger update');
+  assert.deepEqual(db.lastBatchResults[1].results.map(row=>row.id),[one.requestId]);
+  assert.equal(db.rows('SELECT * FROM booking_occupancy_cache')[0].expires_at,0);
+  assert.equal(calls.insert,1);assert.equal(db.rows('SELECT * FROM booking_payment_proofs').length,1);
 });
 
 test('Book and a new pending owner acceptance synchronize definite deletion before checking or claiming the replacement slot', async () => {

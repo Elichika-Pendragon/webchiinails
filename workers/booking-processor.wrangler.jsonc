@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
+  "name": "chii-booking-processor",
+  "account_id": "7d64fbacdea3648b74e69d4077704952",
+  "main": "booking-processor.js",
+  "compatibility_date": "2026-10-21",
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true, "logs": { "enabled": true, "invocation_logs": true } },
+  "durable_objects": { "bindings": [{ "name": "BOOKING_PROCESSOR", "class_name": "BookingSubmissionProcessor" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["BookingSubmissionProcessor"] }],
+  "d1_databases": [{ "binding": "BOOKING_DB", "database_name": "chiinails-booking", "database_id": "bd567303-5679-46f4-a4e9-d152b25bac06" }],
+  "images": { "binding": "IMAGES" }
+}

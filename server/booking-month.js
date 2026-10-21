@@ -9,6 +9,7 @@
 import { getBookingDateBounds, listBookingSlots, normalizeBookingDesign } from './booking.js';
 import { BookingRequestError } from './booking-requests.js';
 import { createGoogleCalendarProvider } from './google-calendar.js';
+import { createPublicBookingCalendar } from './booking-occupancy-cache.js';
 
 const DAY = 86400000;
 const CELL = 1800000;
@@ -42,7 +43,7 @@ export function getBookingMonthBounds(month, { now } = {}) {
 }
 
 /** One occupancy range plus one bounded read of uncertain in-flight claims. */
-export async function getBookingCalendarMonth(env, input, { now, calendar } = {}) {
+export async function getBookingCalendarMonth(env, input, { now, calendar, occupancyCache = false } = {}) {
   if (!object(input) || Object.keys(input).sort().join(',') !== 'designType,durationMinutes,month'
     || typeof input.designType !== 'string' || typeof input.durationMinutes !== 'string') throw inputError();
   const design = normalizeBookingDesign(input.designType, input.durationMinutes);
@@ -55,7 +56,8 @@ export async function getBookingCalendarMonth(env, input, { now, calendar } = {}
   const timeMax = `${isoDay(Date.parse(`${bounds.maxDate}T00:00:00Z`) + DAY)}T00:00:00+07:00`;
   let occupancy;
   try {
-    const provider = calendar ?? createGoogleCalendarProvider(env, { now: () => currentTime(now) });
+    const fresh = calendar ?? createGoogleCalendarProvider(env, { now: () => currentTime(now) });
+    const provider = occupancyCache ? createPublicBookingCalendar(env, { calendar: fresh, now: () => currentTime(now) }) : fresh;
     occupancy = await provider.availability({ timeMin, timeMax });
   } catch { throw calendarError(); }
   if (!object(occupancy) || !Array.isArray(occupancy.busyIntervals) || occupancy.busyIntervals.length > 10000

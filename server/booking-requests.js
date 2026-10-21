@@ -11,7 +11,7 @@
  */
 import { validateBooking, normalizeBookingDesign, listBookingSlots, getBookingDateBounds, getOperatingHours } from './booking.js';
 import { createGoogleCalendarProvider } from './google-calendar.js';
-import { validatePaymentProof, paymentProofBytes, PAYMENT_PROOF_RETENTION_MS } from './booking-proofs.js';
+import { validatePaymentProof, normalizePaymentProof, bytesToHex, paymentProofBytes, PAYMENT_PROOF_RETENTION_MS } from './booking-proofs.js';
 
 const DAY = 86400000;
 const CELL = 1800000;
@@ -145,7 +145,7 @@ async function created(config, row, now) {
 }
 
 /** Public creation route must additionally enforce activation, same-origin and request-size limits. */
-export async function createBookingRequest(env, input, { now, calendar } = {}) {
+export async function createBookingRequest(env, input, { now, calendar, admission, normalizeProof = normalizePaymentProof } = {}) {
   const config = configuration(env);
   const clock = clockOption(now);
   const current = clock();
@@ -158,7 +158,7 @@ export async function createBookingRequest(env, input, { now, calendar } = {}) {
   let checked;
   // Normalize against the historical half-hour cadence only to identify an
   // immutable existing request. New requests must pass today's cadence below.
-  try { checked = validateBooking(input, { now: current, stepMinutes: 30, ...(historical ? { paymentPolicy: 'min20k-v2' } : {}) }); } catch { throw failure('BOOKING_INPUT', 400); }
+  try { checked = validateBooking(input, { now: prior ? prior.created_at : current, stepMinutes: 30, ...(historical ? { paymentPolicy: 'min20k-v2' } : {}) }); } catch { throw failure('BOOKING_INPUT', 400); }
   if (!checked.valid) throw failure('BOOKING_INPUT', 400, checked.errors);
   const value = checked.value;
   const basePayload = { name: value.name, whatsapp: value.whatsapp, agreedPrice: value.agreedPrice, date: value.date, time: value.time };
@@ -177,45 +177,62 @@ export async function createBookingRequest(env, input, { now, calendar } = {}) {
   try { checked = validateBooking(input, { now: current }); } catch { throw failure('BOOKING_INPUT', 400); }
   if (!checked.valid) throw failure('BOOKING_INPUT', 400, checked.errors);
   if (!proof) throw failure('BOOKING_INPUT', 400, { proof: true });
-  // Submission checks availability again. This creates no hold or Calendar
-  // event; owner acceptance must still recheck and claim atomically later.
-  const blocked = await blockedIntervals(config, env, calendar, checked.preview, clock);
-  if (blocked.some(interval => interval.start < checked.preview.end && interval.end > checked.preview.start)) throw failure('SLOT_CONFLICT', 409);
-  if (checked.preview.start <= clock()) throw failure('BOOKING_INPUT', 400, { time: true });
-  const id = crypto.randomUUID();
-  const token = await reviewToken(config.secret, id);
-  const expires = Math.min(current + 7 * DAY, checked.preview.start);
-  const insert = config.db.prepare(`INSERT INTO booking_requests
-    (id, token_hash, idempotency_hash, payload_hash, name, whatsapp, agreed_price, deposit, date, time, start_ms, end_ms, start_iso, end_iso, created_at, expires_at, updated_at, payment_mode, payment_amount, design_type, duration_minutes, service_type, custom_payment_amount)
-    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-    WHERE (SELECT count(*) FROM booking_requests WHERE whatsapp = ? AND created_at > ?) < 10`).bind(
-    // The existing deposit column is the immutable v1 10% storage value. New
-    // Manual payments use custom_payment_amount; payment_amount retains its v2
-    // CHECK-compatible shadow. Existing columns and snapshots are never rewritten.
-    id, await hash(token), idemHash, payloadHash, value.name, value.whatsapp, value.agreedPrice, Math.floor(value.agreedPrice / 10) + (value.agreedPrice % 10 ? 1 : 0), value.date, value.time,
-    // Original end columns retain their v1 two-hour CHECK. Actual duration/end
-    // is derived from the explicit design_type/duration_minutes snapshot.
-    checked.preview.start, checked.preview.start + 7200000, checked.preview.startISO, localISO(checked.preview.start + 7200000), current, expires, current, value.paymentMode,
-    value.paymentMode === 'full' ? value.agreedPrice : Math.max(20000, Math.ceil(value.agreedPrice / 10)),
-    ['gel', 'removal'].includes(value.designType) ? 'plain' : value.designType, value.durationMinutes,
-    value.designType, value.deposit, value.whatsapp, current - DAY,
-  );
-  const receipt = config.db.prepare(`INSERT INTO booking_payment_proofs(request_id, content_type, content, sha256, created_at, expires_at)
-    SELECT id, 'image/jpeg', ?, ?, ?, ? FROM booking_requests WHERE id = ?`).bind(proof.bytes.buffer, proof.digest, current, checked.preview.end + PAYMENT_PROOF_RETENTION_MS, id);
-  // The D1 transaction stores the request and its receipt together, or neither.
-  // Concurrent retries are reconciled by the unique idempotency hash.
+  // Existing immutable retries above need no new challenge or transformation.
+  // All new insertions require a server-produced admission reservation.
+  if (typeof admission?.authorizeNew !== 'function') throw failure('BOOKING_CONFIG');
+  const ticket = await admission.authorizeNew({ idempotencyHash: idemHash, payloadHash, maxBytes: 512000 });
+  if (typeof ticket?.insertCondition !== 'function' || typeof ticket?.finalizeStatements !== 'function' || typeof ticket?.release !== 'function') throw failure('BOOKING_CONFIG');
+  let finalized = false;
   try {
-    const result = await config.db.batch([insert, receipt]);
-    if (!Array.isArray(result) || result.some(item => item?.success === false)) throw new Error();
-  } catch (error) {
-    const concurrent = await first(config.db.prepare(`${REQUEST_SELECT} WHERE r.idempotency_hash = ?`).bind(idemHash));
-    if (!concurrent) throw failure('BOOKING_STORAGE');
-    if (!samePayload(concurrent)) throw failure('IDEMPOTENCY_CONFLICT', 409);
-    return created(config, concurrent, current);
+    const normalized = await normalizeProof(env, proof, ticket);
+    if (!paymentProofBytes(normalized?.bytes) || typeof normalized.digest !== 'string' || !/^[a-f0-9]{64}$/.test(normalized.digest)) throw failure('BOOKING_STORAGE');
+    // Submission checks availability again. This creates no hold or Calendar
+    // event; owner acceptance must still recheck and claim atomically later.
+    const blocked = await blockedIntervals(config, env, calendar, checked.preview, clock);
+    if (blocked.some(interval => interval.start < checked.preview.end && interval.end > checked.preview.start)) throw failure('SLOT_CONFLICT', 409);
+    if (checked.preview.start <= clock()) throw failure('BOOKING_INPUT', 400, { time: true });
+    const id = crypto.randomUUID();
+    const token = await reviewToken(config.secret, id);
+    const expires = Math.min(current + 7 * DAY, checked.preview.start);
+    const condition = ticket.insertCondition(clock());
+    const insert = config.db.prepare(`INSERT INTO booking_requests
+      (id, token_hash, idempotency_hash, payload_hash, name, whatsapp, agreed_price, deposit, date, time, start_ms, end_ms, start_iso, end_iso, created_at, expires_at, updated_at, payment_mode, payment_amount, design_type, duration_minutes, service_type, custom_payment_amount)
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      WHERE ${condition.sql}`).bind(
+      // The existing deposit column is the immutable v1 10% storage value. New
+      // Manual payments use custom_payment_amount; payment_amount retains its v2
+      // CHECK-compatible shadow. Existing columns and snapshots are never rewritten.
+      id, await hash(token), idemHash, payloadHash, value.name, value.whatsapp, value.agreedPrice, Math.floor(value.agreedPrice / 10) + (value.agreedPrice % 10 ? 1 : 0), value.date, value.time,
+      // Original end columns retain their v1 two-hour CHECK. Actual duration/end
+      // is derived from the explicit design_type/duration_minutes snapshot.
+      checked.preview.start, checked.preview.start + 7200000, checked.preview.startISO, localISO(checked.preview.start + 7200000), current, expires, current, value.paymentMode,
+      value.paymentMode === 'full' ? value.agreedPrice : Math.max(20000, Math.ceil(value.agreedPrice / 10)),
+      ['gel', 'removal'].includes(value.designType) ? 'plain' : value.designType, value.durationMinutes,
+      value.designType, value.deposit, ...condition.values,
+    );
+    const receipt = config.db.prepare(`INSERT INTO booking_payment_proofs(request_id, content_type, content, sha256, created_at, expires_at)
+      SELECT id, 'image/jpeg', unhex(?), ?, ?, ? FROM booking_requests WHERE id = ?`).bind(bytesToHex(normalized.bytes), normalized.digest, current, checked.preview.end + PAYMENT_PROOF_RETENTION_MS, id);
+    // The D1 transaction stores the request and its receipt together, or neither.
+    // Concurrent retries are reconciled by the unique idempotency hash.
+    try {
+      const statements = [insert, receipt, ...ticket.finalizeStatements(id)];
+      const result = await config.db.batch(statements);
+      if (!Array.isArray(result) || result.length !== statements.length || result.some(item => item?.success === false)) throw new Error();
+      finalized = true;
+    } catch (error) {
+      const concurrent = await first(config.db.prepare(`${REQUEST_SELECT} WHERE r.idempotency_hash = ?`).bind(idemHash));
+      if (!concurrent) throw failure('BOOKING_STORAGE');
+      if (!samePayload(concurrent)) throw failure('IDEMPOTENCY_CONFLICT', 409);
+      return created(config, concurrent, current);
+    }
+    const row = await byId(config, id);
+    if (!row) throw failure('REQUEST_IN_PROGRESS', 409);
+    return created(config, row, current);
+  } finally {
+    // Normalization/provider/storage failure releases reserved capacity. If D1
+    // itself is unavailable the bounded lease expires; no unchecked file saves.
+    if (!finalized) { try { await ticket.release(); } catch { /* Lease is fail-safe. */ } }
   }
-  const row = await byId(config, id);
-  if (!row) throw failure('BOOKING_RATE_LIMIT', 429);
-  return created(config, row, current);
 }
 
 /** Caller must verify owner login first; knowing the URL is never sufficient. */
@@ -423,17 +440,23 @@ async function synchronizeCalendarDeletions(config, provider, interval, current)
   if (!deleted.length) return;
   const statements = deleted.flatMap(row => [
     config.db.prepare(`DELETE FROM booking_slot_claims WHERE request_id = ? AND EXISTS
-      (SELECT 1 FROM booking_requests WHERE id = ? AND status = 'accepted' AND calendar_event_id = ?)`).bind(row.id, row.id, row.calendar_event_id),
+      (SELECT 1 FROM booking_requests WHERE id = ? AND status = 'accepted' AND calendar_event_id = ?)
+      RETURNING slot_start`).bind(row.id, row.id, row.calendar_event_id),
     config.db.prepare(`UPDATE booking_requests SET status = 'cancelled', updated_at = ?
-      WHERE id = ? AND status = 'accepted' AND calendar_event_id = ?`).bind(current, row.id, row.calendar_event_id),
+      WHERE id = ? AND status = 'accepted' AND calendar_event_id = ? RETURNING id`).bind(current, row.id, row.calendar_event_id),
   ]);
   try {
     const results = await config.db.batch(statements);
     if (!Array.isArray(results) || results.length !== statements.length || results.some(result => result?.success === false)) throw new Error();
     for (let i = 0; i < results.length; i += 2) {
-      const released = results[i]?.meta?.changes;
-      const changed = results[i + 1]?.meta?.changes;
-      if (!Number.isInteger(released) || released < 0 || released > 10 || ![0, 1].includes(changed) || (changed === 0 && released !== 0)) throw new Error();
+      // D1 meta.changes includes trigger work (such as cache invalidation), not
+      // just the target rows. RETURNING describes the claims/request directly.
+      const released = results[i]?.results;
+      const changed = results[i + 1]?.results;
+      if (!Array.isArray(released) || released.length > 10 || released.some(row => !Number.isSafeInteger(row?.slot_start) || row.slot_start % CELL !== 0)
+        || new Set(released.map(row => row.slot_start)).size !== released.length
+        || !Array.isArray(changed) || changed.length > 1 || changed.some(row => row?.id !== deleted[i / 2].id)
+        || (changed.length === 0 && released.length !== 0)) throw new Error();
     }
   } catch { throw failure('BOOKING_STORAGE'); }
 }

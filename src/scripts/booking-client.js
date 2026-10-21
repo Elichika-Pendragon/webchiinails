@@ -2,6 +2,7 @@ import { calculatePayment, getBookingDateBounds, listBookingSlots, normalizeBook
 import { createBookingCalendar, calendarMonthDays } from './booking-calendar.js';
 import { PaymentProofError, preparePaymentProof } from './booking-proof.js';
 import { createBookingDraft } from './booking-draft.js';
+import { BookingChallengeError, createBookingChallenge } from './booking-challenge.js';
 
 const form = document.querySelector('#booking-form');
 if (form) {
@@ -56,6 +57,7 @@ if (form) {
   let restoringProofDigest = '';
   let reconnectPending = false;
   const offline = () => navigator.onLine === false;
+  const challenge = createBookingChallenge({ api, container: document.querySelector('#booking-challenge') });
   const draft = createBookingDraft({ onState(info) {
     draftClear.hidden = !info.metadataSaved && !info.hasReceipt;
     const message = !info.metadataSaved
@@ -388,8 +390,7 @@ if (form) {
   async function api(path, options = {}, controller = new AbortController()) {
     if (offline()) throw new Error('offline');
     controllers.add(controller);
-    // A 500 KiB JPEG becomes about 667 KiB of JSON base64: around 43 seconds
-    // at 128 kbps before latency/server work. Keep this bounded but upload-safe.
+    // Binary upload avoids base64 overhead; keep the slow-uplink budget bounded.
     const timeoutMs = path === '/api/booking/requests' && options.method === 'POST' ? 120000 : 12000;
     const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -529,10 +530,18 @@ if (form) {
       let reviewUrl = '';
       if (service === 'enabled') {
         const value = result.value;
+        const key = idempotencyKey(value);
+        setStatus('Memeriksa keamanan sebelum mengirim… Isian dan bukti tetap tersimpan.');
+        const admission = await challenge.verify();
+        if (!active || offline()) throw new DOMException('Aborted', 'AbortError');
+        const body = new FormData();
+        body.set('booking', JSON.stringify({ name: value.name, whatsapp: value.whatsapp, agreedPrice: String(value.agreedPrice), paymentMode: value.paymentMode, deposit: String(value.deposit), designType: value.designType, durationMinutes: String(value.durationMinutes), date: value.date, time: value.time, idempotencyKey: key, turnstileToken: admission.token }));
+        body.set('proof', proof.blob, 'receipt.jpg');
+        setStatus('Mengunggah bukti dan menyimpan permintaan booking… Tunggu hingga selesai.');
         const response = await api('/api/booking/requests', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: value.name, whatsapp: value.whatsapp, agreedPrice: String(value.agreedPrice), paymentMode: value.paymentMode, deposit: String(value.deposit), designType: value.designType, durationMinutes: String(value.durationMinutes), date: value.date, time: value.time, idempotencyKey: idempotencyKey(value), proof: { contentType: proof.contentType, base64: proof.base64 } }),
+          headers: { 'X-Booking-Nonce': admission.nonce },
+          body,
         });
         reviewUrl = approvalUrl(response, value, result.preview);
         draftComplete = true;
@@ -544,12 +553,25 @@ if (form) {
       window.location.assign(destination);
     } catch (error) {
       if (!active) return;
-      if (error.status === 409 && error.code === 'SLOT_CONFLICT') {
+      if (offline()) setStatus('Koneksi terputus. Isian dan bukti tetap tersimpan. Sambungkan internet, periksa jadwal, lalu tekan Book lagi.', true);
+      else if (error.status === 409 && error.code === 'SLOT_CONFLICT') {
         lastSelectedTime = '';
         input('time').value = '';
         await fillTimes();
         setStatus('Jadwal baru saja terisi. Pilih tanggal atau jam lain, lalu tekan Book lagi. Detail dan bukti pembayaranmu tetap di formulir.', true);
-      } else if (error.status === 429) setStatus('Terlalu banyak permintaan. Tunggu sebentar, lalu tekan Book lagi. Detailmu tetap tersimpan di formulir ini.', true);
+      } else if (error instanceof BookingChallengeError || ['ADMISSION_CHALLENGE', 'ADMISSION_REQUIRED'].includes(error.code)) setStatus('Pemeriksaan keamanan belum selesai. Periksa koneksi, lalu tekan Book lagi. Isian dan bukti pembayaran tetap tersimpan.', true);
+      else if (error.code === 'ADMISSION_CAPACITY') setStatus('Permintaan online sedang dibatasi. Isian tetap tersimpan; hubungi Chii melalui WhatsApp untuk melanjutkan.', true);
+      else if (error.code === 'ADMISSION_IN_PROGRESS') setStatus('Pengiriman yang sama sedang diproses. Tunggu sebentar, lalu tekan Book lagi. Isian dan bukti tetap tersimpan.', true);
+      else if (error.code === 'BOOKING_UPDATE_REQUIRED') setStatus('Formulir telah diperbarui. Muat ulang halaman untuk memulihkan isian dan melanjutkan.', true);
+      else if (['PROOF_INVALID', 'PROOF_SIZE'].includes(error.code)) {
+        clearProof();
+        proofState = 'error';
+        proofInput.setAttribute('aria-invalid', 'true');
+        proofStatus.dataset.tone = 'error';
+        proofStatus.textContent = error.code === 'PROOF_SIZE' ? 'Gambar masih terlalu besar. Potong bagian bukti pembayaran lalu unggah lagi.' : 'Gambar belum dapat diperiksa. Pilih gambar bukti pembayaran lain.';
+        setStatus('Periksa bukti pembayaran dan unggah kembali. Isian lainnya tetap tersimpan.', true);
+      }
+      else if (error.status === 429) setStatus('Terlalu banyak permintaan. Tunggu sebentar, lalu tekan Book lagi. Detailmu tetap tersimpan di formulir ini.', true);
       else setStatus('Konfirmasi pengiriman belum diterima. Detail dan bukti tetap di formulir. Periksa koneksi, lalu tekan Book lagi; pengiriman yang sama tidak membuat permintaan ganda.', true);
     } finally {
       if (active) {
@@ -642,7 +664,7 @@ if (form) {
     try {
       const prepared = await preparePaymentProof(file, { signal: controller.signal });
       if (!active || sequence !== proofSequence) return;
-      proof = { contentType: prepared.contentType, base64: prepared.base64, digest: prepared.digest };
+      proof = { contentType: prepared.contentType, blob: prepared.blob, digest: prepared.digest };
       proofBlob = prepared.blob;
       proofState = 'ready';
       restoreProofPreview();
@@ -706,7 +728,7 @@ if (form) {
       if (!active || sequence !== proofSequence) return;
       restoringProofDigest = '';
       if (prepared) {
-        proof = { contentType: prepared.contentType, base64: prepared.base64, digest: prepared.digest };
+        proof = { contentType: prepared.contentType, blob: prepared.blob, digest: prepared.digest };
         proofBlob = prepared.blob; proofState = 'ready'; restoreProofPreview();
         proofStatus.textContent = 'Bukti pembayaran dipulihkan dan siap dikirim.';
       } else {
@@ -720,6 +742,7 @@ if (form) {
   window.addEventListener('pagehide', () => {
     saveDraft();
     active = false;
+    challenge.cancel();
     stopRefresh();
     pauseSlotCheck();
     pauseMonthCheck();
@@ -763,6 +786,7 @@ if (form) {
     startRefresh();
   });
   window.addEventListener('offline', () => {
+    challenge.cancel();
     saveDraft(); stopRefresh(); pauseSlotCheck(); pauseMonthCheck();
     availability = 'error'; availabilityKey = ''; monthCache.clear();
     controllers.forEach(controller => controller.abort());

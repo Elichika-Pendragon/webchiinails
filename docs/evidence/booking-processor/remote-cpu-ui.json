@@ -1,0 +1,37 @@
+[
+  {
+    "cpuTimeMs": "9",
+    "executionModel": "\"durableObject\"",
+    "outcome": "\"canceled\"",
+    "scriptVersion": "380c4270-de57-481a-955c-2424ec893e6e",
+    "timestampNs": "\"1792601501094000000\""
+  },
+  {
+    "cpuTimeMs": "0",
+    "executionModel": "\"stateless\"",
+    "outcome": "\"ok\"",
+    "scriptVersion": "380c4270-de57-481a-955c-2424ec893e6e",
+    "timestampNs": "\"1792601500867000000\""
+  },
+  {
+    "cpuTimeMs": "32",
+    "executionModel": "\"durableObject\"",
+    "outcome": "\"canceled\"",
+    "scriptVersion": "380c4270-de57-481a-955c-2424ec893e6e",
+    "timestampNs": "\"1792601500766000000\""
+  },
+  {
+    "cpuTimeMs": "10",
+    "executionModel": "\"durableObject\"",
+    "outcome": "\"canceled\"",
+    "scriptVersion": "380c4270-de57-481a-955c-2424ec893e6e",
+    "timestampNs": "\"1792601500291000000\""
+  },
+  {
+    "cpuTimeMs": "31",
+    "executionModel": "\"durableObject\"",
+    "outcome": "\"canceled\"",
+    "scriptVersion": "380c4270-de57-481a-955c-2424ec893e6e",
+    "timestampNs": "\"1792601500033000000\""
+  }
+]

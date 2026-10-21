@@ -1,0 +1,8 @@
+Prepared CPU integration evidence - 21 October 2026
+Production is not activated. The private processor production deploy, D1 migrations, Pages binding and staged Pages release await the explicit access-grant confirmation in this chat.
+Release checkout tests: 490/490 pass; static production build passes.
+Final synthetic RPC Worker version: 380c4270-de57-481a-955c-2424ec893e6e.
+Final-source UI CPU samples: stateless forwarding 0ms; DO exact512000-byte create31ms, retry10ms; real Images create32ms, retry9ms.
+The displayed0ms is rounded telemetry. DO RPC events show outcome canceled after each completed streamed Response; callers received201, returned complete JSON, and retries reused the same persisted IDs. These are capability-lifecycle events, not a claim that every raw log outcome says ok. No long-lived RpcTarget is returned. Real production-path verification remains a separate gate.
+Remote receipts and credentials are synthetic, D1 is the disposable a055926e database, and Google/Turnstile responses are mocked. Images decoding is actual Cloudflare Images for the ordinary variant; exact-size identity variant explicitly skips decoding to exercise full BLOB transport.
+No production D1 migration, processor data access, Pages binding, commit or push has been performed at this evidence capture.

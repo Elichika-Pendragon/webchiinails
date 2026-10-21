@@ -2,10 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
-import { createBookingRequest, getBookingRequest, decideBookingRequest, getBookingAvailability, BookingRequestError } from './booking-requests.js';
+import { createBookingRequest as createRequest, getBookingRequest, decideBookingRequest, getBookingAvailability, BookingRequestError } from './booking-requests.js';
 import { createGoogleCalendarProvider } from './google-calendar.js';
 import { getBookingCalendarMonth } from './booking-month.js';
 import { proof } from './fixtures/payment-proof.js';
+import { syntheticAdmission, syntheticNormalization } from './fixtures/synthetic-admission.js';
+const createBookingRequest = (env, input, options = {}) => createRequest(env, input, { admission: syntheticAdmission, normalizeProof: syntheticNormalization, ...options });
 
 // Coupled ledger + actual Calendar adapter. This uses ephemeral RSA material,
 // SQLite and an in-memory Google transport, never real credentials or services.
@@ -39,7 +41,13 @@ class D1Fixture {
   async batch(statements) {
     this.sqlite.exec('BEGIN');
     try {
-      const result = statements.map(statement => ({ success: true, meta: { changes: Number(this.sqlite.prepare(statement.sql).run(...statement.values).changes) } }));
+      const result = statements.map(statement => {
+        const before=this.sqlite.prepare('SELECT total_changes() AS count').get().count;
+        const prepared=this.sqlite.prepare(statement.sql);
+        const rows=/\bRETURNING\b/i.test(statement.sql)?prepared.all(...statement.values):(prepared.run(...statement.values),[]);
+        const after=this.sqlite.prepare('SELECT total_changes() AS count').get().count;
+        return {success:true,results:rows,meta:{changes:Number(after-before)}};
+      });
       this.sqlite.exec('COMMIT');
       return result;
     } catch (error) { this.sqlite.exec('ROLLBACK'); throw error; }

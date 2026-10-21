@@ -1,0 +1,65 @@
+{
+  "startedAt": "2026-10-21T16:51:38.952Z",
+  "scope": "Actual private remote production-shaped RPC stream to SQLite DO, disposable D1, actual Images for ordinary variant. Synthetic Google/Turnstile and clock. No production data or credentials.",
+  "calls": [
+    {
+      "at": "2026-10-21T16:51:38.953Z",
+      "path": "/api/booking/admission",
+      "status": 200,
+      "wallMs": 481.69090000000006
+    },
+    {
+      "at": "2026-10-21T16:51:39.436Z",
+      "path": "/harness/stats",
+      "status": 200,
+      "wallMs": 98.56799999999998
+    },
+    {
+      "at": "2026-10-21T16:51:39.541Z",
+      "path": "/api/booking/requests",
+      "status": 201,
+      "wallMs": 446.73080000000004,
+      "requestId": "850b410b-07e8-4f34-bb27-340567857fdf"
+    },
+    {
+      "at": "2026-10-21T16:51:39.988Z",
+      "path": "/api/booking/requests",
+      "status": 201,
+      "wallMs": 269.45820000000003,
+      "requestId": "850b410b-07e8-4f34-bb27-340567857fdf"
+    },
+    {
+      "at": "2026-10-21T16:51:40.260Z",
+      "path": "/api/booking/requests",
+      "status": 201,
+      "wallMs": 605.1442,
+      "requestId": "5394c58e-69da-4385-bdcc-424f7ade60f1"
+    },
+    {
+      "at": "2026-10-21T16:51:40.866Z",
+      "path": "/api/booking/requests",
+      "status": 201,
+      "wallMs": 223.36940000000004,
+      "requestId": "5394c58e-69da-4385-bdcc-424f7ade60f1"
+    },
+    {
+      "at": "2026-10-21T16:51:41.089Z",
+      "path": "/harness/stats",
+      "status": 200,
+      "wallMs": 57.37870000000021
+    }
+  ],
+  "providerDelta": {
+    "oauth": 1,
+    "freeBusy": 2,
+    "events": 2,
+    "turnstile": 2,
+    "images": 0,
+    "rowsRead": 0,
+    "rowsWritten": 0,
+    "queries": 0,
+    "batches": 0,
+    "d1EngineDurationMs": 0
+  },
+  "passed": true
+}

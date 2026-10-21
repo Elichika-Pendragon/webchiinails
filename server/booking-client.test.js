@@ -5,6 +5,7 @@ import { webcrypto } from 'node:crypto';
 import test from 'node:test';
 import { BOOKING_DESIGNS, calculatePayment, getBookingDateBounds, listBookingSlots, normalizeBookingDesign, validateBooking } from './booking.js';
 import { PaymentProofError } from '../src/scripts/booking-proof.js';
+import { BookingChallengeError } from '../src/scripts/booking-challenge.js';
 import { createBookingDraft } from '../src/scripts/booking-draft.js';
 import { calendarMonthDays } from '../src/scripts/booking-calendar.js';
 
@@ -13,6 +14,16 @@ import { calendarMonthDays } from '../src/scripts/booking-calendar.js';
 const source = readFileSync(new URL('../src/scripts/booking-client.js', import.meta.url), 'utf8').replace(/^import .*;\r?\n/gm, '');
 class FixedDate extends Date { static now() { return Date.parse('2026-10-20T13:00:00Z'); } }
 const settle = () => new Promise(resolve => setTimeout(resolve, 0));
+let challengeSequence = 0;
+const syntheticJpeg = value => Buffer.concat([Buffer.from([255,216,255,219]),Buffer.from(value || 'synthetic image'),Buffer.from([255,217])]);
+const postPayload = call => {
+  assert.ok(call.request.body instanceof FormData, 'receipt transport stays binary multipart');
+  assert.deepEqual([...call.request.body.keys()].sort(), ['booking','proof']);
+  const proof = call.request.body.get('proof');
+  assert.ok(proof instanceof Blob);
+  return {...JSON.parse(call.request.body.get('booking')),proof:{contentType:proof.type,blob:proof}};
+};
+const proofBytes = async payload => Buffer.from(await payload.proof.blob.arrayBuffer());
 
 function element() {
   return {
@@ -30,7 +41,7 @@ function element() {
 }
 
 function harness(options = {}) {
-  const config = { enabled: true, statusFailure: false, requestFailures: 0, hold: false, availabilityFailures: 0, blockedTimes: [], busyIntervals: [], holdAvailability: false, closedDates: [], closedByDesign: {}, monthFailures: 0, holdMonth: false, monthResponse: null, clipboardFailure: false, proofFailure: false, holdProof: false, ...options };
+  const config = { enabled: true, statusFailure: false, requestFailures: 0, hold: false, availabilityFailures: 0, blockedTimes: [], busyIntervals: [], holdAvailability: false, closedDates: [], closedByDesign: {}, monthFailures: 0, holdMonth: false, monthResponse: null, clipboardFailure: false, proofFailure: false, holdProof: false, challengeFailure: false, holdChallenge: false, ...options };
   const nodes = Object.fromEntries([...source.matchAll(/querySelector\('([^']+)'\)/g)].map(match => [match[1], element()]));
   const inputs = Object.fromEntries(['name', 'whatsapp', 'agreedPrice', 'paymentMode', 'deposit', 'serviceDuration', 'date', 'time', 'paymentProof'].map(name => {
     const node = element(); node.name = name; return [name, node];
@@ -59,6 +70,8 @@ function harness(options = {}) {
   const objectUrls = [];
   const revokedUrls = [];
   const proofReleases = [];
+  const challengeCalls = [];
+  const challengeReleases = [];
   const intervals = new Map();
   let nextInterval = 0;
   class TestURL extends URL {
@@ -116,7 +129,9 @@ function harness(options = {}) {
     }
     if (config.hold) await new Promise(resolve => { release = resolve; });
     if (config.requestFailures-- > 0) return { ok: false, status: config.requestFailureStatus || 503, json: async () => ({ code: config.requestFailureCode || 'SYNTHETIC_UNAVAILABLE' }) };
-    const payload = JSON.parse(request.body);
+    const payload = postPayload({request});
+    assert.equal(Object.keys(request.headers).some(key=>key.toLowerCase()==='content-type'),false,'browser supplies multipart boundary');
+    assert.equal(request.headers['X-Booking-Nonce'],'a'.repeat(64));
     const result = validateBooking(payload, { now: FixedDate.now() });
     assert.equal(result.valid, true, 'controller must send valid canonical input');
     const booking = { ...result.value, ...result.preview, id: 'synthetic-request', status: 'pending', hasPaymentProof: true };
@@ -147,18 +162,32 @@ function harness(options = {}) {
     if (config.holdProof) await new Promise(resolve => proofReleases.push(resolve));
     if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
     if (config.proofFailure) throw new PaymentProofError('PROOF_TYPE', 'Gunakan gambar JPEG, PNG, atau WebP.');
-    const bytes = Buffer.concat([config.storage ? Buffer.from([255, 216, 255, 219]) : Buffer.alloc(0), Buffer.from(file.syntheticBytes || 'synthetic image')]);
+    const bytes = syntheticJpeg(file.syntheticBytes);
     const digest = Buffer.from(await webcrypto.subtle.digest('SHA-256', bytes)).toString('hex');
-    return { contentType: 'image/jpeg', base64: bytes.toString('base64'), digest, blob: new Blob([bytes], { type: 'image/jpeg' }) };
+    return { contentType: 'image/jpeg', digest, blob: new Blob([bytes], { type: 'image/jpeg' }) };
+  };
+  let challengeGeneration=0, rejectChallenge=null;
+  const challenge = {
+    async verify() {
+      const generation=challengeGeneration;
+      challengeCalls.push({action:'verify',generation});
+      if(config.holdChallenge) await new Promise((resolve,reject)=>{challengeReleases.push(resolve);rejectChallenge=reject;});
+      if(generation!==challengeGeneration)throw new DOMException('Aborted','AbortError');
+      rejectChallenge=null;
+      if(config.challengeFailure)throw new BookingChallengeError();
+      return {nonce:'a'.repeat(64),token:`synthetic-token-${++challengeSequence}`};
+    },
+    cancel() {challengeCalls.push({action:'cancel',generation:challengeGeneration});challengeGeneration++;rejectChallenge?.(new DOMException('Aborted','AbortError'));rejectChallenge=null;},
   };
   vm.runInNewContext(source, {
-    document, window, navigator, Intl, URL: TestURL, URLSearchParams, Date: FixedDate, Option, fetch, AbortController, DOMException, Uint8Array, PaymentProofError, preparePaymentProof,
+    document, window, navigator, Intl, URL: TestURL, URLSearchParams, Date: FixedDate, Option, fetch, AbortController, DOMException, Uint8Array, Blob, FormData, PaymentProofError, preparePaymentProof, BookingChallengeError,
     BOOKING_DESIGNS, calculatePayment, getBookingDateBounds, listBookingSlots, normalizeBookingDesign, validateBooking, calendarMonthDays,
     createBookingDraft: options => createBookingDraft({ ...options, storage: config.storage || null, receiptStore: config.receiptStore || { async purge() {}, async put() {}, async get() {}, async remove() {} }, crypto: webcrypto, now: FixedDate.now }),
     createBookingCalendar: (root, input, options) => { onMonthChange = options?.onMonthChange; return calendar; },
+    createBookingChallenge: () => challenge,
   });
   return {
-    nodes, inputs, form, fieldsets, values, calls, redirects, window, document, config, calendar, monthReleases, availabilityReleases, copyButtons, clipboardWrites, proofReleases, objectUrls, revokedUrls, timeoutBudgets, intervals, navigator,
+    nodes, inputs, form, fieldsets, values, calls, redirects, window, document, config, calendar, monthReleases, availabilityReleases, copyButtons, clipboardWrites, proofReleases, challengeCalls, challengeReleases, objectUrls, revokedUrls, timeoutBudgets, intervals, navigator,
     tickRefresh() { [...intervals.values()].forEach(timer => timer.callback()); },
     visibility(value) { document.visibilityState = value; document.listeners.visibilitychange(); },
     release: () => release(),
@@ -175,7 +204,7 @@ function harness(options = {}) {
     },
     uploadProof(file = { size: 100, type: 'image/png', name: 'synthetic.png' }) { inputs.paymentProof.files = [file]; return inputs.paymentProof.listeners.change(); },
     submit: () => form.listeners.submit({ preventDefault() {} }),
-    posts: () => calls.filter(call => call.path.endsWith('/requests')).map(call => JSON.parse(call.request.body)),
+    posts: () => calls.filter(call => call.path.endsWith('/requests')).map(postPayload),
   };
 }
 
@@ -222,7 +251,7 @@ test('an ambiguous failed upload survives reload with identical proof and retry 
   await next.submit();
   const after = next.posts()[0];
   assert.equal(after.idempotencyKey, before.idempotencyKey);
-  assert.equal(after.proof.base64, before.proof.base64);
+  assert.deepEqual(await proofBytes(after), await proofBytes(before));
   assert.equal(after.deposit, '35000');
   assert.equal(next.redirects.length, 1);
   assert.equal(saved.values.size, 0, 'validated acknowledgement clears text and retry metadata');
@@ -267,7 +296,7 @@ test('temporary availability failure during reload preserves the lost-ack identi
   assert.equal(recovered.posts().length, 0);
   await recovered.submit();
   assert.equal(recovered.posts()[0].idempotencyKey, first.idempotencyKey);
-  assert.equal(recovered.posts()[0].proof.base64, first.proof.base64);
+  assert.deepEqual(await proofBytes(recovered.posts()[0]), await proofBytes(first));
 });
 
 test('a newly occupied restored time is removed after revalidation without changing customer details or submitting', async () => {
@@ -459,14 +488,18 @@ test('online Book posts canonical strings, then prepares the unique approval lin
   const page = harness(); await settle(); await page.fill(); await page.submit();
   assert.equal(page.redirects.length, 1);
   const payload = page.posts()[0];
-  assert.deepEqual(Object.keys(payload).sort(), ['agreedPrice', 'date', 'deposit', 'designType', 'durationMinutes', 'idempotencyKey', 'name', 'paymentMode', 'proof', 'time', 'whatsapp']);
+  assert.deepEqual(Object.keys(payload).sort(), ['agreedPrice', 'date', 'deposit', 'designType', 'durationMinutes', 'idempotencyKey', 'name', 'paymentMode', 'proof', 'time', 'turnstileToken', 'whatsapp']);
   assert.equal(payload.whatsapp, '6281234567890');
   assert.equal(payload.agreedPrice, '100000');
   assert.equal(payload.paymentMode, 'deposit');
   assert.equal(payload.deposit, '20000');
   assert.equal(payload.designType, 'simple');
   assert.equal(payload.durationMinutes, '120');
-  assert.deepEqual(Object.keys(payload.proof).sort(), ['base64', 'contentType']);
+  assert.deepEqual(Object.keys(payload.proof).sort(), ['blob', 'contentType']);
+  assert.equal(payload.proof.blob.name,'receipt.jpg');
+  assert.match(payload.turnstileToken,/^synthetic-token-\d+$/);
+  assert.deepEqual(await proofBytes(payload),syntheticJpeg());
+  assert.equal(JSON.parse(page.calls.find(call=>call.path.endsWith('/requests')).request.body.get('booking')).proof,undefined);
   assert.match(payload.idempotencyKey, /^[a-f0-9]{64}$/);
   const message = new URL(page.redirects[0]).searchParams.get('text');
   assert.match(message, /\/book\/approve\?r=[A-Za-z0-9_-]{43}/);
@@ -503,6 +536,7 @@ test('request failure retains values and reuses the same key on an explicit retr
   await page.submit();
   assert.equal(page.posts().length, 2);
   assert.equal(page.posts()[0].idempotencyKey, page.posts()[1].idempotencyKey);
+  assert.notEqual(page.posts()[0].turnstileToken,page.posts()[1].turnstileToken,'fresh challenge tokens stay outside immutable request identity');
 });
 
 test('changing the quote creates a new key while preserving the manually entered DP', async () => {
@@ -873,7 +907,7 @@ test('changed compressed proof creates a new request identity without putting im
   await page.submit();
   assert.notEqual(page.posts()[0].idempotencyKey, page.posts()[1].idempotencyKey);
   assert.equal(page.posts()[1].proof.contentType, 'image/jpeg');
-  assert.equal(page.posts()[1].proof.base64, Buffer.from('different image').toString('base64'));
+  assert.deepEqual(await proofBytes(page.posts()[1]),syntheticJpeg('different image'));
   const message = new URL(page.redirects[0]).searchParams.get('text');
   assert.doesNotMatch(message, /never-send-this-name|ZGlmZmVyZW50IGltYWdl|data:image/);
   assert.match(message, /Bukti pembayaran sudah diunggah/);
@@ -1262,4 +1296,91 @@ test('an older free-time snapshot cannot restore choices after a newer month sum
   assert.equal(page.inputs.time.value, '');
   assert.equal(page.nodes['#booking-review'].disabled, true);
   assert.equal(page.posts().length, 0);
+});
+
+test('security verification starts only on explicit Book, and a failed challenge preserves proof and retry identity',async()=>{
+  const saved=draftStorage(),page=harness({...saved,challengeFailure:true});await settle();await page.fill();
+  page.tickRefresh();await recover();
+  assert.equal(page.challengeCalls.filter(call=>call.action==='verify').length,0);
+  await page.submit();
+  assert.equal(page.posts().length,0);assert.equal(page.redirects.length,0);
+  assert.equal(page.nodes['#booking-proof-preview'].hidden,false);assert.equal(page.inputs.name.value,'Synthetic Customer');
+  assert.equal(page.nodes['#booking-review'].disabled,false);
+  assert.match(page.nodes['#booking-submit-status'].textContent,/Pemeriksaan keamanan belum selesai/);
+  const key=JSON.parse([...saved.values.values()][0]).requestKey;assert.match(key,/^[a-f0-9]{64}$/);
+  page.config.challengeFailure=false;await page.submit();
+  assert.equal(page.posts()[0].idempotencyKey,key);assert.equal(page.challengeCalls.filter(call=>call.action==='verify').length,2);
+  assert.equal(page.redirects.length,1);
+});
+
+test('a pending challenge locks submission without uploading, and a second submit cannot start another challenge',async()=>{
+  const page=harness({holdChallenge:true});await settle();await page.fill();
+  const pending=page.submit();await settle();
+  assert.equal(page.posts().length,0);assert.equal(page.nodes['#booking-review'].disabled,true);
+  assert.ok(page.fieldsets.every(fieldset=>fieldset.disabled));
+  assert.match(page.nodes['#booking-submit-status'].textContent,/Memeriksa keamanan/);
+  await page.submit();assert.equal(page.challengeCalls.filter(call=>call.action==='verify').length,1);
+  page.challengeReleases[0]();await pending;
+  assert.equal(page.posts().length,1);assert.equal(page.redirects.length,1);
+});
+
+test('going offline cancels a pending challenge and reconnecting never submits without another explicit Book',async()=>{
+  const saved=draftStorage(),page=harness({...saved,holdChallenge:true});await settle();await page.fill();
+  const pending=page.submit();await settle();
+  page.navigator.onLine=false;page.window.listeners.offline();await pending;await recover();
+  assert.ok(page.challengeCalls.some(call=>call.action==='cancel'));
+  assert.equal(page.posts().length,0);assert.equal(page.redirects.length,0);assert.equal(page.nodes['#booking-review'].disabled,true);
+  assert.match(page.nodes['#booking-submit-status'].textContent,/Koneksi terputus/);
+  assert.equal(page.inputs.time.value,'14:00');assert.equal(page.nodes['#booking-proof-preview'].hidden,false);
+  const key=JSON.parse([...saved.values.values()][0]).requestKey;
+  page.config.holdChallenge=false;page.navigator.onLine=true;page.window.listeners.online();await recover();
+  assert.equal(page.posts().length,0);assert.equal(page.nodes['#booking-review'].disabled,false);
+  await page.submit();assert.equal(page.posts()[0].idempotencyKey,key);assert.equal(page.redirects.length,1);
+});
+
+test('page departure cancels a pending challenge, and a late token cannot upload or redirect',async()=>{
+  const page=harness({holdChallenge:true});await settle();await page.fill();
+  const pending=page.submit();await settle();page.window.listeners.pagehide();await pending;
+  page.challengeReleases[0]();await settle();
+  assert.equal(page.posts().length,0);assert.equal(page.redirects.length,0);
+  page.config.holdChallenge=false;page.window.listeners.pageshow({persisted:true});await recover();
+  assert.equal(page.nodes['#booking-review'].disabled,false);await page.submit();
+  assert.equal(page.posts().length,1);assert.equal(page.redirects.length,1);
+});
+
+test('admission capacity, inflight and form-update errors keep details and retry keys without automatic uploads',async()=>{
+  for(const [requestFailureCode,requestFailureStatus,message] of [['ADMISSION_CAPACITY',503,/sedang dibatasi/],['ADMISSION_IN_PROGRESS',409,/sedang diproses/],['BOOKING_UPDATE_REQUIRED',409,/Formulir telah diperbarui/]]){
+    const page=harness({requestFailures:1,requestFailureCode,requestFailureStatus});await settle();await page.fill();await page.submit();
+    assert.equal(page.redirects.length,0);assert.equal(page.inputs.name.value,'Synthetic Customer');assert.equal(page.inputs.time.value,'14:00');
+    assert.equal(page.nodes['#booking-proof-preview'].hidden,false);assert.match(page.nodes['#booking-submit-status'].textContent,message);
+    const first=page.posts()[0];await recover();assert.equal(page.posts().length,1);
+    await page.submit();assert.equal(page.posts()[1].idempotencyKey,first.idempotencyKey);
+    assert.notEqual(page.posts()[1].turnstileToken,first.turnstileToken);assert.equal(page.redirects.length,1);
+  }
+});
+
+test('server-rejected receipt requires replacement after reload while all other booking fields survive',async()=>{
+  for(const [requestFailureCode,requestFailureStatus] of [['PROOF_INVALID',400],['PROOF_SIZE',413]]){
+    const saved=draftStorage(),page=harness({...saved,requestFailures:1,requestFailureCode,requestFailureStatus});await settle();await page.fill();await page.submit();
+    assert.equal(page.redirects.length,0);assert.equal(page.nodes['#booking-review'].disabled,true);assert.equal(page.inputs.paymentProof.attrs['aria-invalid'],'true');
+    assert.match(page.nodes['#booking-proof-status'].textContent,requestFailureCode==='PROOF_SIZE'?/terlalu besar/:/belum dapat diperiksa/);
+    const first=page.posts()[0];await page.submit();assert.equal(page.posts().length,1,'cannot resend a rejected receipt without replacement');
+    page.window.listeners.pagehide();await recover();
+    const next=harness(saved);await recover();
+    assert.equal(next.inputs.name.value,'Synthetic Customer');assert.equal(next.inputs.date.value,'2026-10-21');assert.equal(next.inputs.time.value,'14:00');
+    assert.equal(next.nodes['#booking-review'].disabled,true,'reload cannot make a known rejected receipt ready');
+    assert.equal(next.posts().length,0);await next.uploadProof({size:100,type:'image/png',name:'replacement.png',syntheticBytes:'replacement valid image'});
+    assert.equal(next.nodes['#booking-review'].disabled,false);await next.submit();
+    assert.notEqual(next.posts()[0].idempotencyKey,first.idempotencyKey);assert.equal(next.redirects.length,1);
+  }
+});
+
+test('a historical base64 receipt draft recovers into binary transport with its original lost-ack key',async()=>{
+  const saved=draftStorage(),original=harness({...saved,requestFailures:1});await settle();await original.fill();await original.submit();
+  original.window.listeners.pagehide();await recover();const first=original.posts()[0];
+  for(const [id,record] of saved.images){const legacy={...record,base64:Buffer.from(await record.blob.arrayBuffer()).toString('base64')};delete legacy.blob;delete legacy.version;saved.images.set(id,legacy);}
+  const next=harness(saved);await recover();assert.equal(next.nodes['#booking-proof-preview'].hidden,false);assert.equal(next.nodes['#booking-review'].disabled,false);
+  assert.equal(next.posts().length,0);await next.submit();
+  assert.equal(next.posts()[0].idempotencyKey,first.idempotencyKey);assert.deepEqual(await proofBytes(next.posts()[0]),await proofBytes(first));
+  assert.equal(next.redirects.length,1);
 });

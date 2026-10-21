@@ -106,9 +106,7 @@ export async function preparePaymentProof(file, { signal, decodeImage = decodeLo
     check(signal);
     const digest = Array.from(new Uint8Array(await boundedPreparation(() => crypto.subtle.digest('SHA-256', bytes), signal)), byte => byte.toString(16).padStart(2, '0')).join('');
     check(signal);
-    let binary = '';
-    for (let offset = 0; offset < bytes.length; offset += 32768) binary += String.fromCharCode(...bytes.subarray(offset, offset + 32768));
-    return { contentType: 'image/jpeg', base64: btoa(binary), digest, blob };
+    return { contentType: 'image/jpeg', digest, blob };
   } finally {
     image?.close?.();
     if (canvas) { canvas.width = 0; canvas.height = 0; }

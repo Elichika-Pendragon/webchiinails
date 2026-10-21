@@ -15,9 +15,9 @@ function fixture(overrides = {}) {
 }
 const fields = { name: 'Synthetic Customer', whatsapp: '+62 812 3456 7890', agreedPrice: '100000', paymentMode: 'deposit', deposit: '35000', serviceDuration: 'simple:120', date: '2026-10-30', time: '08:00' };
 async function proof(label = 'fixture') {
-  const bytes = Buffer.concat([Buffer.from([255, 216, 255, 219]), Buffer.from(label)]);
+  const bytes = Buffer.concat([Buffer.from([255, 216, 255, 219]), Buffer.from(label), Buffer.from([255, 217])]);
   const digest = Buffer.from(await webcrypto.subtle.digest('SHA-256', bytes)).toString('hex');
-  return { contentType: 'image/jpeg', base64: bytes.toString('base64'), digest };
+  return { contentType: 'image/jpeg', blob: new Blob([bytes], { type: 'image/jpeg' }), digest };
 }
 
 test('per-tab metadata stores only bounded booking fields and exact retry identity, never URLs or credentials', () => {
@@ -46,11 +46,48 @@ test('prepared JPEG restores byte-for-byte with verified digest and without rewr
   assert.equal(f.writes.length, 1);
   const next = f.create(); next.read();
   const restored = await next.loadProof();
-  assert.equal(restored.base64, prepared.base64);
+  assert.equal('base64' in restored, false);
   assert.equal(restored.digest, prepared.digest);
   assert.equal(restored.blob.type, 'image/jpeg');
-  assert.equal(Buffer.from(await restored.blob.arrayBuffer()).toString('base64'), prepared.base64);
+  assert.deepEqual(await restored.blob.arrayBuffer(), await prepared.blob.arrayBuffer());
+  assert.equal(f.writes[0].version, 2);
+  assert.equal('base64' in f.writes[0], false);
   assert.equal(next.read().fields.deposit, '35000');
+});
+
+test('a legacy base64 receipt restores as a verified Blob without changing retry identity or expiry', async () => {
+  const f=fixture(); const draft=f.create(); const prepared=await proof('old-format');
+  draft.save({fields,proofDigest:prepared.digest,requestKey:'b'.repeat(64),requestSignature:'original immutable signature'});
+  await draft.saveProof(prepared);
+  const old=[...f.images.values()][0];
+  delete old.version;
+  old.base64=Buffer.from(await old.blob.arrayBuffer()).toString('base64');
+  delete old.blob;
+  const originalMetadata=[...f.values.values()][0];
+  const next=f.create(); const metadata=next.read();
+  const restored=await next.loadProof();
+  assert.deepEqual(await restored.blob.arrayBuffer(),await prepared.blob.arrayBuffer());
+  assert.equal(restored.digest,prepared.digest);
+  assert.equal('base64' in restored,false);
+  assert.equal(metadata.requestKey,'b'.repeat(64));
+  assert.equal(metadata.requestSignature,'original immutable signature');
+  assert.equal([...f.values.values()][0],originalMetadata);
+  assert.equal(f.writes.length,1,'reading a legacy receipt does not race a migration write');
+});
+
+test('unknown receipt versions and noncanonical legacy base64 cannot become ready proof', async () => {
+  for(const invalid of ['version','base64','type']) {
+    const f=fixture(); const draft=f.create(); const prepared=await proof();
+    draft.save({fields,proofDigest:prepared.digest}); await draft.saveProof(prepared);
+    const record=[...f.images.values()][0];
+    if(invalid==='version') record.version=3;
+    if(invalid==='type') record.blob=new Blob([await prepared.blob.arrayBuffer()],{type:'image/svg+xml'});
+    if(invalid==='base64') { delete record.version; record.base64=Buffer.from(await prepared.blob.arrayBuffer()).toString('base64')+'\n'; delete record.blob; }
+    const next=f.create();next.read();
+    assert.equal(await next.loadProof(),null,invalid);
+    assert.equal(next.state().receiptSaved,false);
+    assert.equal(next.read().fields.name,fields.name,'text progress survives receipt rejection');
+  }
 });
 
 test('every current service choice and the typed manual amount survive draft recovery without payment recalculation', () => {
@@ -131,9 +168,9 @@ test('corrupt JPEG bytes or digest never restores ready proof', async () => {
     const f = fixture(); const draft = f.create(); const prepared = await proof();
     draft.save({ fields, proofDigest: prepared.digest }); await draft.saveProof(prepared);
     const record = [...f.images.values()][0];
-    if (corrupt === 'bytes') record.base64 = `${record.base64.slice(0, -4)}YWJj`;
+    if (corrupt === 'bytes') record.blob = new Blob([new Uint8Array([255, 216, 255, 1, 255, 217])], { type: 'image/jpeg' });
     if (corrupt === 'digest') record.digest = 'f'.repeat(64);
-    if (corrupt === 'header') record.base64 = Buffer.from('not a JPEG').toString('base64');
+    if (corrupt === 'header') record.blob = new Blob(['not a JPEG'], { type: 'image/jpeg' });
     const next = f.create(); next.read();
     assert.equal(await next.loadProof(), null, corrupt);
     assert.equal(next.state().receiptSaved, false);

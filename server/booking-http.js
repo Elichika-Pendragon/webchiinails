@@ -13,7 +13,9 @@ import { BookingRequestError, createBookingRequest, getBookingRequest, decideBoo
 import { createGoogleCalendarProvider } from './google-calendar.js';
 import { getBookingCalendarMonth, getBookingMonthBounds } from './booking-month.js';
 import { normalizeBookingDesign, getOperatingHours, getBookingDateBounds, calculatePayment } from './booking.js';
-import { PAYMENT_PROOF_BODY_MAX_BYTES, PAYMENT_PROOF_MAX_BYTES, paymentProofBytes } from './booking-proofs.js';
+import { PAYMENT_PROOF_MAX_BYTES, paymentProofBytes, PaymentProofValidationError } from './booking-proofs.js';
+import { BookingAdmissionError, issueBookingAdmission, preflightBookingAdmission, submissionAdmission, isBookingAdmissionConfigured } from './booking-admission.js';
+import { createPublicBookingCalendar } from './booking-occupancy-cache.js';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', { fatal: true });
@@ -43,12 +45,34 @@ const HTTP_ERRORS = {
   BOOKING_DISABLED: [503, 'Booking belum tersedia. Silakan hubungi Chii melalui WhatsApp.'],
   BOOKING_ORIGIN: [403, 'Buka formulir booking melalui situs Chii.'],
   BOOKING_METHOD: [405, 'Metode permintaan tidak didukung.'],
-  BOOKING_MEDIA: [415, 'Kirim data booking dalam format JSON.'],
+  BOOKING_MEDIA: [415, 'Format pengiriman tidak didukung. Muat ulang formulir lalu coba lagi.'],
+  BOOKING_UPDATE_REQUIRED: [409, 'Formulir telah diperbarui. Muat ulang halaman untuk memulihkan isian dan melanjutkan.'],
   BOOKING_BODY: [413, 'Data booking terlalu besar.'],
   BOOKING_INPUT: [400, 'Periksa kembali data booking.'],
   BOOKING_TIMEOUT: [503, 'Permintaan belum selesai. Coba lagi sebentar.'],
   BOOKING_UNAVAILABLE: [503, 'Permintaan belum dapat diproses. Coba lagi sebentar.'],
+  BOOKING_BUSY: [503, 'Formulir booking sedang sibuk. Isian tetap tersimpan; coba lagi sebentar.'],
+  BOOKING_PUBLIC_RATE_LIMIT: [429, 'Kalender terlalu sering dimuat. Tunggu sebentar lalu coba lagi.'],
+  BOOKING_PUBLIC_UNAVAILABLE: [503, 'Kalender belum dapat diperiksa. Coba lagi sebentar.'],
 };
+
+export const BOOKING_HTTP_LIMITS = Object.freeze({
+  maxInFlightCreations: 8,
+  publicReadsPerIpMinute: 300,
+  publicIpEntries: 2048,
+});
+
+function trustedPublicIp(request) {
+  const value = request.headers.get('CF-Connecting-IP');
+  if (typeof value !== 'string' || !value || value.length > 45) throw new BookingHttpError('BOOKING_PUBLIC_UNAVAILABLE');
+  if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(value)) {
+    const parts = value.split('.').map(Number);
+    if (parts.every(part => part >= 0 && part <= 255)) return parts.join('.');
+  } else if (value.includes(':') && /^[0-9a-f:.]+$/i.test(value)) {
+    try { return new URL(`http://[${value}]/`).hostname.toLowerCase(); } catch { /* Invalid IPv6 never becomes another shared bucket. */ }
+  }
+  throw new BookingHttpError('BOOKING_PUBLIC_UNAVAILABLE');
+}
 
 class BookingHttpError extends Error {
   constructor(code, allow) {
@@ -95,6 +119,20 @@ function errorResponse(error) {
   } else if (error instanceof BookingAuthError) {
     const safe = new BookingAuthError(error.code);
     ({ code, message, status } = safe);
+  } else if (error instanceof BookingAdmissionError) {
+    const safe = new BookingAdmissionError(error.code);
+    ({ code, message, status } = safe);
+  } else if (error instanceof PaymentProofValidationError) {
+    const known = {
+      PROOF_INVALID: [400, 'Gambar bukti pembayaran belum dapat dibuka. Pilih gambar lain.'],
+      PROOF_SIZE: [413, 'Gambar bukti masih terlalu besar. Potong bagian bukti pembayaran lalu unggah lagi.'],
+      PROOF_UNAVAILABLE: [503, 'Gambar belum dapat diperiksa. Isian tetap tersimpan; coba lagi sebentar.'],
+    };
+    if (Object.hasOwn(known, error.code)) {
+      code = error.code;
+      [status, message] = known[code];
+      if (status !== 503) fields = { proof: FIELD_MESSAGES.proof };
+    }
   } else if (error instanceof BookingRequestError && STORE_CODES.has(error.code)) {
     const safe = new BookingRequestError(error.code, ERROR_STATUSES.has(error.status) ? error.status : 503);
     ({ code, message, status } = safe);
@@ -118,15 +156,25 @@ function siteOrigin(env) {
 
 /** Readiness is deliberately private: status returns only this boolean. */
 export function isBookingEnabled(env) {
+  return isBookingCoreEnabled(env) && isBookingAdmissionConfigured(env) && typeof env.BOOKING_IMAGES?.fetch === 'function';
+}
+
+// The private submission processor never receives the owner's login signing
+// secret. Only Pages owner routes need that separate authentication config.
+export function isBookingSubmissionEnabled(env) {
+  return isBookingCoreEnabled(env, false) && isBookingAdmissionConfigured(env) && typeof env.BOOKING_IMAGES?.fetch === 'function';
+}
+
+function isBookingCoreEnabled(env, ownerAuth = true) {
   if (!object(env) || env.BOOKING_ENABLED !== 'true' || !siteOrigin(env)
     || typeof env.BOOKING_DB?.prepare !== 'function' || typeof env.BOOKING_DB?.batch !== 'function') return false;
   const bounded = (value, minimum, maximum) => typeof value === 'string' && encoder.encode(value).length >= minimum && value.length <= maximum && !/[\u0000-\u001f\u007f]/.test(value);
   return bounded(env.BOOKING_LINK_SECRET, 32, 4096)
-    && bounded(env.BOOKING_AUTH_SECRET, 32, 512)
+    && (!ownerAuth || bounded(env.BOOKING_AUTH_SECRET, 32, 512))
     && typeof env.BOOKING_OWNER_EMAIL === 'string' && env.BOOKING_OWNER_EMAIL.length <= 254
     && /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,63}$/.test(env.BOOKING_OWNER_EMAIL)
-    && typeof env.GOOGLE_OAUTH_CLIENT_ID === 'string' && env.GOOGLE_OAUTH_CLIENT_ID.length <= 256
-    && /^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/.test(env.GOOGLE_OAUTH_CLIENT_ID)
+    && (!ownerAuth || typeof env.GOOGLE_OAUTH_CLIENT_ID === 'string' && env.GOOGLE_OAUTH_CLIENT_ID.length <= 256
+    && /^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/.test(env.GOOGLE_OAUTH_CLIENT_ID))
     && typeof env.GOOGLE_SERVICE_ACCOUNT_EMAIL === 'string' && env.GOOGLE_SERVICE_ACCOUNT_EMAIL.length <= 254
     && /^[a-z0-9._-]+@[a-z0-9.-]+\.gserviceaccount\.com$/i.test(env.GOOGLE_SERVICE_ACCOUNT_EMAIL)
     && typeof env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY === 'string' && env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.length <= 16384
@@ -135,8 +183,8 @@ export function isBookingEnabled(env) {
     && env.GOOGLE_CALENDAR_ID !== 'primary' && !/[\u0000-\u0020\u007f]/.test(env.GOOGLE_CALENDAR_ID);
 }
 
-function assertReady(env) {
-  if (!isBookingEnabled(env)) throw new BookingHttpError('BOOKING_DISABLED');
+function assertReady(env, owner = false) {
+  if (!(owner ? isBookingCoreEnabled(env) : isBookingEnabled(env))) throw new BookingHttpError('BOOKING_DISABLED');
 }
 
 function method(request, allowed) {
@@ -157,9 +205,7 @@ function tokenFrom(request) {
   return tokens[0];
 }
 
-async function readJson(request, maximum = 8192, timeoutMs = 5000) {
-  const type = request.headers.get('Content-Type') || '';
-  if (!/^application\/json(?:\s*;\s*charset\s*=\s*(?:utf-8|"utf-8"))?\s*$/i.test(type)) throw new BookingHttpError('BOOKING_MEDIA');
+async function readBodyBytes(request, maximum, timeoutMs) {
   const length = request.headers.get('Content-Length');
   if (length && (!/^\d+$/.test(length) || Number(length) > maximum)) throw new BookingHttpError('BOOKING_BODY');
   if (!request.body) throw new BookingHttpError('BOOKING_INPUT');
@@ -174,23 +220,19 @@ async function readJson(request, maximum = 8192, timeoutMs = 5000) {
     }, timeoutMs);
   });
   const read = (async () => {
-    const chunks = [];
-    let size = 0;
+    const all = new Uint8Array(maximum);
+    let size = 0, chunks = 0, emptyChunks = 0;
     while (true) {
       const { done, value } = await reader.read();
       if (timedOut) throw new BookingHttpError('BOOKING_TIMEOUT');
       if (done) break;
+      if (!(value instanceof Uint8Array)) throw new BookingHttpError('BOOKING_INPUT');
+      if (++chunks > 4096 || value.byteLength === 0 && ++emptyChunks > 32) throw new BookingHttpError('BOOKING_BODY');
       size += value.byteLength;
       if (size > maximum) throw new BookingHttpError('BOOKING_BODY');
-      chunks.push(value);
+      all.set(value, size - value.byteLength);
     }
-    const all = new Uint8Array(size);
-    let offset = 0;
-    for (const chunk of chunks) { all.set(chunk, offset); offset += chunk.byteLength; }
-    let value;
-    try { value = JSON.parse(decoder.decode(all)); } catch { throw new BookingHttpError('BOOKING_INPUT'); }
-    if (!object(value)) throw new BookingHttpError('BOOKING_INPUT');
-    return value;
+    return all.subarray(0, size);
   })();
   try { return await Promise.race([read, timeout]); }
   finally {
@@ -200,6 +242,41 @@ async function readJson(request, maximum = 8192, timeoutMs = 5000) {
     if (!timedOut) reader.releaseLock();
     else read.finally(() => reader.releaseLock()).catch(() => {});
   }
+}
+
+async function readJson(request, maximum = 8192, timeoutMs = 5000) {
+  const type = request.headers.get('Content-Type') || '';
+  if (!/^application\/json(?:\s*;\s*charset\s*=\s*(?:utf-8|"utf-8"))?\s*$/i.test(type)) throw new BookingHttpError('BOOKING_MEDIA');
+  const bytes = await readBodyBytes(request, maximum, timeoutMs);
+  let value;
+  try { value = JSON.parse(decoder.decode(bytes)); } catch { throw new BookingHttpError('BOOKING_INPUT'); }
+  if (!object(value)) throw new BookingHttpError('BOOKING_INPUT');
+  return value;
+}
+
+export const BOOKING_MULTIPART_MAX_BYTES = PAYMENT_PROOF_MAX_BYTES + 16384;
+
+async function readBookingSubmission(request, timeoutMs) {
+  const type = request.headers.get('Content-Type') || '';
+  // An older open tab must reload, then restore its unchanged draft/key. Do not
+  // run the costly JSON/base64 path on the Free CPU budget.
+  if (/^application\/json(?:\s*;|\s*$)/i.test(type)) throw new BookingHttpError('BOOKING_UPDATE_REQUIRED');
+  if (!/^multipart\/form-data\s*;\s*boundary=(?:[A-Za-z0-9'()+_,.\/:=?-]{1,70}|"[A-Za-z0-9'()+_,.\/:=?-]{1,70}")\s*$/i.test(type)) throw new BookingHttpError('BOOKING_MEDIA');
+  // Buffer only the bounded stream before invoking the platform multipart parser.
+  const bytes = await readBodyBytes(request, BOOKING_MULTIPART_MAX_BYTES, timeoutMs);
+  let fields;
+  try { fields = await new Response(bytes, { headers: { 'Content-Type': type } }).formData(); }
+  catch { throw new BookingHttpError('BOOKING_INPUT'); }
+  const entries = [...fields.entries()];
+  if (entries.length !== 2 || fields.getAll('booking').length !== 1 || fields.getAll('proof').length !== 1
+    || entries.some(([name]) => !['booking', 'proof'].includes(name))) throw new BookingHttpError('BOOKING_INPUT');
+  const metadata = fields.get('booking'), file = fields.get('proof');
+  if (typeof metadata !== 'string' || encoder.encode(metadata).length > 4096 || !file || typeof file === 'string'
+    || file.type !== 'image/jpeg' || file.size < 4 || file.size > PAYMENT_PROOF_MAX_BYTES) throw new BookingHttpError('BOOKING_INPUT');
+  let value;
+  try { value = JSON.parse(metadata); } catch { throw new BookingHttpError('BOOKING_INPUT'); }
+  if (!object(value) || Object.hasOwn(value, 'proof')) throw new BookingHttpError('BOOKING_INPUT');
+  return { ...value, proof: { contentType: 'image/jpeg', bytes: new Uint8Array(await file.arrayBuffer()) } };
 }
 
 export function createBookingHttpHandlers(overrides = {}) {
@@ -214,13 +291,39 @@ export function createBookingHttpHandlers(overrides = {}) {
   const challenge = overrides.getAuthChallenge ?? getAuthChallenge;
   const signIn = overrides.signInOwner ?? signInOwner;
   const signOut = overrides.signOutOwner ?? signOutOwner;
+  const issueAdmission = overrides.issueBookingAdmission ?? issueBookingAdmission;
+  const preflightAdmission = overrides.preflightBookingAdmission ?? preflightBookingAdmission;
+  const admitSubmission = overrides.submissionAdmission ?? submissionAdmission;
+  const publicCalendar = overrides.createPublicBookingCalendar ?? createPublicBookingCalendar;
   const createCalendar = overrides.createGoogleCalendarProvider ?? createGoogleCalendarProvider;
   const bodyTimeoutMs = overrides.bodyTimeoutMs ?? 5000;
-  // A near-limit receipt includes base64 overhead and may need over 45 seconds
-  // on a weak mobile uplink. Keep uploads bounded without applying the much
+  // A near-limit binary receipt can need over 30 seconds on a weak uplink.
+  // Keep uploads bounded without applying the much
   // shorter small-JSON budget to their streaming request body.
   const proofBodyTimeoutMs = overrides.bodyTimeoutMs ?? 120000;
   const authOptions = { now, ...(overrides.fetch ? { fetch: overrides.fetch } : {}) };
+  let activeCreations = 0;
+  let publicMinute;
+  const publicIps = new Map();
+  // This is a coarse per-handler/isolate guard, not a global/account DDoS
+  // budget. Both public projections share the same IP window. It performs no
+  // D1 writes, so normal customer polling does not consume database write quota.
+  const admitPublicRead = overrides.publicReadAdmission ?? (request => {
+    const ip = trustedPublicIp(request);
+    let current;
+    try { current = now(); } catch { throw new BookingHttpError('BOOKING_PUBLIC_UNAVAILABLE'); }
+    if (!Number.isSafeInteger(current) || current <= 0) throw new BookingHttpError('BOOKING_PUBLIC_UNAVAILABLE');
+    const minute = Math.floor(current / 60000);
+    if (minute !== publicMinute) { publicIps.clear(); publicMinute = minute; }
+    const hits = publicIps.get(ip);
+    if (hits !== undefined) {
+      if (hits >= BOOKING_HTTP_LIMITS.publicReadsPerIpMinute) throw new BookingHttpError('BOOKING_PUBLIC_RATE_LIMIT');
+      publicIps.set(ip, hits + 1);
+    } else {
+      if (publicIps.size >= BOOKING_HTTP_LIMITS.publicIpEntries) throw new BookingHttpError('BOOKING_PUBLIC_RATE_LIMIT');
+      publicIps.set(ip, 1);
+    }
+  });
   // Keep at most two credential sets per isolate. Tokens/imported RSA keys live
   // in the provider; owner reads/cancel/login never instantiate this adapter.
   const calendarProviders = [];
@@ -253,21 +356,34 @@ export function createBookingHttpHandlers(overrides = {}) {
       return json({ enabled: isBookingEnabled(env) });
     }),
     requests: guarded(async (request, env) => {
-      assertReady(env);
+      if (!(overrides.isSubmissionEnabled ?? isBookingEnabled)(env)) throw new BookingHttpError('BOOKING_DISABLED');
       method(request, ['POST']);
       sameOrigin(request, env, true);
-      const input = await readJson(request, PAYMENT_PROOF_BODY_MAX_BYTES, proofBodyTimeoutMs);
-      if (Object.keys(input).some(key => !REQUEST_FIELDS.includes(key) && !['paymentMode', 'deposit', 'designType', 'durationMinutes', 'proof'].includes(key)) || REQUEST_FIELDS.some(key => typeof input[key] !== 'string')
+      if (activeCreations >= BOOKING_HTTP_LIMITS.maxInFlightCreations) throw new BookingHttpError('BOOKING_BUSY');
+      activeCreations++;
+      try {
+      const context = await preflightAdmission(request, env, authOptions);
+      const input = await readBookingSubmission(request, proofBodyTimeoutMs);
+      if (Object.keys(input).some(key => !REQUEST_FIELDS.includes(key) && !['paymentMode', 'deposit', 'designType', 'durationMinutes', 'proof', 'turnstileToken'].includes(key)) || REQUEST_FIELDS.some(key => typeof input[key] !== 'string')
         || (input.paymentMode !== undefined && !['deposit', 'full'].includes(input.paymentMode))
         || (input.deposit !== undefined && (typeof input.deposit !== 'string' || !/^\d{1,16}$/.test(input.deposit) || !calculatePayment(input.agreedPrice, input.paymentMode, input.deposit)))
         || (input.designType !== undefined && typeof input.designType !== 'string') || (input.durationMinutes !== undefined && typeof input.durationMinutes !== 'string')
         || !normalizeBookingDesign(input.designType, input.durationMinutes)
-        || !object(input.proof) || Object.keys(input.proof).sort().join(',') !== 'base64,contentType' || input.proof.contentType !== 'image/jpeg'
-        || typeof input.proof.base64 !== 'string' || input.proof.base64.length > 4 * Math.ceil(PAYMENT_PROOF_MAX_BYTES / 3)) throw new BookingHttpError('BOOKING_INPUT');
-      return json(await createRequest(env, input, { now, calendar: calendar(env) }), 201);
+        || typeof input.turnstileToken !== 'string' || input.turnstileToken.length > 2048) throw new BookingHttpError('BOOKING_INPUT');
+      const { turnstileToken, ...booking } = input;
+      const admission = admitSubmission(env, context, { ...authOptions, turnstileToken });
+      return json(await createRequest(env, booking, { now, calendar: calendar(env), admission }), 201);
+      } finally { activeCreations--; }
+    }),
+    admission: guarded(async (request, env) => {
+      assertReady(env);
+      method(request, ['GET']);
+      sameOrigin(request, env);
+      if (new URL(request.url).search) throw new BookingHttpError('BOOKING_INPUT');
+      return protect(await issueAdmission(request, env, authOptions));
     }),
     proof: guarded(async (request, env) => {
-      assertReady(env);
+      assertReady(env, true);
       method(request, ['GET']);
       sameOrigin(request, env);
       const identity = await requireOwner(request, env, authOptions);
@@ -285,6 +401,7 @@ export function createBookingHttpHandlers(overrides = {}) {
       method(request, ['POST']);
       sameOrigin(request, env, true);
       if (new URL(request.url).search) throw new BookingHttpError('BOOKING_INPUT');
+      await admitPublicRead(request, env, authOptions);
       const input = await readJson(request, 1024, bodyTimeoutMs);
       if (Object.keys(input).sort().join(',') !== 'date,designType,durationMinutes' || typeof input.date !== 'string' || typeof input.designType !== 'string'
         || typeof input.durationMinutes !== 'string') throw new BookingHttpError('BOOKING_INPUT');
@@ -293,20 +410,21 @@ export function createBookingHttpHandlers(overrides = {}) {
       const date = input.date;
       const bounds = getBookingDateBounds({ now: now() });
       if (!getOperatingHours(date) || date < bounds.minDate || date > bounds.maxDate) throw new BookingHttpError('BOOKING_INPUT');
-      return json(await readAvailability(env, { date, ...selection }, { now, calendar: calendar(env) }));
+      return json(await readAvailability(env, { date, ...selection }, { now, calendar: publicCalendar(env, { now, calendar: calendar(env) }) }));
     }),
     calendar: guarded(async (request, env) => {
       assertReady(env);
       method(request, ['POST']);
       sameOrigin(request, env, true);
       if (new URL(request.url).search) throw new BookingHttpError('BOOKING_INPUT');
+      await admitPublicRead(request, env, authOptions);
       const input = await readJson(request, 1024, bodyTimeoutMs);
       if (Object.keys(input).sort().join(',') !== 'designType,durationMinutes,month' || typeof input.month !== 'string'
         || typeof input.designType !== 'string' || typeof input.durationMinutes !== 'string') throw new BookingHttpError('BOOKING_INPUT');
       const selection = normalizeBookingDesign(input.designType, input.durationMinutes);
       if (!selection) throw new BookingHttpError('BOOKING_INPUT');
       const bounds = getBookingMonthBounds(input.month, { now });
-      const result = await readCalendarMonth(env, input, { now, calendar: calendar(env) });
+      const result = await readCalendarMonth(env, input, { now, calendar: calendar(env), occupancyCache: true });
       // Explicit response shape protects this public route even if an internal
       // adapter accidentally includes private Calendar or customer properties.
       if (!object(result) || Object.keys(result).sort().join(',') !== 'closedDates,designType,durationMinutes,maxDate,minDate,month,timeZone'
@@ -318,7 +436,7 @@ export function createBookingHttpHandlers(overrides = {}) {
       return json(result);
     }),
     review: guarded(async (request, env) => {
-      assertReady(env);
+      assertReady(env, true);
       method(request, ['GET', 'POST']);
       sameOrigin(request, env, request.method === 'POST');
       // Authenticate before parsing the lookup token, request body or any PII.
@@ -333,7 +451,7 @@ export function createBookingHttpHandlers(overrides = {}) {
       return json(await decideRequest(env, token, input.action, options));
     }),
     session: guarded(async (request, env) => {
-      assertReady(env);
+      assertReady(env, true);
       method(request, ['GET', 'POST', 'DELETE']);
       sameOrigin(request, env, request.method !== 'GET');
       const action = request.method === 'GET' ? challenge : request.method === 'POST' ? signIn : signOut;
@@ -350,3 +468,4 @@ export const handleBookingSession = handlers.session;
 export const handleBookingAvailability = handlers.availability;
 export const handleBookingCalendarMonth = handlers.calendar;
 export const handleBookingProof = handlers.proof;
+export const handleBookingAdmission = handlers.admission;

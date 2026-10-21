@@ -1,0 +1,36 @@
+{
+  "scope": "Local actual Request/Response RPC stream, production forwarder and processor boundary, real local D1 and image emulator; synthetic provider responses. Not Cloudflare runtime CPU evidence.",
+  "checks": [
+    "No public fixture or direct DO HTTP route",
+    {
+      "name": "Synthetic Identity",
+      "sourceBytes": 512000,
+      "storedBytes": 512000,
+      "first": 201,
+      "retry": 201,
+      "sameRequest": true,
+      "conflict": 409,
+      "storedHashVerified": true
+    },
+    {
+      "name": "Synthetic Actual Images",
+      "sourceBytes": 244849,
+      "storedBytes": 178656,
+      "first": 201,
+      "retry": 201,
+      "sameRequest": true,
+      "conflict": 409,
+      "storedHashVerified": true
+    },
+    {
+      "invalid": 400,
+      "challengeFailure": 403,
+      "ledger": {
+        "stored_count": 2,
+        "stored_bytes": 690656
+      },
+      "noLeakedReservations": true
+    }
+  ],
+  "passed": true
+}

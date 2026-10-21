@@ -58,7 +58,8 @@ test('proof is redrawn at a bounded size and returns only compressed bytes plus 
   assert.deepEqual(encoded.slice(1, 4), [1600, 1200, 'image/jpeg']);
   assert.equal(image.draws[0][0], 'white');
   assert.equal(image.draws[1][0], 'image');
-  assert.equal(Buffer.from(result.base64, 'base64').byteLength, 128);
+  assert.equal((await result.blob.arrayBuffer()).byteLength, 128);
+  assert.equal('base64' in result, false);
   const expected = Buffer.from(await crypto.subtle.digest('SHA-256', new Uint8Array(128))).toString('hex');
   assert.equal(result.digest, expected);
   assert.equal('name' in result, false);
