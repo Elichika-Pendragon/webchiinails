@@ -3,7 +3,7 @@
 // never serializes a large image into synchronous Web Storage.
 export const BOOKING_DRAFT_TTL = 24 * 60 * 60 * 1000;
 const STORAGE_KEY = 'chii.booking.draft.v1';
-const FIELD_LIMITS = { name: 80, whatsapp: 40, agreedPrice: 16, paymentMode: 12, serviceDuration: 24, date: 10, time: 5 };
+const FIELD_LIMITS = { name: 80, whatsapp: 40, agreedPrice: 16, paymentMode: 12, deposit: 16, serviceDuration: 24, date: 10, time: 5 };
 const token = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 const live = (value, now) => value?.version === 1 && token(value.id) && Number.isFinite(value.createdAt) && value.createdAt <= now && value.expiresAt === value.createdAt + BOOKING_DRAFT_TTL && value.expiresAt > now;
 

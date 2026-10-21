@@ -20,8 +20,8 @@ const env = {
 };
 const current = Date.parse('2026-10-20T12:00:00Z');
 const reviewToken = 'A'.repeat(43);
-const input = { name: 'Synthetic Customer', whatsapp: '081234567890', agreedPrice: '100000', date: '2026-10-21', time: '14:00', idempotencyKey: 'synthetic-request-key-1', proof };
-const summary = { id: 'synthetic-request-id', status: 'pending', name: input.name, whatsapp: '6281234567890', agreedPrice: 100000, deposit: 20000, paymentMode: 'deposit', paymentPolicy: 'min20k-v2', remainingBalance: 80000, date: input.date, time: input.time, startISO: '2026-10-21T14:00:00+07:00', endISO: '2026-10-21T16:00:00+07:00', durationMinutes: 120, expiresAt: '2026-10-21T07:00:00.000Z' };
+const input = { name: 'Synthetic Customer', whatsapp: '081234567890', agreedPrice: '100000', deposit: '20000', date: '2026-10-21', time: '14:00', idempotencyKey: 'synthetic-request-key-1', proof };
+const summary = { id: 'synthetic-request-id', status: 'pending', name: input.name, whatsapp: '6281234567890', agreedPrice: 100000, deposit: 20000, paymentMode: 'deposit', paymentPolicy: 'manual-min20k-v3', remainingBalance: 80000, date: input.date, time: input.time, startISO: '2026-10-21T14:00:00+07:00', endISO: '2026-10-21T16:00:00+07:00', durationMinutes: 120, expiresAt: '2026-10-21T07:00:00.000Z' };
 const created = { requestId: summary.id, status: 'pending', reviewUrl: `${env.SITE_URL}/book/approve?r=${reviewToken}`, booking: summary };
 const identity = { email: env.BOOKING_OWNER_EMAIL, subject: 'synthetic-owner', csrfToken: 'C'.repeat(43) };
 
@@ -129,7 +129,7 @@ test('public payment mode permits only deposit or full, retaining omitted-mode c
 
 test('public design and duration fields are strict strings and permit only the agreed combinations', async () => {
   const item = fixture();
-  for (const [designType, durationMinutes] of [['plain', '60'], ['simple', '60'], ['simple', '120'], ['full-art', '180'], ['full-art', '240'], ['full-art', '300']]) {
+  for (const [designType, durationMinutes] of [['plain', '60'], ['gel', '60'], ['removal', '60'], ['simple', '60'], ['simple', '120'], ['full-art', '180'], ['full-art', '240'], ['full-art', '300']]) {
     const response = await item.handlers.requests(request('requests', { method: 'POST', body: { ...input, designType, durationMinutes } }), env);
     assert.equal(response.status, 201);
     assert.equal(item.calls.at(-1)[2].durationMinutes, durationMinutes);

@@ -12,7 +12,7 @@ import { BookingAuthError, getAuthChallenge, signInOwner, requireBookingOwner, s
 import { BookingRequestError, createBookingRequest, getBookingRequest, decideBookingRequest, getBookingAvailability, getBookingPaymentProof } from './booking-requests.js';
 import { createGoogleCalendarProvider } from './google-calendar.js';
 import { getBookingCalendarMonth, getBookingMonthBounds } from './booking-month.js';
-import { normalizeBookingDesign, getOperatingHours, getBookingDateBounds } from './booking.js';
+import { normalizeBookingDesign, getOperatingHours, getBookingDateBounds, calculatePayment } from './booking.js';
 import { PAYMENT_PROOF_BODY_MAX_BYTES, PAYMENT_PROOF_MAX_BYTES, paymentProofBytes } from './booking-proofs.js';
 
 const encoder = new TextEncoder();
@@ -20,7 +20,7 @@ const decoder = new TextDecoder('utf-8', { fatal: true });
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const TOKEN = /^[A-Za-z0-9_-]{43}$/;
 const REQUEST_FIELDS = ['name', 'whatsapp', 'agreedPrice', 'date', 'time', 'idempotencyKey'];
-const VALIDATION_FIELDS = ['name', 'whatsapp', 'agreedPrice', 'date', 'time', 'paymentMode', 'designType', 'durationMinutes', 'proof'];
+const VALIDATION_FIELDS = ['name', 'whatsapp', 'agreedPrice', 'deposit', 'date', 'time', 'paymentMode', 'designType', 'durationMinutes', 'proof'];
 const FIELD_MESSAGES = {
   name: 'Isi nama 2–80 karakter.',
   whatsapp: 'Isi nomor WhatsApp Indonesia yang valid.',
@@ -30,6 +30,7 @@ const FIELD_MESSAGES = {
   paymentMode: 'Pilih DP atau full payment.',
   designType: 'Pilih jenis desain yang valid.',
   durationMinutes: 'Pilih durasi sesuai konsultasi.',
+  deposit: 'Isi DP minimal Rp20.000 dan tidak melebihi harga total.',
   proof: 'Unggah bukti pembayaran dalam format gambar.',
 };
 const STORE_CODES = new Set([
@@ -256,8 +257,9 @@ export function createBookingHttpHandlers(overrides = {}) {
       method(request, ['POST']);
       sameOrigin(request, env, true);
       const input = await readJson(request, PAYMENT_PROOF_BODY_MAX_BYTES, proofBodyTimeoutMs);
-      if (Object.keys(input).some(key => !REQUEST_FIELDS.includes(key) && !['paymentMode', 'designType', 'durationMinutes', 'proof'].includes(key)) || REQUEST_FIELDS.some(key => typeof input[key] !== 'string')
+      if (Object.keys(input).some(key => !REQUEST_FIELDS.includes(key) && !['paymentMode', 'deposit', 'designType', 'durationMinutes', 'proof'].includes(key)) || REQUEST_FIELDS.some(key => typeof input[key] !== 'string')
         || (input.paymentMode !== undefined && !['deposit', 'full'].includes(input.paymentMode))
+        || (input.deposit !== undefined && (typeof input.deposit !== 'string' || !/^\d{1,16}$/.test(input.deposit) || !calculatePayment(input.agreedPrice, input.paymentMode, input.deposit)))
         || (input.designType !== undefined && typeof input.designType !== 'string') || (input.durationMinutes !== undefined && typeof input.durationMinutes !== 'string')
         || !normalizeBookingDesign(input.designType, input.durationMinutes)
         || !object(input.proof) || Object.keys(input.proof).sort().join(',') !== 'base64,contentType' || input.proof.contentType !== 'image/jpeg'

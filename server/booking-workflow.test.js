@@ -13,7 +13,7 @@ const keys = await crypto.subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulu
 const pem = `-----BEGIN PRIVATE KEY-----\n${Buffer.from(await crypto.subtle.exportKey('pkcs8', keys.privateKey)).toString('base64')}\n-----END PRIVATE KEY-----`;
 const initial = Date.parse('2026-10-20T00:00:00+07:00');
 const owner = { email: 'workflow-owner@gmail.com', subject: 'synthetic-workflow-owner', verified: true };
-const input = (extra = {}) => ({ name: 'Workflow Test', whatsapp: '081234567890', agreedPrice: '100001', date: '2026-10-21', time: '14:00', idempotencyKey: 'synthetic_workflow_request_001', proof, ...extra });
+const input = (extra = {}) => ({ name: 'Workflow Test', whatsapp: '081234567890', agreedPrice: '100001', deposit: '20000', date: '2026-10-21', time: '14:00', idempotencyKey: 'synthetic_workflow_request_001', proof, ...extra });
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 const tokenOf = result => new URL(result.reviewUrl).searchParams.get('r');
 
@@ -25,6 +25,7 @@ class D1Fixture {
     this.sqlite.exec(readFileSync(new URL('../migrations/0003-booking-duration.sql', import.meta.url), 'utf8'));
     this.sqlite.exec(readFileSync(new URL('../migrations/0004-booking-payment-proofs.sql', import.meta.url), 'utf8'));
     this.sqlite.exec(readFileSync(new URL('../migrations/0005-booking-calendar-sync-index.sql', import.meta.url), 'utf8'));
+    this.sqlite.exec(readFileSync(new URL('../migrations/0006-booking-manual-payment.sql', import.meta.url), 'utf8'));
   }
   prepare(sql) {
     const database = this.sqlite;
@@ -107,7 +108,7 @@ function fixture() {
 
 test('real adapter and ledger couple pending/read-only review to one private acknowledged Calendar event', async () => {
   const f = fixture();
-  const created = await createBookingRequest(f.env, input({ approved: true, paymentVerified: true, deposit: '1' }), { now: f.now, calendar: f.calendar });
+  const created = await createBookingRequest(f.env, input({ approved: true, paymentVerified: true }), { now: f.now, calendar: f.calendar });
   assert.equal(created.status, 'pending');
   assert.equal(created.booking.deposit, 20000);
   assert.equal(f.calls.length, 3); // Service token + read-only occupancy/all-day query.
@@ -132,9 +133,9 @@ test('real adapter and ledger couple pending/read-only review to one private ack
   assert.equal(event.start.timeZone, 'Asia/Jakarta');
   assert.equal(event.start.dateTime, '2026-10-21T14:00:00+07:00');
   assert.equal(event.end.dateTime, '2026-10-21T16:00:00+07:00');
-  assert.match(event.description, /DP 10%, minimal Rp20000\nNominal pembayaran: Rp20000/);
-  assert.equal(event.extendedProperties.private.source, 'chiinails-booking-v4');
-  assert.equal(event.summary, 'Workflow Test · 081234567890 · Simple nail art');
+  assert.match(event.description, /DP, minimal Rp20000\nNominal pembayaran: Rp20000/);
+  assert.equal(event.extendedProperties.private.source, 'chiinails-booking-v5');
+  assert.equal(event.summary, 'Workflow Test · 081234567890 · Simple Design');
   assert.equal(event.extendedProperties.private.bookingId, created.requestId);
   assert.match(event.description, /WhatsApp: <a href="https:\/\/wa.me\/6281234567890">https:\/\/wa.me\/6281234567890<\/a>\n/);
   assert.equal(event.description.includes(proof.base64), false);
@@ -194,14 +195,14 @@ test('full-payment snapshot reaches the real adapter with zero remaining balance
   assert.equal(accepted.deposit, 100001);
   const event = [...f.events.values()][0];
   assert.match(event.description, /Pilihan pembayaran: Full payment\nNominal pembayaran: Rp100001\nSisa pembayaran: Rp0/);
-  assert.equal(event.extendedProperties.private.source, 'chiinails-booking-v4');
+  assert.equal(event.extendedProperties.private.source, 'chiinails-booking-v5');
   assert.equal(f.insertCount(), 1);
 });
 
 test('legacy uncertain request reconciles its original 10% event fingerprint after the payment-policy upgrade', async () => {
   const f = fixture();
   const created = await createBookingRequest(f.env, input(), { now: f.now, calendar: f.calendar });
-  f.db.sqlite.prepare("UPDATE booking_requests SET payment_mode = 'legacy', payment_amount = NULL, design_type = 'legacy' WHERE id = ?").run(created.requestId);
+  f.db.sqlite.prepare("UPDATE booking_requests SET payment_mode = 'legacy', payment_amount = NULL, design_type = 'legacy', service_type = NULL, custom_payment_amount = NULL WHERE id = ?").run(created.requestId);
   const original = await f.calendar.createApprovedAppointment({ bookingId: created.requestId, name: 'Workflow Test', whatsapp: '6281234567890', agreedPrice: 100001, date: '2026-10-21', time: '14:00' });
   const originalBody = structuredClone(f.events.get(original.eventId));
   assert.match(originalBody.description, /DP 10%: Rp10001\n/);
@@ -216,6 +217,26 @@ test('legacy uncertain request reconciles its original 10% event fingerprint aft
   assert.equal(accepted.paymentMode, 'legacy');
   assert.equal(accepted.deposit, 10001);
   assert.equal(f.eventGetCount(), 1);
+  assert.equal(f.insertCount(), 1);
+  assert.deepEqual(f.events.get(original.eventId), originalBody);
+});
+
+test('historical v4 combined service and percentage DP recover byte-exactly after the new manual policy deploys', async () => {
+  const f = fixture();
+  const created = await createBookingRequest(f.env, input({ agreedPrice: '1000000', designType: 'plain', durationMinutes: '60' }), { now: f.now, calendar: f.calendar });
+  f.db.sqlite.prepare('UPDATE booking_requests SET custom_payment_amount=NULL,service_type=NULL WHERE id=?').run(created.requestId);
+  const snapshot = { bookingId: created.requestId, name: 'Workflow Test', whatsapp: '6281234567890', agreedPrice: 1000000, date: '2026-10-21', time: '14:00', designType: 'plain', durationMinutes: 60, paymentMode: 'deposit', paymentAmount: 100000, paymentPolicy: 'min20k-v2' };
+  const original = await f.calendar.createApprovedAppointment(snapshot);
+  const originalBody = structuredClone(f.events.get(original.eventId));
+  assert.equal(originalBody.summary, 'Workflow Test · 081234567890 · Plain / nail gel / removal');
+  assert.match(originalBody.description, /DP 10%, minimal Rp20000\nNominal pembayaran: Rp100000/);
+  assert.equal(originalBody.extendedProperties.private.source, 'chiinails-booking-v4');
+  f.db.sqlite.prepare("UPDATE booking_requests SET status='reconcile',approval_operation='synthetic-old-v4-operation',approval_lease_until=? WHERE id=?").run(initial - 1, created.requestId);
+  for (let cell = 0; cell < 2; cell++) f.db.sqlite.prepare('INSERT INTO booking_slot_claims(slot_start,request_id,claimed_at) VALUES(?,?,?)').run(Date.parse(created.booking.startISO) + cell * 1800000, created.requestId, initial);
+  const accepted = await decideBookingRequest(f.env, tokenOf(created), 'accept', { owner, now: f.now, calendar: f.calendar });
+  assert.equal(accepted.deposit, 100000);
+  assert.equal(accepted.paymentPolicy, 'min20k-v2');
+  assert.equal(accepted.status, 'accepted');
   assert.equal(f.insertCount(), 1);
   assert.deepEqual(f.events.get(original.eventId), originalBody);
 });

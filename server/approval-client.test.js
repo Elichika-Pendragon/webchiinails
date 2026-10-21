@@ -2,14 +2,14 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { calculatePayment, normalizeBookingDesign } from './booking.js';
+import { BOOKING_DESIGNS, LEGACY_BOOKING_DESIGN_LABELS, calculatePayment, calculateLegacyPayment, normalizeBookingDesign } from './booking.js';
 
 // Synthetic native-controller coverage only; real Google sign-in, rendering,
 // mobile layout and Calendar writes are deliberately outside this fixture.
 const source = readFileSync(new URL('../src/scripts/approval-client.js', import.meta.url), 'utf8').replace(/^import .*;\r?\n/gm, '');
 const fixture = {
   id: 'synthetic-request', status: 'pending', name: 'Synthetic Customer', whatsapp: '+6281234567890',
-  agreedPrice: 100000, deposit: 20000, remainingBalance: 80000, paymentMode: 'deposit', paymentPolicy: 'min20k-v2',
+  agreedPrice: 100000, deposit: 20000, remainingBalance: 80000, paymentMode: 'deposit', paymentPolicy: 'manual-min20k-v3',
   designType: 'simple', durationMinutes: 120,
   hasPaymentProof: true,
   startISO: '2026-10-21T07:00:00.000Z', endISO: '2026-10-21T09:00:00.000Z',
@@ -70,7 +70,7 @@ function harness(options = {}) {
     };
     return { ok: true, status: 200, json: async () => data };
   };
-  vm.runInNewContext(source, { document, window, URL: TestURL, Intl, fetch, AbortController, DOMException, calculatePayment, normalizeBookingDesign });
+  vm.runInNewContext(source, { document, window, URL: TestURL, Intl, fetch, AbortController, DOMException, BOOKING_DESIGNS, LEGACY_BOOKING_DESIGN_LABELS, calculatePayment, calculateLegacyPayment, normalizeBookingDesign });
   return { nodes, fields, main, calls, window, config, objectUrls, revokedUrls, get scripts() { return scripts; }, posts: () => calls.filter(call => call.request.method === 'POST') };
 }
 
@@ -168,12 +168,30 @@ test('forbidden owner account cannot keep private fields or decision controls', 
   assert.equal(page.nodes['approval-actions'].hidden, true);
 });
 
-test('invalid derived amounts or interval cannot render a misleading summary', async () => {
-  for (const summary of [{ deposit: 1 }, { endISO: '2026-10-21T08:00:00Z' }]) {
+test('invalid manual amounts, mismatched balance or interval cannot render a misleading summary', async () => {
+  for (const summary of [{ deposit: 19999, remainingBalance: 80001 }, { deposit: 100001, remainingBalance: -1 }, { deposit: 35000, remainingBalance: 80000 }, { endISO: '2026-10-21T08:00:00Z' }]) {
     const page = harness({ summary }); await settle();
     assert.equal(page.nodes['approval-request'].hidden, true);
     assert(page.fields.every(node => node.textContent === ''));
     assert.equal(page.nodes['approval-retry'].hidden, false);
+  }
+});
+
+test('the owner brief preserves a manually declared Rp20.000 on a million-rupiah quote', async () => {
+  const page = harness({ summary: { agreedPrice: 1000000, deposit: 20000, remainingBalance: 980000 } }); await settle();
+  assert.equal(page.nodes['approval-request'].hidden, false);
+  assert.equal(page.nodes['approval-actions'].hidden, false);
+  assert.match(page.fields.find(node => node.dataset.approvalValue === 'deposit').textContent, /20\.000/);
+  assert.match(page.fields.find(node => node.dataset.approvalValue === 'remainingBalance').textContent, /980\.000/);
+  assert.doesNotMatch(page.nodes['approval-payment-label'].textContent, /10\s*%/);
+  assert.doesNotMatch(page.nodes['approval-payment-note'].textContent, /10\s*%/);
+});
+
+test('custom manual deposit and an amount equal to the total remain actionable', async () => {
+  for (const deposit of [35000, 100000]) {
+    const page = harness({ summary: { deposit, remainingBalance: 100000 - deposit } }); await settle();
+    assert.equal(page.nodes['approval-actions'].hidden, false);
+    assert.equal(page.nodes['approval-request'].hidden, false);
   }
 });
 
@@ -184,12 +202,30 @@ test('page departure removes private DOM and contact URLs before history restora
   assert.equal(page.fields.find(node => node.dataset.approvalValue === 'whatsapp').href, undefined);
 });
 
-test('legacy pending requests retain their original 10% amount and explicit policy label', async () => {
+test('legacy pending requests retain their original amount and identify the previous payment terms', async () => {
   const page = harness({ summary: { paymentMode: 'legacy', paymentPolicy: 'legacy-10pct-v1', deposit: 10000, remainingBalance: 90000 } }); await settle();
   assert.equal(page.nodes['approval-actions'].hidden, false);
-  assert.match(page.nodes['approval-payment-label'].textContent, /DP 10%.*ketentuan sebelumnya/);
+  assert.match(page.nodes['approval-payment-label'].textContent, /DP.*ketentuan sebelumnya/);
   assert.match(page.fields.find(node => node.dataset.approvalValue === 'deposit').textContent, /10\.000/);
-  assert.match(page.nodes['approval-payment-note'].textContent, /ketentuan DP 10% sebelumnya/);
+  assert.match(page.nodes['approval-payment-note'].textContent, /ketentuan pembayaran sebelumnya/);
+});
+
+test('historical minimum-DP requests retain the stored percentage amount under their original policy', async () => {
+  const page = harness({ summary: { agreedPrice: 1000000, deposit: 100000, remainingBalance: 900000, paymentPolicy: 'min20k-v2' } }); await settle();
+  assert.equal(page.nodes['approval-actions'].hidden, false);
+  assert.match(page.fields.find(node => node.dataset.approvalValue === 'deposit').textContent, /100\.000/);
+  const tampered = harness({ summary: { agreedPrice: 1000000, deposit: 20000, remainingBalance: 980000, paymentPolicy: 'min20k-v2' } }); await settle();
+  assert.equal(tampered.nodes['approval-request'].hidden, true);
+  assert.equal(tampered.nodes['approval-actions'].hidden, true);
+});
+
+test('historical service snapshots retain their original labels instead of being reclassified', async () => {
+  for (const [designType, durationMinutes, label] of [['plain', 60, 'Plain / nail gel / removal'], ['simple', 120, 'Simple nail art'], ['full-art', 180, 'Full nail art']]) {
+    const endISO = new Date(Date.parse(fixture.startISO) + durationMinutes * 60000).toISOString();
+    const page = harness({ summary: { paymentPolicy: 'min20k-v2', designType, durationMinutes, endISO } }); await settle();
+    assert.equal(page.nodes['approval-actions'].hidden, false);
+    assert.equal(page.fields.find(node => node.dataset.approvalValue === 'design').textContent, label);
+  }
 });
 
 test('full-payment summary shows the full amount and zero balance without a DP label', async () => {
@@ -201,12 +237,13 @@ test('full-payment summary shows the full amount and zero balance without a DP l
 });
 
 test('owner brief displays each real agreed duration and preserves legacy two-hour bookings', async () => {
-  for (const [designType, durationMinutes] of [['plain', 60], ['simple', 60], ['simple', 120], ['full-art', 180], ['full-art', 240], ['full-art', 300], ['legacy', 120]]) {
+  for (const [designType, durationMinutes] of [['plain', 60], ['gel', 60], ['removal', 60], ['simple', 60], ['simple', 120], ['full-art', 180], ['full-art', 240], ['full-art', 300], ['legacy', 120]]) {
     const endISO = new Date(Date.parse(fixture.startISO) + durationMinutes * 60000).toISOString();
     const page = harness({ summary: { designType, durationMinutes, endISO } }); await settle();
     assert.equal(page.nodes['approval-request'].hidden, false);
     assert.equal(page.nodes['approval-duration-label'].textContent, `Waktu · ${durationMinutes / 60} jam`);
     if (designType === 'legacy') assert.match(page.fields.find(node => node.dataset.approvalValue === 'design').textContent, /ketentuan sebelumnya/);
+    else assert.equal(page.fields.find(node => node.dataset.approvalValue === 'design').textContent, { plain: 'Plain', gel: 'Gel', removal: 'Removal', simple: 'Simple Design', 'full-art': 'Full Art' }[designType]);
   }
 });
 

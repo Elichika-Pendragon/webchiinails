@@ -1,4 +1,4 @@
-import { calculatePayment, normalizeBookingDesign } from '../../server/booking.js';
+import { BOOKING_DESIGNS, LEGACY_BOOKING_DESIGN_LABELS, calculateLegacyPayment, calculatePayment, normalizeBookingDesign } from '../../server/booking.js';
 
 const main = document.querySelector('.approval-page');
 
@@ -175,8 +175,10 @@ if (main) {
     if (item.paymentMode === 'legacy' && item.paymentPolicy === 'legacy-10pct-v1') {
       if (item.deposit !== Math.ceil(item.agreedPrice / 10)) throw new Error('summary');
     } else {
-      if (!['deposit', 'full'].includes(item.paymentMode) || item.paymentPolicy !== 'min20k-v2') throw new Error('summary');
-      const payment = calculatePayment(String(item.agreedPrice), item.paymentMode);
+      if (!['deposit', 'full'].includes(item.paymentMode) || !['min20k-v2', 'manual-min20k-v3'].includes(item.paymentPolicy)) throw new Error('summary');
+      const payment = item.paymentPolicy === 'min20k-v2'
+        ? calculateLegacyPayment(String(item.agreedPrice), item.paymentMode)
+        : calculatePayment(String(item.agreedPrice), item.paymentMode, String(item.deposit));
       if (!payment || payment.paymentMode !== item.paymentMode || payment.deposit !== item.deposit) throw new Error('summary');
     }
     const design = item.designType === 'legacy' && item.durationMinutes === 120
@@ -200,7 +202,8 @@ if (main) {
     const values = {
       name: item.name,
       whatsapp: item.whatsapp,
-      design: { plain: 'Plain / Nail gel / Removal', simple: 'Simple art', 'full-art': 'Full art', legacy: 'Sesuai konsultasi · ketentuan sebelumnya' }[item.designType],
+      design: item.designType === 'legacy' ? 'Sesuai konsultasi · ketentuan sebelumnya'
+        : item.paymentPolicy === 'manual-min20k-v3' ? BOOKING_DESIGNS[item.designType]?.label : LEGACY_BOOKING_DESIGN_LABELS[item.designType],
       date: dateFormat.format(item.start),
       time: `${timeFormat.format(item.start)}–${timeFormat.format(item.end)} WIB`,
       agreedPrice: currency.format(item.agreedPrice),
@@ -211,9 +214,9 @@ if (main) {
       element.textContent = values[element.dataset.approvalValue] || '';
       if (element.dataset.approvalValue === 'whatsapp') element.href = `https://wa.me/${item.whatsapp.replace(/^\+/, '')}`;
     });
-    paymentLabel.textContent = item.paymentMode === 'full' ? 'Full payment' : item.paymentMode === 'legacy' ? 'DP 10% · ketentuan sebelumnya' : 'DP · 10%, min. Rp20.000';
+    paymentLabel.textContent = item.paymentMode === 'full' ? 'Full payment' : item.paymentPolicy === 'manual-min20k-v3' ? 'DP · min. Rp20.000' : 'DP · ketentuan sebelumnya';
     durationLabel.textContent = `Waktu · ${item.durationMinutes / 60} jam`;
-    paymentNote.textContent = `${item.paymentMode === 'legacy' ? 'Permintaan ini memakai ketentuan DP 10% sebelumnya. ' : ''}Dengan menerima, kamu menyatakan nominal sudah sesuai konsultasi dan pembayaran sudah diterima. Jadwal akan diperiksa kembali sebelum ditambahkan ke kalender.`;
+    paymentNote.textContent = `${item.paymentPolicy !== 'manual-min20k-v3' ? 'Permintaan ini memakai ketentuan pembayaran sebelumnya. ' : ''}Dengan menerima, kamu menyatakan nominal sudah sesuai konsultasi dan pembayaran sudah diterima. Jadwal akan diperiksa kembali sebelum ditambahkan ke kalender.`;
     const labels = { pending: 'Menunggu konfirmasi', approving: 'Sedang diproses', reconcile: 'Perlu pemeriksaan', accepted: 'Diterima', cancelled: 'Dibatalkan', expired: 'Kedaluwarsa' };
     state.textContent = labels[item.status];
     actions.hidden = item.status !== 'pending';

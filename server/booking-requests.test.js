@@ -21,6 +21,7 @@ class D1TestDatabase {
     this.sqlite.exec(readFileSync(new URL('../migrations/0003-booking-duration.sql', import.meta.url), 'utf8'));
     this.sqlite.exec(readFileSync(new URL('../migrations/0004-booking-payment-proofs.sql', import.meta.url), 'utf8'));
     this.sqlite.exec(readFileSync(new URL('../migrations/0005-booking-calendar-sync-index.sql', import.meta.url), 'utf8'));
+    this.sqlite.exec(readFileSync(new URL('../migrations/0006-booking-manual-payment.sql', import.meta.url), 'utf8'));
     this.fail = null;
   }
   prepare(sql) {
@@ -58,7 +59,7 @@ class D1TestDatabase {
 
 const initial = Date.parse('2026-10-20T00:00:00+07:00');
 const owner = { email: 'owner@example.com', subject: 'synthetic-owner', verified: true };
-const customer = (other = {}) => ({ name: 'Client Test', whatsapp: '081234567890', agreedPrice: '100001', date: '2026-10-21', time: '14:00', idempotencyKey: 'synthetic_idempotency_001', proof, ...other });
+const customer = (other = {}) => ({ name: 'Client Test', whatsapp: '081234567890', agreedPrice: '100001', deposit: '20000', date: '2026-10-21', time: '14:00', idempotencyKey: 'synthetic_idempotency_001', proof, ...other });
 function setup() {
   const db = new D1TestDatabase();
   const env = { BOOKING_DB: db, BOOKING_LINK_SECRET: 'synthetic_secret_only_for_tests_0123456789', BOOKING_OWNER_EMAIL: owner.email, SITE_URL: 'https://chiinails.example' };
@@ -87,13 +88,13 @@ function setup() {
 const tokenOf = result => new URL(result.reviewUrl).searchParams.get('r');
 const isCode = (code, status) => error => error instanceof BookingRequestError && error.code === code && (!status || error.status === status);
 
-test('creation stores the canonical five fields and derived DP; token is opaque and stored only as a hash', async () => {
+test('creation stores validated fields and entered DP; token is opaque and stored only as a hash', async () => {
   const { env, db, calendar, calls } = setup();
-  const result = await createBookingRequest(env, customer({ deposit: '1', approved: true, paymentVerified: true }), { now: initial, calendar });
+  const result = await createBookingRequest(env, customer({ approved: true, paymentVerified: true }), { now: initial, calendar });
   assert.equal(result.status, 'pending');
   assert.equal(result.booking.deposit, 20000);
   assert.equal(result.booking.paymentMode, 'deposit');
-  assert.equal(result.booking.paymentPolicy, 'min20k-v2');
+  assert.equal(result.booking.paymentPolicy, 'manual-min20k-v3');
   assert.equal(result.booking.remainingBalance, 80001);
   assert.equal(result.booking.whatsapp, '6281234567890');
   assert.equal(result.booking.startISO, '2026-10-21T14:00:00+07:00');
@@ -105,6 +106,8 @@ test('creation stores the canonical five fields and derived DP; token is opaque 
   const stored = db.rows()[0];
   assert.equal(stored.deposit, 10001); // Preserved v1 storage CHECK, not API amount.
   assert.equal(stored.payment_amount, 20000);
+  assert.equal(stored.custom_payment_amount, 20000);
+  assert.equal(stored.service_type, 'simple');
   assert.equal(stored.payment_mode, 'deposit');
   assert.match(stored.token_hash, /^[a-f0-9]{64}$/);
   assert.equal(JSON.stringify(stored).includes(token), false);
@@ -116,7 +119,7 @@ test('creation stores the canonical five fields and derived DP; token is opaque 
 test('idempotent retries normalize the same input and return the same request and token', async () => {
   const { env, db } = setup();
   const one = await createBookingRequest(env, customer(), { now: initial });
-  const two = await createBookingRequest(env, customer({ name: ' Client Test ', whatsapp: '+62 812-3456-7890', agreedPrice: '0100001', deposit: '999999' }), { now: initial + 1000 });
+  const two = await createBookingRequest(env, customer({ name: ' Client Test ', whatsapp: '+62 812-3456-7890', agreedPrice: '0100001', deposit: '020000' }), { now: initial + 1000 });
   assert.equal(one.requestId, two.requestId);
   assert.equal(one.reviewUrl, two.reviewUrl);
   assert.equal(db.rows().length, 1);
@@ -142,6 +145,84 @@ test('payment choice persists the canonical amount and participates in request i
   }
 });
 
+test('a Rp20000 DP on a Rp1000000 total survives storage, retries and owner approval without a percentage floor', async () => {
+  const { env, db, calendar, calls } = setup();
+  const input = customer({ agreedPrice: '1000000', deposit: '20000', designType: 'gel', durationMinutes: '60' });
+  const created = await createBookingRequest(env, input, { now: initial });
+  assert.equal(created.booking.deposit, 20000);
+  assert.equal(created.booking.remainingBalance, 980000);
+  assert.equal(created.booking.paymentPolicy, 'manual-min20k-v3');
+  const row = db.rows()[0];
+  assert.equal(row.deposit, 100000, 'v1 shadow retains its immutable CHECK');
+  assert.equal(row.payment_amount, 100000, 'v2 shadow retains its immutable CHECK');
+  assert.equal(row.custom_payment_amount, 20000);
+  assert.equal(row.design_type, 'plain');
+  assert.equal(row.service_type, 'gel');
+  const before = { ...calls };
+  assert.deepEqual(await createBookingRequest(env, { ...input, deposit: '020000' }, { now: initial }), created);
+  assert.deepEqual(calls, before);
+  await assert.rejects(createBookingRequest(env, { ...input, deposit: '35000' }, { now: initial }), isCode('IDEMPOTENCY_CONFLICT', 409));
+  let snapshot;
+  const write = calendar.createApprovedAppointment;
+  calendar.createApprovedAppointment = async appointment => { snapshot = appointment; return write(appointment); };
+  const accepted = await decideBookingRequest(env, tokenOf(created), 'accept', { owner, calendar, now: initial });
+  assert.equal(accepted.deposit, 20000);
+  assert.equal(snapshot.paymentAmount, 20000);
+  assert.equal(snapshot.paymentPolicy, 'manual-min20k-v3');
+  assert.equal(snapshot.designType, 'gel');
+  assert.equal(db.rows('SELECT * FROM booking_slot_claims').length, 2);
+});
+
+test('new requests cannot omit or forge the DP or receipt and cannot select historical payment policy', async () => {
+  const { env, db, calls } = setup();
+  for (const deposit of [undefined, '', '0', '19999', '100002', '2e4', '20.000', 20000, {}, null]) {
+    await assert.rejects(createBookingRequest(env, customer({ deposit, paymentPolicy: 'min20k-v2' }), { now: initial }), error => isCode('BOOKING_INPUT', 400)(error) && Boolean(error.fields.deposit));
+  }
+  await assert.rejects(createBookingRequest(env, customer({ proof: undefined }), { now: initial }), error => isCode('BOOKING_INPUT', 400)(error) && Boolean(error.fields.proof));
+  assert.equal(db.rows().length, 0);
+  assert.equal(db.rows('SELECT * FROM booking_payment_proofs').length, 0);
+  assert.deepEqual(calls, { availability: 0, insert: 0, lookup: 0 });
+});
+
+test('manual payment migration preserves prior requests, receipts and claims and rejects malformed new snapshots', async () => {
+  const { env, db } = setup();
+  const created = await createBookingRequest(env, customer(), { now: initial });
+  const original = { ...db.rows()[0] };
+  delete original.service_type;
+  delete original.custom_payment_amount;
+  const old = new DatabaseSync(':memory:');
+  for (const file of ['0001-booking.sql', '0002-booking-payment.sql', '0003-booking-duration.sql', '0004-booking-payment-proofs.sql', '0005-booking-calendar-sync-index.sql']) old.exec(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'));
+  const columns = Object.keys(original);
+  old.prepare(`INSERT INTO booking_requests(${columns.join(',')}) VALUES(${columns.map(() => '?').join(',')})`).run(...Object.values(original));
+  const originalProof = db.rows('SELECT * FROM booking_payment_proofs')[0];
+  const proofColumns = Object.keys(originalProof);
+  old.prepare(`INSERT INTO booking_payment_proofs(${proofColumns.join(',')}) VALUES(${proofColumns.map(() => '?').join(',')})`).run(...Object.values(originalProof));
+  old.prepare('INSERT INTO booking_slot_claims(slot_start,request_id,claimed_at) VALUES(?,?,?)').run(original.start_ms, created.requestId, initial);
+  const beforeProof = old.prepare('SELECT * FROM booking_payment_proofs').get();
+  const beforeClaims = old.prepare('SELECT * FROM booking_slot_claims').all();
+  old.exec(readFileSync(new URL('../migrations/0006-booking-manual-payment.sql', import.meta.url), 'utf8'));
+  const migrated = old.prepare('SELECT * FROM booking_requests').get();
+  assert.equal(migrated.custom_payment_amount, null);
+  assert.equal(migrated.service_type, null);
+  delete migrated.custom_payment_amount;
+  delete migrated.service_type;
+  assert.deepEqual({ ...migrated }, original);
+  assert.deepEqual(old.prepare('SELECT * FROM booking_payment_proofs').get(), beforeProof);
+  assert.deepEqual(old.prepare('SELECT * FROM booking_slot_claims').all(), beforeClaims);
+  for (const sql of [
+    "UPDATE booking_requests SET service_type='simple'",
+    'UPDATE booking_requests SET custom_payment_amount=20000',
+    "UPDATE booking_requests SET service_type='simple',custom_payment_amount=19999",
+    "UPDATE booking_requests SET service_type='simple',custom_payment_amount=100002",
+    "UPDATE booking_requests SET service_type='simple',custom_payment_amount=20000.5",
+    "UPDATE booking_requests SET service_type='gel',custom_payment_amount=20000",
+    "UPDATE booking_requests SET service_type='simple',custom_payment_amount=20000,payment_mode='full',payment_amount=agreed_price",
+  ]) assert.throws(() => old.prepare(sql).run(), /CHECK constraint/);
+  old.prepare("UPDATE booking_requests SET service_type='simple',custom_payment_amount=23789").run();
+  assert.equal(old.prepare('SELECT custom_payment_amount FROM booking_requests').get().custom_payment_amount, 23789);
+  old.close();
+});
+
 test('small totals normalize to full with no overcharge and unchanged canonical retries', async () => {
   const { env } = setup();
   for (const agreedPrice of ['1', '19999', '20000']) {
@@ -158,7 +239,7 @@ test('legacy pending rows keep their original 10% amount, idempotent retry and C
   const { env, db, calendar } = setup();
   const created = await createBookingRequest(env, customer(), { now: initial });
   const legacyHash = Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify({ name: 'Client Test', whatsapp: '6281234567890', agreedPrice: 100001, date: '2026-10-21', time: '14:00' })))).toString('hex');
-  db.sqlite.prepare("UPDATE booking_requests SET payment_mode = 'legacy', payment_amount = NULL, design_type = 'legacy', payload_hash = ? WHERE id = ?").run(legacyHash, created.requestId);
+  db.sqlite.prepare("UPDATE booking_requests SET payment_mode = 'legacy', payment_amount = NULL, design_type = 'legacy', service_type = NULL, custom_payment_amount = NULL, payload_hash = ? WHERE id = ?").run(legacyHash, created.requestId);
   const reviewed = await getBookingRequest(env, tokenOf(created), { owner, now: initial });
   assert.equal(reviewed.paymentMode, 'legacy');
   assert.equal(reviewed.paymentPolicy, 'legacy-10pct-v1');
@@ -177,6 +258,30 @@ test('legacy pending rows keep their original 10% amount, idempotent retry and C
   assert.equal(received.paymentAmount, 10001);
 });
 
+test('a pre-manual request retries without the new DP input and retains its original larger percentage payment', async () => {
+  const { env, db, calls, calendar } = setup();
+  const input = customer({ agreedPrice: '1000000', time: '08:00', designType: 'plain', durationMinutes: '60' });
+  const created = await createBookingRequest(env, input, { now: initial });
+  const proofDigest = db.rows('SELECT sha256 FROM booking_payment_proofs')[0].sha256;
+  const historicalPayload = { name: 'Client Test', whatsapp: '6281234567890', agreedPrice: 1000000, date: input.date, time: input.time, paymentMode: 'deposit', paymentAmount: 100000, paymentPolicy: 'min20k-v2', designType: 'plain', durationMinutes: 60, proofDigest };
+  const payloadHash = Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(historicalPayload)))).toString('hex');
+  db.sqlite.prepare('UPDATE booking_requests SET custom_payment_amount=NULL,service_type=NULL,payload_hash=? WHERE id=?').run(payloadHash, created.requestId);
+  const before = { ...calls };
+  const repeated = await createBookingRequest(env, { ...input, deposit: undefined }, { now: initial });
+  assert.equal(repeated.requestId, created.requestId);
+  assert.equal(repeated.reviewUrl, created.reviewUrl);
+  assert.equal(repeated.booking.deposit, 100000);
+  assert.equal(repeated.booking.paymentPolicy, 'min20k-v2');
+  assert.deepEqual(calls, before);
+  await assert.rejects(createBookingRequest(env, { ...input, deposit: undefined, agreedPrice: '1000001' }, { now: initial }), isCode('IDEMPOTENCY_CONFLICT', 409));
+  let appointment;
+  const write = calendar.createApprovedAppointment;
+  calendar.createApprovedAppointment = async snapshot => { appointment = snapshot; return write(snapshot); };
+  await decideBookingRequest(env, tokenOf(created), 'accept', { owner, calendar, now: initial });
+  assert.equal(appointment.paymentAmount, 100000);
+  assert.equal(appointment.paymentPolicy, 'min20k-v2');
+});
+
 test('additive payment migration preserves existing rows and claims without rebuilding tables', async () => {
   const { env, db } = setup();
   const created = await createBookingRequest(env, customer(), { now: initial });
@@ -185,6 +290,8 @@ test('additive payment migration preserves existing rows and claims without rebu
   delete source.payment_amount;
   delete source.design_type;
   delete source.duration_minutes;
+  delete source.service_type;
+  delete source.custom_payment_amount;
   const legacy = new DatabaseSync(':memory:');
   legacy.exec(readFileSync(new URL('../migrations/0001-booking.sql', import.meta.url), 'utf8'));
   const columns = Object.keys(source);
@@ -578,7 +685,7 @@ test('an incomplete claim set fails closed before any Calendar I/O on resume', a
 });
 
 test('actual duration drives the owner brief, fresh Calendar bounds and complete atomic claim count', async () => {
-  for (const [designType, durationMinutes, time] of [['plain', 60, '14:00'], ['simple', 60, '14:00'], ['simple', 120, '14:00'], ['full-art', 180, '11:00'], ['full-art', 240, '12:00'], ['full-art', 300, '08:00']]) {
+  for (const [designType, durationMinutes, time] of [['plain', 60, '14:00'], ['gel', 60, '14:00'], ['removal', 60, '14:00'], ['simple', 60, '14:00'], ['simple', 120, '14:00'], ['full-art', 180, '11:00'], ['full-art', 240, '12:00'], ['full-art', 300, '08:00']]) {
     const { env, db, calendar } = setup();
     let checkedBounds;
     calendar.availability = async bounds => { checkedBounds = bounds; return { busyIntervals: [] }; };
@@ -589,6 +696,8 @@ test('actual duration drives the owner brief, fresh Calendar bounds and complete
     const stored = db.rows()[0];
     assert.equal(stored.end_ms - stored.start_ms, 7200000); // Original v1 column CHECK is preserved.
     assert.equal(stored.duration_minutes, durationMinutes);
+    assert.equal(stored.service_type, designType);
+    assert.equal(stored.design_type, ['gel', 'removal'].includes(designType) ? 'plain' : designType);
     assert.equal((await decideBookingRequest(env, tokenOf(created), 'accept', { owner, calendar, now: initial })).status, 'accepted');
     assert.equal(checkedBounds.timeMax, created.booking.endISO);
     assert.equal(db.rows('SELECT * FROM booking_slot_claims').length, durationMinutes / 30);
@@ -601,7 +710,7 @@ test('design and duration are immutable request identity, including old payment-
   const one = await createBookingRequest(env, customer(), { now: initial });
   await assert.rejects(createBookingRequest(env, customer({ designType: 'plain', durationMinutes: '60' }), { now: initial }), isCode('IDEMPOTENCY_CONFLICT', 409));
   const legacyFinancialHash = Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify({ name: 'Client Test', whatsapp: '6281234567890', agreedPrice: 100001, date: '2026-10-21', time: '14:00', paymentMode: 'deposit', paymentAmount: 20000, paymentPolicy: 'min20k-v2' })))).toString('hex');
-  db.sqlite.prepare("UPDATE booking_requests SET design_type = 'legacy', payload_hash = ? WHERE id = ?").run(legacyFinancialHash, one.requestId);
+  db.sqlite.prepare("UPDATE booking_requests SET design_type = 'legacy', service_type = NULL, custom_payment_amount = NULL, payload_hash = ? WHERE id = ?").run(legacyFinancialHash, one.requestId);
   const repeated = await createBookingRequest(env, customer({ proof: undefined }), { now: initial });
   assert.equal(repeated.reviewUrl, one.reviewUrl);
   assert.equal(repeated.booking.designType, 'legacy');
@@ -613,14 +722,14 @@ test('persisted half-hour requests retain exact retries, owner review and accept
   const { env, db, calendar, calls } = setup();
   const original = await createBookingRequest(env, customer({ time: '08:00' }), { now: initial });
   // Reproduce the immutable record written by the previous half-hour UI.
-  const oldInput = customer({ time: '08:30' });
+  const oldInput = customer({ time: '08:30', deposit: undefined });
   const proofDigest = db.rows('SELECT sha256 FROM booking_payment_proofs')[0].sha256;
   const previousPayload = { name: 'Client Test', whatsapp: '6281234567890', agreedPrice: 100001, date: '2026-10-21', time: '08:30', paymentMode: 'deposit', paymentAmount: 20000, paymentPolicy: 'min20k-v2', designType: 'simple', durationMinutes: 120, proofDigest };
   const payloadHash = Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(previousPayload)))).toString('hex');
   const startISO = '2026-10-21T08:30:00+07:00';
   const endISO = '2026-10-21T10:30:00+07:00';
   const start = Date.parse(startISO);
-  db.sqlite.prepare('UPDATE booking_requests SET time=?,start_ms=?,end_ms=?,start_iso=?,end_iso=?,expires_at=?,payload_hash=? WHERE id=?').run('08:30', start, Date.parse(endISO), startISO, endISO, start, payloadHash, original.requestId);
+  db.sqlite.prepare('UPDATE booking_requests SET time=?,start_ms=?,end_ms=?,start_iso=?,end_iso=?,expires_at=?,payload_hash=?,service_type=NULL,custom_payment_amount=NULL WHERE id=?').run('08:30', start, Date.parse(endISO), startISO, endISO, start, payloadHash, original.requestId);
   db.sqlite.prepare('UPDATE booking_payment_proofs SET expires_at=? WHERE request_id=?').run(Date.parse(endISO) + PAYMENT_PROOF_RETENTION_MS, original.requestId);
   const before = { ...calls };
   const repeated = await createBookingRequest(env, oldInput, { now: initial });
@@ -630,7 +739,7 @@ test('persisted half-hour requests retain exact retries, owner review and accept
   assert.equal(repeated.booking.endISO, endISO);
   assert.deepEqual(calls, before);
   await assert.rejects(createBookingRequest(env, { ...oldInput, agreedPrice: '150000' }, { now: initial }), isCode('IDEMPOTENCY_CONFLICT', 409));
-  await assert.rejects(createBookingRequest(env, { ...oldInput, idempotencyKey: 'synthetic_new_off_grid_start' }, { now: initial }), error => isCode('BOOKING_INPUT', 400)(error) && Boolean(error.fields.time));
+  await assert.rejects(createBookingRequest(env, { ...oldInput, deposit: '20000', idempotencyKey: 'synthetic_new_off_grid_start' }, { now: initial }), error => isCode('BOOKING_INPUT', 400)(error) && Boolean(error.fields.time));
   assert.deepEqual(calls, before);
   assert.equal(db.rows().length, 1);
   assert.equal((await getBookingRequest(env, tokenOf(original), { owner, now: initial })).time, '08:30');
@@ -678,6 +787,8 @@ test('additive duration migration preserves prior payment metadata, original end
   const original = db.rows()[0];
   delete original.design_type;
   delete original.duration_minutes;
+  delete original.service_type;
+  delete original.custom_payment_amount;
   const older = new DatabaseSync(':memory:');
   older.exec(readFileSync(new URL('../migrations/0001-booking.sql', import.meta.url), 'utf8'));
   older.exec(readFileSync(new URL('../migrations/0002-booking-payment.sql', import.meta.url), 'utf8'));

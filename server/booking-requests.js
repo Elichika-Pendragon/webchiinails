@@ -101,20 +101,24 @@ const REQUEST_SELECT = `SELECT r.*, (SELECT p.expires_at FROM booking_payment_pr
 const byId = (config, id) => first(config.db.prepare(`${REQUEST_SELECT} WHERE r.id = ?`).bind(id));
 const localISO = milliseconds => `${new Date(milliseconds + 25200000).toISOString().slice(0, 19)}+07:00`;
 function schedule(row) {
-  const designType = row.design_type ?? 'legacy';
+  const designType = row.service_type ?? row.design_type ?? 'legacy';
   const durationMinutes = row.duration_minutes ?? 120;
   if (designType === 'legacy' ? durationMinutes !== 120 : !normalizeBookingDesign(designType, durationMinutes)) throw failure('BOOKING_STORAGE');
+  if (row.service_type != null && row.design_type !== (['gel', 'removal'].includes(designType) ? 'plain' : designType)) throw failure('BOOKING_STORAGE');
   const end = row.start_ms + durationMinutes * 60000;
   return { designType, durationMinutes, end, endISO: localISO(end) };
 }
 function summary(row, now = Date.now()) {
   const paymentMode = row.payment_mode ?? 'legacy';
-  const amount = paymentMode === 'legacy' ? row.deposit : row.payment_amount;
+  const manual = row.custom_payment_amount != null;
+  if (manual !== (row.service_type != null)) throw failure('BOOKING_STORAGE');
+  const amount = manual ? row.custom_payment_amount : paymentMode === 'legacy' ? row.deposit : row.payment_amount;
   if (!['legacy', 'deposit', 'full'].includes(paymentMode) || !Number.isSafeInteger(amount) || amount < 1 || amount > row.agreed_price) throw failure('BOOKING_STORAGE');
+  if (manual && (paymentMode === 'legacy' || paymentMode === 'deposit' && (amount < 20000 || row.agreed_price <= 20000) || paymentMode === 'full' && amount !== row.agreed_price)) throw failure('BOOKING_STORAGE');
   const appointment = schedule(row);
   return {
     id: row.id, status: row.status, name: row.name, whatsapp: row.whatsapp,
-    agreedPrice: row.agreed_price, deposit: amount, paymentMode, paymentPolicy: paymentMode === 'legacy' ? 'legacy-10pct-v1' : 'min20k-v2', remainingBalance: row.agreed_price - amount,
+    agreedPrice: row.agreed_price, deposit: amount, paymentMode, paymentPolicy: manual ? 'manual-min20k-v3' : paymentMode === 'legacy' ? 'legacy-10pct-v1' : 'min20k-v2', remainingBalance: row.agreed_price - amount,
     date: row.date, time: row.time, startISO: row.start_iso, endISO: appointment.endISO,
     designType: appointment.designType, durationMinutes: appointment.durationMinutes, expiresAt: new Date(row.expires_at).toISOString(),
     hasPaymentProof: Number.isSafeInteger(row.proof_expires_at) && row.proof_expires_at > now,
@@ -146,10 +150,15 @@ export async function createBookingRequest(env, input, { now, calendar } = {}) {
   const clock = clockOption(now);
   const current = clock();
   if (!object(input) || typeof input.idempotencyKey !== 'string' || !/^[A-Za-z0-9_-]{16,128}$/.test(input.idempotencyKey)) throw failure('BOOKING_INPUT', 400);
+  const proof = input.proof === undefined ? null : await validatePaymentProof(input.proof);
+  if (input.proof !== undefined && !proof) throw failure('BOOKING_INPUT', 400, { proof: true });
+  const idemHash = hex(await hmac(config.secret, `chiinails:idempotency:v1:${input.idempotencyKey}`));
+  const prior = await first(config.db.prepare(`${REQUEST_SELECT} WHERE r.idempotency_hash = ?`).bind(idemHash));
+  const historical = prior && prior.custom_payment_amount == null;
   let checked;
   // Normalize against the historical half-hour cadence only to identify an
   // immutable existing request. New requests must pass today's cadence below.
-  try { checked = validateBooking(input, { now: current, stepMinutes: 30 }); } catch { throw failure('BOOKING_INPUT', 400); }
+  try { checked = validateBooking(input, { now: current, stepMinutes: 30, ...(historical ? { paymentPolicy: 'min20k-v2' } : {}) }); } catch { throw failure('BOOKING_INPUT', 400); }
   if (!checked.valid) throw failure('BOOKING_INPUT', 400, checked.errors);
   const value = checked.value;
   const basePayload = { name: value.name, whatsapp: value.whatsapp, agreedPrice: value.agreedPrice, date: value.date, time: value.time };
@@ -158,13 +167,9 @@ export async function createBookingRequest(env, input, { now, calendar } = {}) {
   const financialPayloadHash = await hash(JSON.stringify(financialPayload));
   const bookingPayload = { ...financialPayload, designType: value.designType, durationMinutes: value.durationMinutes };
   const previousPayloadHash = await hash(JSON.stringify(bookingPayload));
-  const proof = input.proof === undefined ? null : await validatePaymentProof(input.proof);
-  if (input.proof !== undefined && !proof) throw failure('BOOKING_INPUT', 400, { proof: true });
   const payloadHash = proof ? await hash(JSON.stringify({ ...bookingPayload, proofDigest: proof.digest })) : previousPayloadHash;
   const samePayload = row => row.payload_hash === payloadHash || (!proof && (row.design_type ?? 'legacy') === 'legacy' && value.designType === 'simple' && value.durationMinutes === 120
     && (row.payload_hash === financialPayloadHash || ((row.payment_mode ?? 'legacy') === 'legacy' && input.paymentMode !== 'full' && row.payload_hash === legacyPayloadHash)));
-  const idemHash = hex(await hmac(config.secret, `chiinails:idempotency:v1:${input.idempotencyKey}`));
-  const prior = await first(config.db.prepare(`${REQUEST_SELECT} WHERE r.idempotency_hash = ?`).bind(idemHash));
   if (prior) {
     if (!samePayload(prior)) throw failure('IDEMPOTENCY_CONFLICT', 409);
     return created(config, prior, current);
@@ -181,15 +186,19 @@ export async function createBookingRequest(env, input, { now, calendar } = {}) {
   const token = await reviewToken(config.secret, id);
   const expires = Math.min(current + 7 * DAY, checked.preview.start);
   const insert = config.db.prepare(`INSERT INTO booking_requests
-    (id, token_hash, idempotency_hash, payload_hash, name, whatsapp, agreed_price, deposit, date, time, start_ms, end_ms, start_iso, end_iso, created_at, expires_at, updated_at, payment_mode, payment_amount, design_type, duration_minutes)
-    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    (id, token_hash, idempotency_hash, payload_hash, name, whatsapp, agreed_price, deposit, date, time, start_ms, end_ms, start_iso, end_iso, created_at, expires_at, updated_at, payment_mode, payment_amount, design_type, duration_minutes, service_type, custom_payment_amount)
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     WHERE (SELECT count(*) FROM booking_requests WHERE whatsapp = ? AND created_at > ?) < 10`).bind(
     // The existing deposit column is the immutable v1 10% storage value. New
-    // payments use the explicit payment_mode/payment_amount snapshot columns.
+    // Manual payments use custom_payment_amount; payment_amount retains its v2
+    // CHECK-compatible shadow. Existing columns and snapshots are never rewritten.
     id, await hash(token), idemHash, payloadHash, value.name, value.whatsapp, value.agreedPrice, Math.floor(value.agreedPrice / 10) + (value.agreedPrice % 10 ? 1 : 0), value.date, value.time,
     // Original end columns retain their v1 two-hour CHECK. Actual duration/end
     // is derived from the explicit design_type/duration_minutes snapshot.
-    checked.preview.start, checked.preview.start + 7200000, checked.preview.startISO, localISO(checked.preview.start + 7200000), current, expires, current, value.paymentMode, value.deposit, value.designType, value.durationMinutes, value.whatsapp, current - DAY,
+    checked.preview.start, checked.preview.start + 7200000, checked.preview.startISO, localISO(checked.preview.start + 7200000), current, expires, current, value.paymentMode,
+    value.paymentMode === 'full' ? value.agreedPrice : Math.max(20000, Math.ceil(value.agreedPrice / 10)),
+    ['gel', 'removal'].includes(value.designType) ? 'plain' : value.designType, value.durationMinutes,
+    value.designType, value.deposit, value.whatsapp, current - DAY,
   );
   const receipt = config.db.prepare(`INSERT INTO booking_payment_proofs(request_id, content_type, content, sha256, created_at, expires_at)
     SELECT id, 'image/jpeg', ?, ?, ?, ? FROM booking_requests WHERE id = ?`).bind(proof.bytes.buffer, proof.digest, current, checked.preview.end + PAYMENT_PROOF_RETENTION_MS, id);
@@ -320,7 +329,7 @@ export async function decideBookingRequest(env, token, action, { owner, now, cal
   row = row.status === 'pending' ? await claim(config, row, operation, current) : await resume(config, row, operation, current);
   await verifyClaims(config, row);
   const snapshot = summary(row, current);
-  const appointment = { bookingId: row.id, name: row.name, whatsapp: row.whatsapp, agreedPrice: row.agreed_price, date: row.date, time: row.time, paymentMode: snapshot.paymentMode, paymentAmount: snapshot.deposit, designType: snapshot.designType, durationMinutes: snapshot.durationMinutes };
+  const appointment = { bookingId: row.id, name: row.name, whatsapp: row.whatsapp, agreedPrice: row.agreed_price, date: row.date, time: row.time, paymentMode: snapshot.paymentMode, paymentAmount: snapshot.deposit, paymentPolicy: snapshot.paymentPolicy, designType: snapshot.designType, durationMinutes: snapshot.durationMinutes };
   if (row.status === 'reconcile') {
     if (typeof provider.reconcileApprovedAppointment !== 'function') throw failure('CALENDAR_RECONCILE');
     let recovered;

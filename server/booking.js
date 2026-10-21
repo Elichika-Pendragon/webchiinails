@@ -15,10 +15,16 @@ export const BOOKING_DEFAULTS = Object.freeze({
 });
 
 export const BOOKING_DESIGNS = Object.freeze({
-  plain: Object.freeze({ label: 'Plain / nail gel / removal', durations: Object.freeze([60]), defaultDurationMinutes: 60 }),
-  simple: Object.freeze({ label: 'Simple nail art', durations: Object.freeze([60, 120]), defaultDurationMinutes: 120 }),
-  'full-art': Object.freeze({ label: 'Full nail art', durations: Object.freeze([180, 240, 300]), defaultDurationMinutes: 180 }),
+  plain: Object.freeze({ label: 'Plain', durations: Object.freeze([60]), defaultDurationMinutes: 60 }),
+  gel: Object.freeze({ label: 'Gel', durations: Object.freeze([60]), defaultDurationMinutes: 60 }),
+  removal: Object.freeze({ label: 'Removal', durations: Object.freeze([60]), defaultDurationMinutes: 60 }),
+  simple: Object.freeze({ label: 'Simple Design', durations: Object.freeze([60, 120]), defaultDurationMinutes: 120 }),
+  'full-art': Object.freeze({ label: 'Full Art', durations: Object.freeze([180, 240, 300]), defaultDurationMinutes: 180 }),
 });
+
+// Immutable labels used by persisted v1-v4 Calendar presentations. In particular,
+// historical "plain" represented three services and must not become Plain alone.
+export const LEGACY_BOOKING_DESIGN_LABELS = Object.freeze({ plain: 'Plain / nail gel / removal', simple: 'Simple nail art', 'full-art': 'Full nail art' });
 
 /** Public choices only. Legacy is a trusted persisted snapshot, never an input. */
 export function normalizeBookingDesign(designType = 'simple', durationMinutes) {
@@ -145,7 +151,7 @@ export function parseRupiah(value, maxAmount = BOOKING_DEFAULTS.maxAmount) {
   return Number.isSafeInteger(amount) && amount <= maxAmount ? amount : null;
 }
 
-/** New requests: 10% DP, minimum Rp20,000, never above the agreed total. */
+/** Immutable min20k-v2 calculation, retained only for persisted snapshots. */
 export function calculateDeposit(value, maxAmount = BOOKING_DEFAULTS.maxAmount) {
   const amount = parseRupiah(value, maxAmount);
   if (amount === null || amount <= 0) return null;
@@ -153,7 +159,7 @@ export function calculateDeposit(value, maxAmount = BOOKING_DEFAULTS.maxAmount) 
 }
 
 /** Choose an upfront amount; orders at or below Rp20,000 are full payment. */
-export function calculatePayment(value, paymentMode = 'deposit', maxAmount = BOOKING_DEFAULTS.maxAmount) {
+export function calculateLegacyPayment(value, paymentMode = 'deposit', maxAmount = BOOKING_DEFAULTS.maxAmount) {
   if (paymentMode !== 'deposit' && paymentMode !== 'full') return null;
   const amount = parseRupiah(value, maxAmount);
   const minimumDeposit = calculateDeposit(value, maxAmount);
@@ -161,6 +167,17 @@ export function calculatePayment(value, paymentMode = 'deposit', maxAmount = BOO
   const mode = amount <= 20000 ? 'full' : paymentMode;
   const deposit = mode === 'full' ? amount : minimumDeposit;
   return { paymentMode: mode, deposit, remainingBalance: amount - deposit, paymentPolicy: 'min20k-v2' };
+}
+
+/** Customer-entered DP; no percentage rule applies to new bookings. */
+export function calculatePayment(value, paymentMode = 'deposit', enteredDeposit, maxAmount = BOOKING_DEFAULTS.maxAmount) {
+  if (paymentMode !== 'deposit' && paymentMode !== 'full') return null;
+  const amount = parseRupiah(value, maxAmount);
+  if (amount === null || amount <= 0) return null;
+  const mode = amount <= 20000 ? 'full' : paymentMode;
+  const deposit = mode === 'full' ? amount : parseRupiah(enteredDeposit, maxAmount);
+  if (deposit === null || (mode === 'deposit' && deposit < 20000) || deposit > amount) return null;
+  return { paymentMode: mode, deposit, remainingBalance: amount - deposit, paymentPolicy: 'manual-min20k-v3' };
 }
 
 /** Return operating hours for a valid YYYY-MM-DD date, or null. */
@@ -208,8 +225,9 @@ export function listBookingSlots(date, options = {}) {
 }
 
 /**
- * Validate the customer fields and payment choice; derive the upfront amount.
- * Legacy/customer-supplied deposit values are ignored. A valid result is a declared
+ * Validate the customer fields, payment choice and entered upfront amount.
+ * The explicit trusted min20k-v2 option is for historical snapshots only.
+ * A valid result is a declared
  * booking preview only. The future API must validate again and verify quote,
  * availability and provider payment separately before confirming a booking.
  */
@@ -222,7 +240,9 @@ export function validateBooking(input, options = {}) {
   const whatsapp = normalizeWhatsApp(source.whatsapp);
   if (whatsapp === null) errors.whatsapp = 'Isi nomor HP Indonesia yang valid (08…, 628…, atau +628…), misalnya 081234567890.';
   const agreedPrice = parseRupiah(source.agreedPrice, config.maxAmount);
-  const payment = calculatePayment(source.agreedPrice, source.paymentMode, config.maxAmount);
+  const historical = options.paymentPolicy === 'min20k-v2';
+  const payment = historical ? calculateLegacyPayment(source.agreedPrice, source.paymentMode, config.maxAmount)
+    : calculatePayment(source.agreedPrice, source.paymentMode, source.deposit, config.maxAmount);
   if (source.paymentMode !== undefined && !['deposit', 'full'].includes(source.paymentMode)) errors.paymentMode = 'Pilih DP atau full payment.';
   const design = normalizeBookingDesign(source.designType, source.durationMinutes);
   if (!design) {
@@ -230,6 +250,7 @@ export function validateBooking(input, options = {}) {
     errors.durationMinutes = 'Pilih durasi yang sudah disepakati dengan Chii.';
   }
   if (agreedPrice === null || agreedPrice <= 0) errors.agreedPrice = `Isi harga dalam angka Rupiah, maksimal ${config.maxAmount} (batas teknis formulir).`;
+  else if (!payment && !errors.paymentMode) errors.deposit = 'Isi DP minimal Rp20.000 dan tidak melebihi harga total.';
   const day = calendarDay(source.date);
   if (day === null) errors.date = 'Pilih tanggal yang valid.';
   else if (day < config.minDay || day > config.maxDay) errors.date = `Pilih tanggal antara ${config.minDate} dan ${config.maxDate}.`;

@@ -53,11 +53,11 @@ const fields = [
             </fieldset>
             <fieldset disabled>
               <legend>Nominal sesuai konsultasi</legend>
-              <p class="booking-fieldset-hint">Isi harga total dalam Rupiah tanpa titik atau koma. DP 10% dengan minimum Rp20.000, atau pilih full payment.</p>
-              <div class="booking-field booking-payment-choice"><label for="booking-paymentMode">Pilihan pembayaran</label><select id="booking-paymentMode" name="paymentMode" required aria-describedby="hint-paymentMode error-paymentMode"><option value="deposit" selected>DP · 10%, min. Rp20.000</option><option value="full">Full payment · Lunas</option></select><small id="hint-paymentMode">Nominal pembayaran tidak melebihi harga total. Harga Rp20.000 atau kurang dibayar penuh.</small><p id="error-paymentMode" class="booking-field-error" hidden></p></div>
+              <p class="booking-fieldset-hint">Isi harga total dan nominal DP yang kamu bayar dalam Rupiah tanpa titik atau koma. Minimum DP Rp20.000, atau pilih full payment.</p>
+              <div class="booking-field booking-payment-choice"><label for="booking-paymentMode">Pilihan pembayaran</label><select id="booking-paymentMode" name="paymentMode" required aria-describedby="hint-paymentMode error-paymentMode"><option value="deposit" selected>DP · min. Rp20.000</option><option value="full">Full payment · Lunas</option></select><small id="hint-paymentMode">Nominal pembayaran tidak melebihi harga total. Harga Rp20.000 atau kurang dibayar penuh.</small><p id="error-paymentMode" class="booking-field-error" hidden></p></div>
               <div class="booking-amounts">
                 <div class="booking-field"><label for="booking-agreedPrice">Harga total</label><div class="booking-currency"><span aria-hidden="true">Rp</span><input id="booking-agreedPrice" name="agreedPrice" type="text" inputmode="numeric" maxlength="8" required aria-describedby="error-agreedPrice" /></div><p id="error-agreedPrice" class="booking-field-error" hidden></p></div>
-                <div class="booking-field"><label id="booking-payment-amount-label" for="booking-deposit">DP · min. Rp20.000</label><div class="booking-currency"><span aria-hidden="true">Rp</span><input id="booking-deposit" name="deposit" type="text" readonly aria-describedby="hint-deposit error-deposit" /></div><small id="hint-deposit">Dihitung dari pilihan pembayaran dan harga total.</small><p id="error-deposit" class="booking-field-error" hidden></p></div>
+                <div class="booking-field"><label id="booking-payment-amount-label" for="booking-deposit">DP · min. Rp20.000</label><div class="booking-currency"><span aria-hidden="true">Rp</span><input id="booking-deposit" name="deposit" type="text" inputmode="numeric" maxlength="8" required aria-describedby="hint-deposit error-deposit" /></div><small id="hint-deposit">Isi nominal DP yang kamu bayar, minimum Rp20.000 dan tidak melebihi harga total. Tanpa titik atau koma.</small><p id="error-deposit" class="booking-field-error" hidden></p></div>
               </div>
               <div class="booking-payment-routes" aria-label="Tujuan pembayaran">
                 <p class="booking-payment-heading">Tujuan pembayaran</p>
@@ -72,12 +72,14 @@ const fields = [
               <div class="booking-field booking-design-options">
                 <label for="booking-serviceDuration">Layanan & durasi</label>
                 <select id="booking-serviceDuration" name="serviceDuration" required aria-describedby="hint-serviceDuration error-serviceDuration">
-                  <option value="plain:60">Plain, gel, removal · 1 jam</option>
-                  <option value="simple:60">Simple art · 1 jam</option>
-                  <option value="simple:120" selected>Simple art · 2 jam</option>
-                  <option value="full-art:180">Full art · 3 jam</option>
-                  <option value="full-art:240">Full art · 4 jam</option>
-                  <option value="full-art:300">Full art · 5 jam</option>
+                  <option value="plain:60">Plain · 1 jam</option>
+                  <option value="gel:60">Gel · 1 jam</option>
+                  <option value="removal:60">Removal · 1 jam</option>
+                  <option value="simple:60">Simple Design · 1 jam</option>
+                  <option value="simple:120" selected>Simple Design · 2 jam</option>
+                  <option value="full-art:180">Full Art · 3 jam</option>
+                  <option value="full-art:240">Full Art · 4 jam</option>
+                  <option value="full-art:300">Full Art · 5 jam</option>
                 </select>
                 <small id="hint-serviceDuration">Pilih durasi yang sudah disepakati. Pilihan ini menentukan waktu, bukan harga layanan.</small>
                 <p id="error-serviceDuration" class="booking-field-error" hidden></p>
@@ -132,7 +134,7 @@ const fields = [
         </section>
         <aside class="booking-guidance" aria-labelledby="booking-guidance-title">
           <h2 id="booking-guidance-title">Dari obrolan ke nail date.</h2>
-          <ol><li><strong>Konsultasi dulu.</strong><p>Sepakati desain, durasi, dan harga total dengan Chii. Pilih DP 10% dengan minimum Rp20.000 atau full payment.</p></li><li><strong>Lengkapi detailmu.</strong><p>Plain, nail gel, atau removal memakai slot 1 jam. Simple art 1–2 jam dan full art 3–5 jam, sesuai konsultasi.</p></li><li><strong>Konfirmasi melalui WhatsApp.</strong><p>Chii memeriksa pembayaran melalui transfer atau QRIS dan jadwal sebelum mengonfirmasi booking.</p></li></ol>
+          <ol><li><strong>Konsultasi dulu.</strong><p>Sepakati desain, durasi, dan harga total dengan Chii. Isi nominal DP minimum Rp20.000 atau pilih full payment.</p></li><li><strong>Lengkapi detailmu.</strong><p>Plain, Gel, dan Removal memakai slot 1 jam. Simple Design 1–2 jam dan Full Art 3–5 jam, sesuai konsultasi. Unggah bukti pembayaran sebelum menekan Book.</p></li><li><strong>Konfirmasi melalui WhatsApp.</strong><p>Chii memeriksa pembayaran melalui transfer atau QRIS dan jadwal sebelum mengonfirmasi booking.</p></li></ol>
           <div class="booking-hours"><strong>Jam studio · WIB</strong>{salon.openingHours.map(day => <p>{day.label}<span>{day.opens.replace(':', '.')}–{day.closes.replace(':', '.')}<small>Last book {day.lastBooking}</small></span></p>)}</div>
           <a class="text-link" href="/about#booking-rules">Baca aturan booking →</a>
         </aside>

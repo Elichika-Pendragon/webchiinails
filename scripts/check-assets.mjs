@@ -30,11 +30,13 @@ for (const page of [...seoPages, bookingPage, approvalPage]) {
 }
 const bookingHtml = await readFile(new URL(bookingPage.file, root), 'utf8');
 const depositInput = bookingHtml.match(/<input\b[^>]*id="booking-deposit"[^>]*>/)?.[0] || '';
-assert.match(depositInput, /\sreadonly(?:\s|=|>|\/)/, 'DP is calculated, never customer-editable');
+assert.ok(!/\sreadonly(?:\s|=|>|\/)/.test(depositInput), 'DP accepts the amount the customer paid');
 assert.equal(bookingHtml.match(/<label\b[^>]*for="booking-deposit"[^>]*>([^<]*)<\/label>/)?.[1], 'DP · min. Rp20.000', 'Current minimum DP label');
 assert.ok(bookingHtml.includes('minimum Rp20.000') && bookingHtml.includes('full payment') && bookingHtml.includes('transfer atau QRIS'), 'Current payment choices and minimum');
 for (const name of ['paymentMode', 'serviceDuration', 'time']) assert.match(bookingHtml, new RegExp(`<select\\b[^>]*name="${name}"[^>]*required`), `${name} choice is required`);
-for (const value of ['plain:60', 'simple:60', 'simple:120', 'full-art:180', 'full-art:240', 'full-art:300']) assert.ok(bookingHtml.includes(`value="${value}"`), `Combined service choice ${value} exists`);
+for (const value of ['plain:60', 'gel:60', 'removal:60', 'simple:60', 'simple:120', 'full-art:180', 'full-art:240', 'full-art:300']) assert.ok(bookingHtml.includes(`value="${value}"`), `Combined service choice ${value} exists`);
+assert.match(bookingHtml, /<input\b[^>]*name="deposit"[^>]*inputmode="numeric"[^>]*required/, 'Customers must enter their DP amount');
+assert.ok(!/<input\b[^>]*name="deposit"[^>]*readonly/.test(bookingHtml) && !bookingHtml.includes('10%'), 'Current DP is editable without a percentage rule');
 assert.ok(!/id="booking-(?:designType|durationMinutes|slots)"/.test(bookingHtml), 'Combined service and native time dropdowns replace separate duration and slot grid');
 assert.match(bookingHtml, /<input\b[^>]*name="paymentProof"[^>]*required/, 'Payment proof is required before Book');
 assert.ok(!bookingHtml.includes('Jessica') && !bookingHtml.includes('Mulai terakhir'), 'Customer-facing booking copy uses Chii and Last book');

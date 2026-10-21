@@ -16,7 +16,7 @@
  * https://developers.google.com/workspace/calendar/api/v3/reference/events/insert
  * https://developers.google.com/workspace/calendar/api/v3/reference/events/get
  */
-import { validateBooking, BOOKING_DESIGNS, normalizeBookingDesign } from './booking.js';
+import { validateBooking, BOOKING_DESIGNS, LEGACY_BOOKING_DESIGN_LABELS, normalizeBookingDesign } from './booking.js';
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const API_URL = 'https://www.googleapis.com/calendar/v3';
@@ -256,9 +256,12 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     if (requestedStart === null) throw failure('CALENDAR_INPUT');
     const current = clock();
     const amount = value => Number.isSafeInteger(value) ? String(value) : value;
+    if (appointment.paymentPolicy !== undefined && !['legacy-10pct-v1', 'min20k-v2', 'manual-min20k-v3'].includes(appointment.paymentPolicy)) throw failure('CALENDAR_INPUT');
+    const manual = appointment.paymentPolicy === 'manual-min20k-v3';
     const legacySchedule = appointment.designType === undefined || appointment.designType === 'legacy';
     const design = legacySchedule ? { designType: 'simple', durationMinutes: 120 } : normalizeBookingDesign(appointment.designType, appointment.durationMinutes);
     if (!design || (legacySchedule && appointment.durationMinutes !== undefined && appointment.durationMinutes !== 120)) throw failure('CALENDAR_INPUT');
+    if (manual && (legacySchedule || !Number.isSafeInteger(appointment.paymentAmount)) || !manual && !legacySchedule && !Object.prototype.hasOwnProperty.call(LEGACY_BOOKING_DESIGN_LABELS, design.designType)) throw failure('CALENDAR_INPUT');
     let checked;
     try {
       // Past starts permit reconciliation of a prior write only, never insertion.
@@ -266,12 +269,12 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
       // flag. Omitted mode preserves the original adapter's v1 fingerprint.
       // Persisted snapshots keep their original half-hour starts when accepted
       // or reconciled; the public creation path enforces today's duration step.
-      checked = validateBooking({ name: appointment.name, whatsapp: appointment.whatsapp, agreedPrice: amount(appointment.agreedPrice), date: appointment.date, time: appointment.time, paymentMode: appointment.paymentMode === 'legacy' ? 'deposit' : appointment.paymentMode, ...design }, { now: Math.min(current, requestedStart - 1), stepMinutes: 30 });
+      checked = validateBooking({ name: appointment.name, whatsapp: appointment.whatsapp, agreedPrice: amount(appointment.agreedPrice), deposit: amount(appointment.paymentAmount), date: appointment.date, time: appointment.time, paymentMode: appointment.paymentMode === 'legacy' ? 'deposit' : appointment.paymentMode, ...design }, { now: Math.min(current, requestedStart - 1), stepMinutes: 30, ...(manual ? {} : { paymentPolicy: 'min20k-v2' }) });
     } catch { throw failure('CALENDAR_INPUT'); }
     if (!checked.valid) throw failure('CALENDAR_INPUT');
     const value = checked.value;
     const legacy = appointment.paymentMode === undefined || appointment.paymentMode === 'legacy';
-    if (!legacySchedule && legacy) throw failure('CALENDAR_INPUT');
+    if (!legacySchedule && legacy || appointment.paymentPolicy === 'legacy-10pct-v1' && !legacy || appointment.paymentPolicy === 'min20k-v2' && legacy) throw failure('CALENDAR_INPUT');
     const paymentMode = legacy ? 'legacy' : value.paymentMode;
     const paymentAmount = legacy ? Math.floor(value.agreedPrice / 10) + (value.agreedPrice % 10 ? 1 : 0) : value.deposit;
     if ((!legacy && appointment.paymentMode !== paymentMode) || (appointment.paymentAmount !== undefined && appointment.paymentAmount !== paymentAmount)) throw failure('CALENDAR_INPUT');
@@ -281,8 +284,9 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     const sharedDescription = `Booking: ${bookingId}\nNama: ${value.name}\nWhatsApp: ${legacySchedule ? `+${value.whatsapp}` : `https://wa.me/${value.whatsapp}`}\nHarga disepakati: Rp${value.agreedPrice}`;
     const financialDescription = legacy
       ? `${sharedDescription}\nDP 10%: Rp${paymentAmount}\nNominal dan pembayaran diperiksa terpisah oleh operator.`
-      : `${sharedDescription}\nPilihan pembayaran: ${paymentMode === 'full' ? 'Full payment' : 'DP 10%, minimal Rp20000'}\nNominal pembayaran: Rp${paymentAmount}\nSisa pembayaran: Rp${value.agreedPrice - paymentAmount}\nNominal dan pembayaran diperiksa terpisah oleh operator.`;
-    const previousDescription = legacySchedule ? financialDescription : `${financialDescription}\nJenis desain: ${BOOKING_DESIGNS[design.designType].label}\nDurasi: ${design.durationMinutes} menit`;
+      : `${sharedDescription}\nPilihan pembayaran: ${paymentMode === 'full' ? 'Full payment' : manual ? 'DP, minimal Rp20000' : 'DP 10%, minimal Rp20000'}\nNominal pembayaran: Rp${paymentAmount}\nSisa pembayaran: Rp${value.agreedPrice - paymentAmount}\nNominal dan pembayaran diperiksa terpisah oleh operator.`;
+    const designLabel = manual ? BOOKING_DESIGNS[design.designType].label : LEGACY_BOOKING_DESIGN_LABELS[design.designType];
+    const previousDescription = legacySchedule ? financialDescription : `${financialDescription}\nJenis desain: ${designLabel}\nDurasi: ${design.durationMinutes} menit`;
     const previousVersion = legacySchedule ? legacy ? 1 : 2 : 3;
     const previousFingerprint = await sha256(JSON.stringify({ version: previousVersion, calendarId, bookingId, summary: previousSummary, description: previousDescription, startISO, endISO }));
     const localPhone = `0${value.whatsapp.slice(2)}`;
@@ -290,12 +294,12 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     // New snapshots show the complete contact and service at a glance. Google
     // Calendar supports HTML descriptions; only this validated digits-only URL
     // becomes a link, and customer-supplied text is always escaped.
-    const summary = legacySchedule ? previousSummary : `${value.name} · ${localPhone} · ${BOOKING_DESIGNS[design.designType].label}`;
+    const summary = legacySchedule ? previousSummary : `${value.name} · ${localPhone} · ${designLabel}`;
     const description = legacySchedule ? previousDescription : escapeHtml(previousDescription).replace(
       `\nWhatsApp: ${whatsappUrl}\n`,
       `\nNomor WhatsApp: ${localPhone} (+${value.whatsapp})\nWhatsApp: <a href="${whatsappUrl}">${whatsappUrl}</a>\n`,
     );
-    const version = legacySchedule ? previousVersion : 4;
+    const version = manual ? 5 : legacySchedule ? previousVersion : 4;
     const source = `chiinails-booking-v${version}`;
     const fingerprint = legacySchedule ? previousFingerprint : await sha256(JSON.stringify({ version, calendarId, bookingId, summary, description, startISO, endISO }));
     const body = {
@@ -303,13 +307,13 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
       start: { dateTime: startISO, timeZone: 'Asia/Jakarta' },
       end: { dateTime: endISO, timeZone: 'Asia/Jakarta' },
       status: 'confirmed', visibility: 'private', transparency: 'opaque',
-      extendedProperties: { private: { source, bookingId, fingerprint } },
+      extendedProperties: { private: { source, bookingId, fingerprint, ...(manual ? { paymentPolicy: 'manual-min20k-v3' } : {}) } },
     };
     // A write may have completed before this display revision was deployed.
     // Recognize its exact previous payload on read-only recovery; never change
     // the event ID, relax identity checks, or insert a duplicate appointment.
-    const previousPresentation = legacySchedule ? null : { summary: previousSummary, description: previousDescription, fingerprint: previousFingerprint, source: 'chiinails-booking-v3' };
-    return { body, bookingId, eventId, summary, description, fingerprint, source, previousPresentation, startISO, endISO, past: requestedStart <= current };
+    const previousPresentation = manual || legacySchedule ? null : { summary: previousSummary, description: previousDescription, fingerprint: previousFingerprint, source: 'chiinails-booking-v3' };
+    return { body, bookingId, eventId, summary, description, fingerprint, source, previousPresentation, manual, startISO, endISO, past: requestedStart <= current };
   }
 
   function verifyEvent(event, expected, reconciled) {
@@ -321,6 +325,7 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
       || event.visibility !== 'private' || event.transparency !== 'opaque'
       || timestamp(event.start?.dateTime) !== timestamp(startISO) || timestamp(event.end?.dateTime) !== timestamp(endISO)
       || !record(metadata) || metadata.bookingId !== bookingId
+      || expected.manual && metadata.paymentPolicy !== 'manual-min20k-v3'
       || (event.attendees !== undefined && (!Array.isArray(event.attendees) || event.attendees.length))) throw failure(reconciled ? 'CALENDAR_CONFLICT' : 'CALENDAR_RESPONSE');
     return { eventId, startISO, endISO, reconciled };
   }
@@ -362,7 +367,7 @@ export function createGoogleCalendarProvider(env = {}, options = {}) {
     const end = timestamp(event.end?.dateTime);
     const metadata = event.extendedProperties?.private;
     if (start === null || end === null || end <= start || !record(metadata) || metadata.bookingId !== input.bookingId
-      || !['chiinails-booking-v1', 'chiinails-booking-v2', 'chiinails-booking-v3', 'chiinails-booking-v4'].includes(metadata.source)) throw failure('CALENDAR_RESPONSE');
+      || !['chiinails-booking-v1', 'chiinails-booking-v2', 'chiinails-booking-v3', 'chiinails-booking-v4', 'chiinails-booking-v5'].includes(metadata.source)) throw failure('CALENDAR_RESPONSE');
     return { state: 'active' };
   }
 

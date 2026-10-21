@@ -168,7 +168,7 @@ function harness(options = {}) {
       form.listeners.input({ target: inputs[name] });
     },
     async fill() {
-      for (const [name, value] of Object.entries({ name: 'Synthetic Customer', whatsapp: '081234567890', agreedPrice: '100000', paymentMode: 'deposit', serviceDuration: 'simple:120', date: '2026-10-21' })) this.change(name, value);
+      for (const [name, value] of Object.entries({ name: 'Synthetic Customer', whatsapp: '081234567890', agreedPrice: '100000', paymentMode: 'deposit', deposit: '20000', serviceDuration: 'simple:120', date: '2026-10-21' })) this.change(name, value);
       await settle();
       this.change('time', '14:00');
       await this.uploadProof();
@@ -189,14 +189,16 @@ function draftStorage() {
 }
 const recover = async () => { await settle(); await settle(); await settle(); };
 
-test('reload restores text, selected service, payment proof and requested time while fresh availability is pending', async () => {
+test('reload restores the manual deposit, selected service, payment proof and requested time while fresh availability is pending', async () => {
   const saved = draftStorage();
   const original = harness(saved); await settle(); await original.fill();
+  original.change('deposit', '35000');
   original.window.listeners.pagehide(); await recover();
   const next = harness({ ...saved, holdAvailability: true, holdMonth: true }); await recover();
   assert.equal(next.inputs.name.value, 'Synthetic Customer');
   assert.equal(next.inputs.whatsapp.value, '081234567890');
   assert.equal(next.inputs.serviceDuration.value, 'simple:120');
+  assert.equal(next.inputs.deposit.value, '35000');
   assert.equal(next.inputs.date.value, '2026-10-21');
   assert.equal(next.inputs.time.value, '', 'a restored choice is not treated as checked availability');
   assert.equal(next.nodes['#booking-review'].disabled, true);
@@ -211,7 +213,8 @@ test('reload restores text, selected service, payment proof and requested time w
 
 test('an ambiguous failed upload survives reload with identical proof and retry key until explicit Book', async () => {
   const saved = draftStorage();
-  const original = harness({ ...saved, requestFailures: 1 }); await settle(); await original.fill(); await original.submit();
+  const original = harness({ ...saved, requestFailures: 1 }); await settle(); await original.fill();
+  original.change('deposit', '35000'); await original.submit();
   original.window.listeners.pagehide(); await recover();
   const before = original.posts()[0];
   const next = harness(saved); await recover();
@@ -220,6 +223,7 @@ test('an ambiguous failed upload survives reload with identical proof and retry 
   const after = next.posts()[0];
   assert.equal(after.idempotencyKey, before.idempotencyKey);
   assert.equal(after.proof.base64, before.proof.base64);
+  assert.equal(after.deposit, '35000');
   assert.equal(next.redirects.length, 1);
   assert.equal(saved.values.size, 0, 'validated acknowledgement clears text and retry metadata');
   await recover(); assert.equal(saved.images.size, 0, 'acknowledgement clears the temporary receipt');
@@ -334,7 +338,7 @@ test('reconnection during receipt preparation waits for completion before refres
 test('explicit clear removes draft, proof and fields and never posts or opens WhatsApp', async () => {
   const saved = draftStorage(); const page = harness(saved); await settle(); await page.fill(); await recover();
   page.nodes['#booking-draft-clear'].listeners.click(); await recover();
-  for (const name of ['name', 'whatsapp', 'agreedPrice', 'date', 'time']) assert.equal(page.inputs[name].value, '', name);
+  for (const name of ['name', 'whatsapp', 'agreedPrice', 'deposit', 'date', 'time']) assert.equal(page.inputs[name].value, '', name);
   assert.equal(page.nodes['#booking-proof-preview'].hidden, true);
   assert.equal(saved.values.size, 0); assert.equal(saved.images.size, 0);
   assert.equal(page.inputs.name.focused, true);
@@ -358,7 +362,7 @@ test('storage metadata never contains an approval link or credentials, including
   assert.doesNotMatch(raw, /outside.invalid|book\/approve|authorization|accessToken|synthetic.png/);
 });
 
-test('Book requires every editable value and derives rather than trusts DP', async () => {
+test('Book requires every editable field, including an explicitly entered deposit', async () => {
   const page = harness(); await settle();
   assert.equal(page.nodes['#booking-review'].disabled, true);
   assert.equal(page.inputs.time.options[0].text, 'Pilih tanggal terlebih dahulu');
@@ -366,12 +370,55 @@ test('Book requires every editable value and derives rather than trusts DP', asy
   await page.fill();
   assert.equal(page.nodes['#booking-review'].disabled, false);
   assert.equal(page.inputs.deposit.value, '20000');
-  for (const name of ['name', 'whatsapp', 'agreedPrice', 'serviceDuration', 'date', 'time']) {
+  assert.equal(page.inputs.deposit.readOnly, false);
+  for (const name of ['name', 'whatsapp', 'agreedPrice', 'deposit', 'serviceDuration', 'date', 'time']) {
     await page.fill(); page.change(name, '');
     assert.equal(page.nodes['#booking-review'].disabled, true, `${name} is required`);
+    await page.submit();
+    assert.equal(page.posts().length, 0, `${name} cannot be bypassed with a submit event`);
   }
-  await page.fill(); page.change('deposit', '1'); await page.submit();
+});
+
+test('a manual deposit below Rp20.000, above the total or malformed cannot enable Book or post', async () => {
+  const page = harness(); await settle(); await page.fill();
+  for (const amount of ['', '19999', '100001', '1e5', '-20000', '20000.5']) {
+    page.change('deposit', amount);
+    page.form.listeners.focusout({ target: page.inputs.deposit });
+    assert.equal(page.nodes['#booking-review'].disabled, true, amount);
+    assert.equal(page.nodes['#error-deposit'].hidden, false, amount);
+    await page.submit();
+    assert.equal(page.posts().length, 0, amount);
+  }
+});
+
+test('the customer may enter Rp20.000 for a million-rupiah quote without a percentage calculation', async () => {
+  const page = harness(); await settle(); await page.fill();
+  page.change('agreedPrice', '1000000');
+  page.change('deposit', '20000');
   assert.equal(page.inputs.deposit.value, '20000');
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+  await page.submit();
+  assert.equal(page.posts()[0].agreedPrice, '1000000');
+  assert.equal(page.posts()[0].deposit, '20000');
+  assert.match(page.values.remainingBalance.textContent, /980\.000/);
+  assert.doesNotMatch(new URL(page.redirects[0]).searchParams.get('text'), /10\s*%/);
+});
+
+test('a declared deposit may equal the total and leaves no remaining balance', async () => {
+  const page = harness(); await settle(); await page.fill();
+  page.change('deposit', '100000');
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+  await page.submit();
+  assert.equal(page.posts()[0].deposit, '100000');
+  assert.match(page.values.remainingBalance.textContent, /^Rp.?0$/);
+});
+
+test('the current customer form and payment hints do not advertise a percentage DP', async () => {
+  const markup = readFileSync(new URL('../src/pages/book.astro', import.meta.url), 'utf8');
+  assert.doesNotMatch(markup, /10\s*%/);
+  const page = harness(); await settle(); await page.fill();
+  assert.doesNotMatch(page.nodes['#hint-deposit'].textContent, /10\s*%/);
+  assert.doesNotMatch(page.nodes['#booking-payment-summary-label'].textContent, /10\s*%/);
 });
 
 test('invalid phone, price and unavailable time cannot enable Book', async () => {
@@ -412,10 +459,11 @@ test('online Book posts canonical strings, then prepares the unique approval lin
   const page = harness(); await settle(); await page.fill(); await page.submit();
   assert.equal(page.redirects.length, 1);
   const payload = page.posts()[0];
-  assert.deepEqual(Object.keys(payload).sort(), ['agreedPrice', 'date', 'designType', 'durationMinutes', 'idempotencyKey', 'name', 'paymentMode', 'proof', 'time', 'whatsapp']);
+  assert.deepEqual(Object.keys(payload).sort(), ['agreedPrice', 'date', 'deposit', 'designType', 'durationMinutes', 'idempotencyKey', 'name', 'paymentMode', 'proof', 'time', 'whatsapp']);
   assert.equal(payload.whatsapp, '6281234567890');
   assert.equal(payload.agreedPrice, '100000');
   assert.equal(payload.paymentMode, 'deposit');
+  assert.equal(payload.deposit, '20000');
   assert.equal(payload.designType, 'simple');
   assert.equal(payload.durationMinutes, '120');
   assert.deepEqual(Object.keys(payload.proof).sort(), ['base64', 'contentType']);
@@ -457,11 +505,29 @@ test('request failure retains values and reuses the same key on an explicit retr
   assert.equal(page.posts()[0].idempotencyKey, page.posts()[1].idempotencyKey);
 });
 
-test('changing a canonical field creates a new key and recalculates DP', async () => {
+test('changing the quote creates a new key while preserving the manually entered DP', async () => {
   const page = harness({ requestFailures: 1 }); await settle(); await page.fill(); await page.submit();
   page.change('agreedPrice', '250000'); await page.submit();
   assert.notEqual(page.posts()[0].idempotencyKey, page.posts()[1].idempotencyKey);
-  assert.equal(page.inputs.deposit.value, '25000');
+  assert.equal(page.inputs.deposit.value, '20000');
+  assert.equal(page.posts()[1].deposit, '20000');
+});
+
+test('changing only the manual deposit creates a new key and an unchanged deposit retries with that key', async () => {
+  const page = harness({ requestFailures: 2 }); await settle(); await page.fill(); await page.submit();
+  page.change('deposit', '35000'); await page.submit();
+  assert.notEqual(page.posts()[0].idempotencyKey, page.posts()[1].idempotencyKey);
+  assert.equal(page.posts()[1].deposit, '35000');
+  await page.submit();
+  assert.equal(page.posts()[2].idempotencyKey, page.posts()[1].idempotencyKey);
+  assert.equal(page.posts()[2].deposit, '35000');
+});
+
+test('equivalent digit-only deposit values keep the canonical retry key', async () => {
+  const page = harness({ requestFailures: 1 }); await settle(); await page.fill(); await page.submit();
+  page.change('deposit', '020000'); await page.submit();
+  assert.equal(page.posts()[0].idempotencyKey, page.posts()[1].idempotencyKey);
+  assert.equal(page.posts()[1].deposit, '20000');
 });
 
 test('equivalent WhatsApp formatting preserves the canonical retry key', async () => {
@@ -520,13 +586,31 @@ test('full payment updates the amount, zero balance, WhatsApp brief and request 
   const page = harness({ requestFailures: 1 }); await settle(); await page.fill(); await page.submit();
   page.change('paymentMode', 'full');
   assert.equal(page.inputs.deposit.value, '100000');
+  assert.equal(page.inputs.deposit.readOnly, true);
   assert.equal(page.nodes['#booking-payment-amount-label'].textContent, 'Full payment');
   await page.submit();
   assert.equal(page.posts()[1].paymentMode, 'full');
+  assert.equal(page.posts()[1].deposit, '100000');
   assert.notEqual(page.posts()[0].idempotencyKey, page.posts()[1].idempotencyKey);
   assert.match(new URL(page.redirects[0]).searchParams.get('text'), /Full payment: Rp.?100\.000/);
   assert.match(new URL(page.redirects[0]).searchParams.get('text'), /Sisa pembayaran: Rp.?0/);
   assert.match(page.values.remainingBalance.textContent, /0/);
+});
+
+test('switching from manual DP to Full payment and back restores the typed DP', async () => {
+  const page = harness(); await settle(); await page.fill();
+  page.change('deposit', '35000');
+  page.change('paymentMode', 'full');
+  assert.equal(page.inputs.deposit.value, '100000');
+  assert.equal(page.inputs.deposit.readOnly, true);
+  page.change('agreedPrice', '150000');
+  assert.equal(page.inputs.deposit.value, '150000');
+  page.change('paymentMode', 'deposit');
+  assert.equal(page.inputs.deposit.value, '35000');
+  assert.equal(page.inputs.deposit.readOnly, false);
+  assert.equal(page.nodes['#booking-review'].disabled, false);
+  await page.submit();
+  assert.equal(page.posts()[0].deposit, '35000');
 });
 
 test('low totals cap payment at the total and normalize full, while a later higher total restores DP', async () => {
@@ -535,6 +619,7 @@ test('low totals cap payment at the total and normalize full, while a later high
     assert.equal(page.inputs.paymentMode.value, 'full');
     assert.equal(page.inputs.paymentMode.options[0].disabled, true);
     assert.equal(page.inputs.deposit.value, amount);
+    assert.equal(page.inputs.deposit.readOnly, true);
     await page.submit();
     assert.equal(page.posts()[0].paymentMode, 'full');
     assert.match(page.values.remainingBalance.textContent, /0/);
@@ -542,6 +627,7 @@ test('low totals cap payment at the total and normalize full, while a later high
     page.change('agreedPrice', '100000');
     assert.equal(page.inputs.paymentMode.value, 'deposit');
     assert.equal(page.inputs.deposit.value, '20000');
+    assert.equal(page.inputs.deposit.readOnly, false);
     assert.equal(page.inputs.paymentMode.options[0].disabled, false);
   }
 });
@@ -549,6 +635,8 @@ test('low totals cap payment at the total and normalize full, while a later high
 test('each combined service choice reaches the unchanged API and WhatsApp with its actual interval', async () => {
   for (const [designType, durationMinutes, starts] of [
     ['plain', 60, ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00']],
+    ['gel', 60, ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00']],
+    ['removal', 60, ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00']],
     ['simple', 60, ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00']],
     ['simple', 120, ['08:00', '10:00', '12:00', '14:00']],
     ['full-art', 180, ['08:00', '11:00']],
@@ -575,6 +663,8 @@ test('each combined service choice reaches the unchanged API and WhatsApp with i
     assert.equal(availability.durationMinutes, String(durationMinutes));
     assert.equal(Object.hasOwn(availability, 'serviceDuration'), false);
     assert.match(new URL(page.redirects[0]).searchParams.get('text'), new RegExp(`Durasi: ${durationMinutes / 60} jam`));
+    const label = { plain: 'Plain', gel: 'Gel', removal: 'Removal', simple: 'Simple Design', 'full-art': 'Full Art' }[designType];
+    assert.match(new URL(page.redirects[0]).searchParams.get('text'), new RegExp(`Desain: ${label}(?:\\n|$)`));
     assert.equal(page.nodes['#booking-duration-summary-label'].textContent, `Waktu · ${durationMinutes / 60} jam`);
   }
 });
@@ -610,7 +700,11 @@ test('service changes update the duration hint and remove a start that no longer
   assert.match(page.inputs.time.options.find(option => option.value === '08:00').text, /08\.00–13\.00 WIB/);
   assert.match(page.nodes['#hint-serviceDuration'].textContent, /Last book 12:00/);
   page.change('serviceDuration', 'plain:60'); await settle();
-  assert.match(page.nodes['#hint-serviceDuration'].textContent, /nail gel.*removal.*1 jam/);
+  assert.match(page.nodes['#hint-serviceDuration'].textContent, /Plain.*1 jam/);
+  for (const service of ['gel', 'removal']) {
+    page.change('serviceDuration', `${service}:60`); await settle();
+    assert.match(page.nodes['#hint-serviceDuration'].textContent, new RegExp(`${service === 'gel' ? 'Gel' : 'Removal'}.*1 jam`));
+  }
   page.change('serviceDuration', 'simple:60'); await settle();
   assert.match(page.nodes['#hint-serviceDuration'].textContent, /slot 1 jam/);
 });
@@ -716,7 +810,7 @@ test('changing the agreed design creates a fresh request identity and one-hour p
   assert.notEqual(page.posts()[0].idempotencyKey, page.posts()[1].idempotencyKey);
   assert.equal(page.posts()[1].designType, 'plain');
   assert.equal(page.posts()[1].durationMinutes, '60');
-  assert.match(page.values.design.textContent, /Nail gel.*Removal/);
+  assert.equal(page.values.design.textContent, 'Plain');
 });
 
 test('copy controls preserve account leading zeros and provide a manual-copy fallback', async () => {
@@ -730,7 +824,7 @@ test('copy controls preserve account leading zeros and provide a manual-copy fal
   assert.equal(page.posts().length, 0);
 });
 
-test('Book requires prepared proof and removing it clears the preview and disables submission', async () => {
+test('Book requires prepared proof and removing it clears the preview and immediately disables submission', async () => {
   const page = harness(); await settle(); await page.fill();
   assert.equal(page.nodes['#booking-review'].disabled, false);
   page.nodes['#booking-proof-remove'].listeners.click();
@@ -747,13 +841,30 @@ test('invalid proof or unfinished compression cannot enable Book and stale work 
   page.config.proofFailure = true; await page.uploadProof();
   assert.equal(page.nodes['#booking-review'].disabled, true);
   assert.match(page.nodes['#booking-proof-status'].textContent, /JPEG/);
+  await page.submit();
+  assert.equal(page.posts().length, 0, 'a failed proof cannot be bypassed with a submit event');
   page.config.proofFailure = false; page.config.holdProof = true;
   const pending = page.uploadProof(); await settle();
   assert.equal(page.nodes['#booking-review'].disabled, true);
+  await page.submit();
+  assert.equal(page.posts().length, 0, 'proof preparation must finish before any request');
   page.nodes['#booking-proof-remove'].listeners.click();
   page.proofReleases[0](); await pending;
   assert.equal(page.nodes['#booking-proof-preview'].hidden, true);
   assert.equal(page.nodes['#booking-review'].disabled, true);
+  await page.submit();
+  assert.equal(page.posts().length, 0, 'a removed proof cannot be restored by stale compression');
+});
+
+test('all text fields and fresh availability cannot enable Book before the first proof upload', async () => {
+  const page = harness(); await settle();
+  for (const [name, value] of Object.entries({ name: 'Synthetic Customer', whatsapp: '081234567890', agreedPrice: '100000', paymentMode: 'deposit', deposit: '20000', serviceDuration: 'simple:120', date: '2026-10-21' })) page.change(name, value);
+  await settle(); page.change('time', '14:00');
+  assert.equal(page.nodes['#booking-review'].disabled, true);
+  await page.submit();
+  assert.equal(page.posts().length, 0);
+  await page.uploadProof();
+  assert.equal(page.nodes['#booking-review'].disabled, false);
 });
 
 test('changed compressed proof creates a new request identity without putting image bytes in WhatsApp', async () => {
@@ -921,10 +1032,10 @@ test('calendar reads one clipped summary per service and duration, and reuses an
   assert.deepEqual(JSON.parse(call.request.body), { month: '2026-10', designType: 'simple', durationMinutes: '120' });
   assert.equal(page.calendar.state.status, 'ready');
   assert.deepEqual([...page.calendar.state.closedDates], ['2026-10-20', '2026-10-24']);
-  for (const choice of ['plain:60', 'simple:60', 'simple:120', 'full-art:180', 'full-art:240', 'full-art:300']) {
+  for (const choice of ['plain:60', 'gel:60', 'removal:60', 'simple:60', 'simple:120', 'full-art:180', 'full-art:240', 'full-art:300']) {
     page.change('serviceDuration', choice); await settle();
   }
-  assert.equal(checks().length, 6, 'each exact service has one cached monthly summary');
+  assert.equal(checks().length, 8, 'each exact service has one cached monthly summary');
   for (const check of checks()) {
     const query = JSON.parse(check.request.body);
     assert.deepEqual(Object.keys(query).sort(), ['designType', 'durationMinutes', 'month']);
@@ -932,7 +1043,7 @@ test('calendar reads one clipped summary per service and duration, and reuses an
   }
   page.change('serviceDuration', 'simple:120'); await settle();
   page.change('serviceDuration', 'simple:120'); await settle();
-  assert.equal(checks().length, 6, 'returning to a fresh same-choice summary does not refetch it');
+  assert.equal(checks().length, 8, 'returning to a fresh same-choice summary does not refetch it');
 });
 
 test('pending month summary keeps Book disabled even when selected-day availability and proof are ready', async () => {

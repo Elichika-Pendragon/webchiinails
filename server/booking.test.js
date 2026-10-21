@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import { salon } from '../src/content.js';
 import {
   getOperatingHours, getBookingDateBounds,
-  listBookingSlots, normalizeWhatsApp, parseRupiah, calculateDeposit, calculatePayment, validateBooking, normalizeBookingDesign, BOOKING_DESIGNS,
+  listBookingSlots, normalizeWhatsApp, parseRupiah, calculateDeposit, calculatePayment, calculateLegacyPayment, validateBooking, normalizeBookingDesign, BOOKING_DESIGNS,
 } from './booking.js';
 
 const now = Date.parse('2026-10-19T17:30:00Z'); // 20 Oct, 00.30 WIB.
 const options = { now };
-const form = overrides => ({ name: 'Jesika Aydilla', whatsapp: '081234567890', agreedPrice: '155000', date: '2026-10-20', time: '08:00', ...overrides });
+const form = overrides => ({ name: 'Jesika Aydilla', whatsapp: '081234567890', agreedPrice: '155000', deposit: '20000', date: '2026-10-20', time: '08:00', ...overrides });
 
 test('shared booking rules work without Object.hasOwn on older mobile browsers', () => {
   const original = Object.getOwnPropertyDescriptor(Object, 'hasOwn');
@@ -178,7 +178,7 @@ test('rupiah accepts digit strings only and never coerces malformed values', () 
   assert.equal(parseRupiah('10000001', 20000000), 10000001);
 });
 
-test('DP applies the Rp20,000 minimum, rounds 10% upward and never exceeds the total', () => {
+test('historical v2 DP calculation remains immutable for old snapshots', () => {
   for (const [total, deposit] of [['155000', 20000], ['200000', 20000], ['155001', 20000], ['200001', 20001], ['20001', 20000], ['20000', 20000], ['19999', 19999], ['11', 11], ['10', 10], ['1', 1], ['000001', 1], ['10000000', 1000000]]) {
     assert.equal(calculateDeposit(total), deposit, total);
   }
@@ -195,7 +195,7 @@ test('validation returns normalized declared values and an explicitly unverified
   const result = validateBooking(form({ name: '  Jesika Aydilla  ' }), options);
   assert.equal(result.valid, true);
   assert.deepEqual(result.errors, {});
-  assert.deepEqual(result.value, { name: 'Jesika Aydilla', whatsapp: '6281234567890', agreedPrice: 155000, deposit: 20000, paymentMode: 'deposit', paymentPolicy: 'min20k-v2', designType: 'simple', durationMinutes: 120, date: '2026-10-20', time: '08:00', quoteStatus: 'customer-declared' });
+  assert.deepEqual(result.value, { name: 'Jesika Aydilla', whatsapp: '6281234567890', agreedPrice: 155000, deposit: 20000, paymentMode: 'deposit', paymentPolicy: 'manual-min20k-v3', designType: 'simple', durationMinutes: 120, date: '2026-10-20', time: '08:00', quoteStatus: 'customer-declared' });
   assert.equal(result.preview.remainingBalance, 135000);
   assert.equal(result.preview.startISO, '2026-10-20T08:00:00+07:00');
   assert.equal(result.preview.endISO, '2026-10-20T10:00:00+07:00');
@@ -205,9 +205,9 @@ test('validation returns normalized declared values and an explicitly unverified
   assert.equal(result.preview.availabilityVerified, false);
 });
 
-test('DP and remaining balance recalculate from every changed total', () => {
+test('entered DP stays fixed as the total changes; only remaining balance recalculates', () => {
   for (const [agreedPrice, deposit, remainingBalance] of [['155000', 20000, 135000], ['200000', 20000, 180000], ['155001', 20000, 135001], ['200001', 20001, 180000], ['1', 1, 0]]) {
-    const result = validateBooking(form({ agreedPrice }), options);
+    const result = validateBooking(form({ agreedPrice, deposit: String(deposit) }), options);
     assert.equal(result.valid, true);
     assert.equal(result.value.deposit, deposit);
     assert.equal(result.preview.remainingBalance, remainingBalance);
@@ -216,24 +216,26 @@ test('DP and remaining balance recalculate from every changed total', () => {
   assert.ok(validateBooking(form({ agreedPrice: '10000001' }), options).errors.agreedPrice);
   const extended = validateBooking(form({ agreedPrice: '10000001' }), { now, maxAmount: 20000000 });
   assert.equal(extended.valid, true);
-  assert.equal(extended.value.deposit, 1000001);
+  assert.equal(extended.value.deposit, 20000);
 });
 
-test('missing, malformed and forged legacy deposit input cannot change the canonical DP', () => {
-  const expected = validateBooking(form(), options);
+test('explicit historical validation ignores legacy input and retains the original percentage snapshot', () => {
+  const historical = { ...options, paymentPolicy: 'min20k-v2' };
+  const expected = validateBooking(form(), historical);
   for (const deposit of [undefined, null, '0', '-1', '50000', '155000', '155001', '1e5', '<script>', {}, [], 0, 1]) {
-    assert.deepEqual(validateBooking(form({ deposit }), options), expected);
+    assert.deepEqual(validateBooking(form({ deposit }), historical), expected);
   }
   const unread = Object.defineProperty(form(), 'deposit', { get() { throw new Error('must not read customer deposit'); } });
-  assert.deepEqual(validateBooking(unread, options), expected);
+  assert.deepEqual(validateBooking(unread, historical), expected);
   const invalidPrice = validateBooking(form({ agreedPrice: 'invalid', deposit: '50000' }), options);
   assert.ok(invalidPrice.errors.agreedPrice);
   assert.equal('deposit' in invalidPrice.errors, false);
 });
 
-test('payment choice derives minimum DP or full total, normalizes small totals and rejects invalid modes', () => {
-  assert.deepEqual(calculatePayment('155000'), { paymentMode: 'deposit', deposit: 20000, remainingBalance: 135000, paymentPolicy: 'min20k-v2' });
-  assert.deepEqual(calculatePayment('155001', 'full'), { paymentMode: 'full', deposit: 155001, remainingBalance: 0, paymentPolicy: 'min20k-v2' });
+test('payment choice uses entered DP or full total, normalizes small totals and rejects invalid modes', () => {
+  assert.deepEqual(calculatePayment('155000', 'deposit', '20000'), { paymentMode: 'deposit', deposit: 20000, remainingBalance: 135000, paymentPolicy: 'manual-min20k-v3' });
+  assert.deepEqual(calculatePayment('155001', 'full'), { paymentMode: 'full', deposit: 155001, remainingBalance: 0, paymentPolicy: 'manual-min20k-v3' });
+  assert.deepEqual(calculateLegacyPayment('1000000'), { paymentMode: 'deposit', deposit: 100000, remainingBalance: 900000, paymentPolicy: 'min20k-v2' });
   for (const mode of ['deposit', 'full']) {
     for (const total of ['1', '19999', '20000']) {
       const result = calculatePayment(total, mode);
@@ -253,6 +255,21 @@ test('payment choice derives minimum DP or full total, normalizes small totals a
   const full = validateBooking(form({ paymentMode: 'full', deposit: '1', paymentAmount: '1' }), { now });
   assert.equal(full.value.deposit, 155000);
   assert.equal(full.preview.remainingBalance, 0);
+});
+
+test('new customer DP accepts arbitrary whole Rupiah from Rp20000 through total without a percentage floor', () => {
+  for (const deposit of ['20000', '23789', '1000000']) {
+    const result = validateBooking(form({ agreedPrice: '1000000', deposit }), options);
+    assert.equal(result.valid, true);
+    assert.equal(result.value.deposit, Number(deposit));
+    assert.equal(result.value.paymentPolicy, 'manual-min20k-v3');
+    assert.equal(result.preview.remainingBalance, 1000000 - Number(deposit));
+  }
+  for (const deposit of [undefined, null, '', '0', '19999', '1000001', '20.000', '2e4', '20000.0', '-20000', ' 20000 ', [], {}, 20000]) {
+    const result = validateBooking(form({ agreedPrice: '1000000', deposit, paymentPolicy: 'min20k-v2' }), options);
+    assert.equal(result.valid, false, String(deposit));
+    assert.ok(result.errors.deposit, String(deposit));
+  }
 });
 
 test('design selection permits only agreed exact durations and defaults cached clients to simple two hours', () => {

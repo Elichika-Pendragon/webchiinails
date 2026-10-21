@@ -13,7 +13,7 @@ function fixture(overrides = {}) {
   const options = { storage, receiptStore, crypto: webcrypto, now: () => clock, ...overrides };
   return { values, images, writes, storage, receiptStore, options, create: extra => createBookingDraft({ ...options, ...extra }), advance: amount => { clock += amount; } };
 }
-const fields = { name: 'Synthetic Customer', whatsapp: '+62 812 3456 7890', agreedPrice: '100000', paymentMode: 'deposit', serviceDuration: 'simple:120', date: '2026-10-30', time: '08:00' };
+const fields = { name: 'Synthetic Customer', whatsapp: '+62 812 3456 7890', agreedPrice: '100000', paymentMode: 'deposit', deposit: '35000', serviceDuration: 'simple:120', date: '2026-10-30', time: '08:00' };
 async function proof(label = 'fixture') {
   const bytes = Buffer.concat([Buffer.from([255, 216, 255, 219]), Buffer.from(label)]);
   const digest = Buffer.from(await webcrypto.subtle.digest('SHA-256', bytes)).toString('hex');
@@ -28,6 +28,7 @@ test('per-tab metadata stores only bounded booking fields and exact retry identi
   assert(raw.length < 1024);
   const restored = f.create().read();
   assert.deepEqual(restored.fields, fields);
+  assert.equal(restored.fields.deposit, '35000');
   assert.equal(restored.requestKey, 'b'.repeat(64));
   assert.equal(restored.proofDigest, 'a'.repeat(64));
   const otherTab = fixture().create();
@@ -49,6 +50,27 @@ test('prepared JPEG restores byte-for-byte with verified digest and without rewr
   assert.equal(restored.digest, prepared.digest);
   assert.equal(restored.blob.type, 'image/jpeg');
   assert.equal(Buffer.from(await restored.blob.arrayBuffer()).toString('base64'), prepared.base64);
+  assert.equal(next.read().fields.deposit, '35000');
+});
+
+test('every current service choice and the typed manual amount survive draft recovery without payment recalculation', () => {
+  for (const serviceDuration of ['plain:60', 'gel:60', 'removal:60', 'simple:60', 'simple:120', 'full-art:180', 'full-art:240', 'full-art:300']) {
+    const f = fixture();
+    f.create().save({ fields: { ...fields, serviceDuration, agreedPrice: '1000000', deposit: '20000' } });
+    const restored = f.create().read();
+    assert.equal(restored.fields.serviceDuration, serviceDuration);
+    assert.equal(restored.fields.agreedPrice, '1000000');
+    assert.equal(restored.fields.deposit, '20000');
+  }
+});
+
+test('a missing old draft deposit stays blank and oversized payment text remains bounded', () => {
+  const f = fixture(); const { deposit, ...oldFields } = fields;
+  const draft = f.create(); draft.save({ fields: oldFields });
+  assert.equal(f.create().read().fields.deposit, '', 'an old draft must require a newly entered amount');
+  draft.save({ fields: { ...fields, deposit: '9'.repeat(1000) } });
+  const restored = f.create().read();
+  assert.equal(restored.fields.deposit.length, 16);
 });
 
 test('two callers share one pending receipt write', async () => {

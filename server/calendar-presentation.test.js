@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGoogleCalendarProvider, GoogleCalendarError } from './google-calendar.js';
-import { BOOKING_DESIGNS, normalizeWhatsApp } from './booking.js';
+import { BOOKING_DESIGNS, LEGACY_BOOKING_DESIGN_LABELS, normalizeWhatsApp } from './booking.js';
 
 // Synthetic, ephemeral signing material and fully intercepted fetch only.
 const keys = await crypto.subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['sign', 'verify']);
@@ -26,7 +26,7 @@ async function previousV3(input = appointment) {
   const summary = `Chii Nails · ${input.name.trim()}`;
   const whatsapp = normalizeWhatsApp(input.whatsapp);
   const payment = input.paymentMode === 'full' ? input.agreedPrice : input.paymentAmount;
-  const description = `Booking: ${bookingId}\nNama: ${input.name.trim()}\nWhatsApp: https://wa.me/${whatsapp}\nHarga disepakati: Rp${input.agreedPrice}\nPilihan pembayaran: ${input.paymentMode === 'full' ? 'Full payment' : 'DP 10%, minimal Rp20000'}\nNominal pembayaran: Rp${payment}\nSisa pembayaran: Rp${input.agreedPrice - payment}\nNominal dan pembayaran diperiksa terpisah oleh operator.\nJenis desain: ${BOOKING_DESIGNS[input.designType].label}\nDurasi: ${input.durationMinutes} menit`;
+  const description = `Booking: ${bookingId}\nNama: ${input.name.trim()}\nWhatsApp: https://wa.me/${whatsapp}\nHarga disepakati: Rp${input.agreedPrice}\nPilihan pembayaran: ${input.paymentMode === 'full' ? 'Full payment' : 'DP 10%, minimal Rp20000'}\nNominal pembayaran: Rp${payment}\nSisa pembayaran: Rp${input.agreedPrice - payment}\nNominal dan pembayaran diperiksa terpisah oleh operator.\nJenis desain: ${LEGACY_BOOKING_DESIGN_LABELS[input.designType]}\nDurasi: ${input.durationMinutes} menit`;
   const startISO = `${input.date}T${input.time}:00+07:00`;
   const endISO = `${new Date(Date.parse(startISO) + input.durationMinutes * 60000 + 7 * 3600000).toISOString().slice(0, 19)}+07:00`;
   const fingerprint = await digest(JSON.stringify({ version: 3, calendarId: env.GOOGLE_CALENDAR_ID, bookingId, summary, description, startISO, endISO }));
@@ -51,10 +51,10 @@ test('all six service-duration choices and supported phone formats create full-n
     for (const whatsapp of ['081234567890', '6281234567890', '+6281234567890', ' +62 (812) 3456-7890 ']) {
       const result = await calendar.createApprovedAppointment({ ...appointment, designType, durationMinutes, whatsapp });
       expectedIds.add(result.eventId);
-      assert.equal(body.summary, `Client Test · 081234567890 · ${BOOKING_DESIGNS[designType].label}`);
+      assert.equal(body.summary, `Client Test · 081234567890 · ${LEGACY_BOOKING_DESIGN_LABELS[designType]}`);
       assert.match(body.description, /Nomor WhatsApp: 081234567890 \(\+6281234567890\)\n/);
       assert.match(body.description, /WhatsApp: <a href="https:\/\/wa.me\/6281234567890">https:\/\/wa.me\/6281234567890<\/a>\n/);
-      assert.ok(body.description.includes(`Jenis desain: ${BOOKING_DESIGNS[designType].label}`));
+      assert.ok(body.description.includes(`Jenis desain: ${LEGACY_BOOKING_DESIGN_LABELS[designType]}`));
       assert.ok(body.description.includes(`Durasi: ${durationMinutes} menit`));
       assert.equal(Date.parse(body.end.dateTime) - Date.parse(body.start.dateTime), durationMinutes * 60000);
       assert.equal(body.extendedProperties.private.source, 'chiinails-booking-v4');
@@ -209,4 +209,56 @@ test('new v4 events remain readable as active appointments for deletion synchron
   assert.deepEqual(await calendar.readAppointmentState(identity), { state: 'active' });
   stored = { id: result.eventId, status: 'cancelled' };
   assert.deepEqual(await calendar.readAppointmentState(identity), { state: 'deleted' });
+});
+
+test('manual DP snapshots create all eight exact service-duration choices as v5 without any percentage wording', async () => {
+  let stored;
+  const calendar = provider(async (url, init) => {
+    if (url.includes('oauth2')) return token();
+    if (init.method === 'POST') { stored = JSON.parse(init.body); return json(stored); }
+    return json(stored);
+  });
+  assert.deepEqual(Object.fromEntries(Object.entries(BOOKING_DESIGNS).map(([id, item]) => [id, item.label])), { plain: 'Plain', gel: 'Gel', removal: 'Removal', simple: 'Simple Design', 'full-art': 'Full Art' });
+  for (const [designType, service] of Object.entries(BOOKING_DESIGNS)) {
+    for (const durationMinutes of service.durations) {
+      const snapshot = { ...appointment, designType, durationMinutes, agreedPrice: 1000000, paymentAmount: 20000, paymentPolicy: 'manual-min20k-v3' };
+      const result = await calendar.createApprovedAppointment(snapshot);
+      assert.equal(stored.summary, `Client Test · 081234567890 · ${service.label}`);
+      assert.match(stored.description, /Pilihan pembayaran: DP, minimal Rp20000\nNominal pembayaran: Rp20000\nSisa pembayaran: Rp980000/);
+      assert.equal(stored.description.includes('10%'), false);
+      assert.ok(stored.description.includes(`Jenis desain: ${service.label}\nDurasi: ${durationMinutes} menit`));
+      assert.equal(stored.extendedProperties.private.source, 'chiinails-booking-v5');
+      assert.equal(stored.extendedProperties.private.paymentPolicy, 'manual-min20k-v3');
+      assert.match(stored.description, /href="https:\/\/wa.me\/6281234567890"/);
+      assert.equal(Date.parse(stored.end.dateTime) - Date.parse(stored.start.dateTime), durationMinutes * 60000);
+      assert.deepEqual(await calendar.readAppointmentState({ bookingId: snapshot.bookingId, eventId: result.eventId }), { state: 'active' });
+      assert.equal((await calendar.reconcileApprovedAppointment(snapshot)).found, true);
+    }
+  }
+});
+
+test('manual Calendar snapshots reject invalid amounts, missing policy and unrecognized policy before network I/O', async () => {
+  let calls = 0;
+  const calendar = provider(async () => { calls++; throw new Error('must not reach transport'); });
+  const snapshot = { ...appointment, agreedPrice: 1000000, paymentAmount: 20000, paymentPolicy: 'manual-min20k-v3' };
+  for (const patch of [
+    { paymentAmount: undefined }, { paymentAmount: 19999 }, { paymentAmount: 1000001 }, { paymentAmount: '20000' },
+    { paymentPolicy: undefined }, { paymentPolicy: 'unrecognized' }, { designType: 'legacy' }, { paymentMode: 'legacy' },
+    { paymentPolicy: 'min20k-v2', designType: 'gel', durationMinutes: 60 },
+  ]) await assert.rejects(calendar.createApprovedAppointment({ ...snapshot, ...patch }), isCode('CALENDAR_INPUT'));
+  assert.equal(calls, 0);
+});
+
+test('manual policy cannot reconcile an older policy event or silently lose its versioned policy marker', async () => {
+  let stored;
+  const calendar = provider(async (url, init) => {
+    if (url.includes('oauth2')) return token();
+    if (init.method === 'POST') { stored = JSON.parse(init.body); return json(stored); }
+    return json(stored);
+  });
+  await calendar.createApprovedAppointment(appointment);
+  await assert.rejects(calendar.reconcileApprovedAppointment({ ...appointment, paymentPolicy: 'manual-min20k-v3' }), isCode('CALENDAR_CONFLICT'));
+  await calendar.createApprovedAppointment({ ...appointment, paymentPolicy: 'manual-min20k-v3' });
+  delete stored.extendedProperties.private.paymentPolicy;
+  await assert.rejects(calendar.reconcileApprovedAppointment({ ...appointment, paymentPolicy: 'manual-min20k-v3' }), isCode('CALENDAR_CONFLICT'));
 });

@@ -6,7 +6,7 @@ import { createBookingDraft } from './booking-draft.js';
 const form = document.querySelector('#booking-form');
 if (form) {
   const fields = ['name', 'whatsapp', 'agreedPrice', 'paymentMode', 'deposit', 'serviceDuration', 'date', 'time'];
-  const editable = fields.filter(name => name !== 'deposit');
+  const editable = fields;
   const input = name => form.elements.namedItem(name);
   const review = document.querySelector('#booking-review-panel');
   const errors = document.querySelector('#booking-errors');
@@ -36,6 +36,7 @@ if (form) {
   let requestSignature = '';
   let requestKey = '';
   let requestedPaymentMode = input('paymentMode').value || 'deposit';
+  let requestedDeposit = input('deposit').value || '';
   let availability = 'idle';
   let availableTimes = new Set();
   let slotController = null;
@@ -68,10 +69,10 @@ if (form) {
   let monthController = null;
   let monthRequest = '';
   let monthSequence = 0;
-  const designLabels = { plain: 'Plain / Nail gel / Removal', simple: 'Simple art', 'full-art': 'Full art' };
+  const designLabels = { plain: 'Plain', gel: 'Gel', removal: 'Removal', simple: 'Simple Design', 'full-art': 'Full Art' };
   const selectedDesign = () => {
     const value = input('serviceDuration').value;
-    const match = /^(plain|simple|full-art):(60|120|180|240|300)$/.exec(value);
+    const match = /^(plain|gel|removal|simple|full-art):(60|120|180|240|300)$/.exec(value);
     return match && match[0] === value ? normalizeBookingDesign(match[1], match[2]) : null;
   };
   const currentSlotKey = () => JSON.stringify([input('date').value, selectedDesign()]);
@@ -124,12 +125,12 @@ if (form) {
     }
     return result;
   };
-  const signature = value => JSON.stringify([value.name, value.whatsapp, value.agreedPrice, value.paymentMode, value.designType, value.durationMinutes, value.date, value.time, proof?.digest || '']);
+  const signature = value => JSON.stringify([value.name, value.whatsapp, value.agreedPrice, value.paymentMode, value.deposit, value.designType, value.durationMinutes, value.date, value.time, proof?.digest || '']);
   const saveDraft = () => {
     if (draftTimer !== null) window.clearTimeout(draftTimer);
     draftTimer = null;
     if (draftRestoring || draftComplete) return;
-    draft.save({ fields: { ...Object.fromEntries(editable.map(name => [name, input(name).value])), paymentMode: requestedPaymentMode, time: input('time').value || lastSelectedTime }, proofDigest: proof?.digest || restoringProofDigest, requestKey, requestSignature });
+    draft.save({ fields: { ...Object.fromEntries(editable.map(name => [name, input(name).value])), paymentMode: requestedPaymentMode, deposit: requestedDeposit, time: input('time').value || lastSelectedTime }, proofDigest: proof?.digest || restoringProofDigest, requestKey, requestSignature });
     if (proofState === 'ready') draft.saveProof(proof);
   };
   const scheduleDraft = () => {
@@ -141,15 +142,17 @@ if (form) {
     status.dataset.tone = error ? 'error' : 'normal';
   };
   const updateDeposit = () => {
-    const payment = calculatePayment(input('agreedPrice').value, requestedPaymentMode);
-    const capped = payment !== null && Number(input('agreedPrice').value) <= 20000;
+    const fullPayment = calculatePayment(input('agreedPrice').value, 'full');
+    const capped = fullPayment !== null && fullPayment.deposit <= 20000;
     input('paymentMode').options[0].disabled = capped;
-    input('paymentMode').value = payment?.paymentMode || requestedPaymentMode;
-    input('deposit').value = payment === null ? '' : String(payment.deposit);
-    paymentAmountLabel.textContent = input('paymentMode').value === 'full' ? 'Full payment' : 'DP · min. Rp20.000';
-    document.querySelector('#hint-deposit').textContent = input('paymentMode').value === 'full'
+    input('paymentMode').value = capped ? 'full' : requestedPaymentMode;
+    const full = input('paymentMode').value === 'full';
+    input('deposit').readOnly = full;
+    input('deposit').value = full ? (fullPayment === null ? '' : String(fullPayment.deposit)) : requestedDeposit;
+    paymentAmountLabel.textContent = full ? 'Full payment' : 'DP · min. Rp20.000';
+    document.querySelector('#hint-deposit').textContent = full
       ? 'Harga total dibayar penuh. Sisa pembayaran Rp0.'
-      : '10% dari harga total, minimum Rp20.000. Pecahan Rupiah dibulatkan ke atas.';
+      : 'Isi nominal DP yang kamu bayar, minimum Rp20.000 dan tidak melebihi harga total. Tanpa titik atau koma.';
   };
   const updateButton = () => {
     const result = validation();
@@ -171,10 +174,10 @@ if (form) {
     document.querySelector('#hint-serviceDuration').textContent = !design
       ? 'Pilih layanan dan durasi yang sudah disepakati dengan Chii.'
       : design.designType === 'full-art'
-        ? 'Full art memiliki Last book 12:00. Pilihan jam menyesuaikan durasi dan jam tutup studio.'
-        : design.designType === 'plain'
-          ? 'Plain, nail gel, atau removal menggunakan slot 1 jam. Pilihan ini tidak menentukan harga.'
-          : `Simple art menggunakan slot ${design.durationMinutes / 60} jam sesuai konsultasi. Pilihan ini tidak menentukan harga.`;
+        ? 'Full Art memiliki Last book 12:00. Pilihan jam menyesuaikan durasi dan jam tutup studio.'
+        : ['plain', 'gel', 'removal'].includes(design.designType)
+          ? `${designLabels[design.designType]} menggunakan slot 1 jam. Pilihan ini tidak menentukan harga.`
+          : `Simple Design menggunakan slot ${design.durationMinutes / 60} jam sesuai konsultasi. Pilihan ini tidak menentukan harga.`;
   };
   const renderSlots = (slots, selected, preserveOptions = false) => {
     const visible = slots.filter(slot => slot.available);
@@ -479,7 +482,7 @@ if (form) {
     const dateLabel = formatDate(preview.startISO);
     const display = { name: value.name, whatsapp: `+${value.whatsapp}`, design: designLabels[value.designType], date: dateLabel, time: preview.label, agreedPrice: formatMoney(value.agreedPrice), deposit: formatMoney(value.deposit), remainingBalance: formatMoney(preview.remainingBalance) };
     Object.keys(display).forEach(name => { review.querySelector(`[data-booking-value="${name}"]`).textContent = display[name]; });
-    const paymentLabel = value.paymentMode === 'full' ? 'Full payment' : 'DP · 10%, min. Rp20.000';
+    const paymentLabel = value.paymentMode === 'full' ? 'Full payment' : 'DP · min. Rp20.000';
     document.querySelector('#booking-payment-summary-label').textContent = paymentLabel;
     document.querySelector('#booking-duration-summary-label').textContent = `Waktu · ${value.durationMinutes / 60} jam`;
     const linkMessage = reviewUrl
@@ -529,7 +532,7 @@ if (form) {
         const response = await api('/api/booking/requests', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: value.name, whatsapp: value.whatsapp, agreedPrice: String(value.agreedPrice), paymentMode: value.paymentMode, designType: value.designType, durationMinutes: String(value.durationMinutes), date: value.date, time: value.time, idempotencyKey: idempotencyKey(value), proof: { contentType: proof.contentType, base64: proof.base64 } }),
+          body: JSON.stringify({ name: value.name, whatsapp: value.whatsapp, agreedPrice: String(value.agreedPrice), paymentMode: value.paymentMode, deposit: String(value.deposit), designType: value.designType, durationMinutes: String(value.durationMinutes), date: value.date, time: value.time, idempotencyKey: idempotencyKey(value), proof: { contentType: proof.contentType, base64: proof.base64 } }),
         });
         reviewUrl = approvalUrl(response, value, result.preview);
         draftComplete = true;
@@ -580,6 +583,7 @@ if (form) {
     if (!editable.includes(event.target.name)) return;
     draftComplete = false;
     if (event.target.name === 'paymentMode') requestedPaymentMode = input('paymentMode').value;
+    if (event.target.name === 'deposit' && !input('deposit').readOnly) requestedDeposit = input('deposit').value;
     updateDeposit();
     const result = updateButton();
     if (touched.size) showErrors(Object.fromEntries(Object.entries(result.errors).filter(([name]) => touched.has(name))));
@@ -671,6 +675,7 @@ if (form) {
     ['name', 'whatsapp', 'agreedPrice', 'date', 'time'].forEach(name => { input(name).value = ''; });
     input('serviceDuration').value = 'simple:120';
     requestedPaymentMode = 'deposit'; input('paymentMode').value = 'deposit';
+    requestedDeposit = '';
     touched.clear(); showErrors({});
     updateServiceHint(); updateDeposit(); fillTimes(); calendar?.refresh();
     draftRestoring = false; draftComplete = false;
@@ -775,6 +780,7 @@ if (form) {
   if (restored) {
     editable.filter(name => name !== 'time').forEach(name => { input(name).value = restored.fields[name]; });
     requestedPaymentMode = restored.fields.paymentMode || 'deposit';
+    requestedDeposit = restored.fields.deposit || '';
     lastSelectedTime = restored.fields.time;
     requestKey = restored.requestKey;
     requestSignature = restored.requestSignature;
