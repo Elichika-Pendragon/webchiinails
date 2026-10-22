@@ -1,0 +1,234 @@
+\"id\":\"production\",\"name\":\"Production\"}"
+  - button "Ask AI":
+    - generic: Ask AI
+  - link "Support":
+    - /url: /?to=/:account/support
+    - generic: Support
+  - button "User menu":
+- navigation:
+  - tablist:
+    - tab "Overview"
+    - tab "Metrics"
+    - tab "Deployments"
+    - tab "Observability" [selected]
+    - tab "Issues"
+    - tab "Domains"
+    - tab "Access"
+    - tab "Settings"
+  - button:
+  - button:
+  - button "Invite":
+    - button "Invite":
+      - generic: Invite
+  - link "Edit code":
+    - /url: /7d64fbacdea3648b74e69d4077704952/workers/services/edit/chii-instagram-links/production
+    - generic: Edit code
+- paragraph: Query Builder
+- button "Saved Queries":
+  - text: Saved Queries
+- heading "Visualizations Add" [level=3]:
+  - button "Visualizations" [expanded]:
+    - text: Visualizations
+  - button "Add":
+    - text: Add
+- region "Visualizations":
+  - button "Select calculation":
+    - paragraph: Count
+  - button "Toggle alias":
+  - button "Remove calculation":
+  - status
+- heading "Filters Add" [level=3]:
+  - button "Filters" [expanded]:
+    - text: Filters
+  - button "Add":
+    - text: Add
+- region "Filters":
+  - paragraph: Choose criteria to narrow down your results
+- heading "Group By Add" [level=3]:
+  - button "Group By" [expanded]:
+    - text: Group By
+  - button "Add":
+    - text: Add
+- region "Group By":
+  - paragraph: Use groups of fields to segment results
+  - status
+- heading "Order By" [level=3]:
+  - button "Order By" [expanded]:
+    - text: Order By
+- region "Order By":
+  - button "count":
+    - paragraph: count
+  - paragraph: in
+  - button "Descending":
+    - text: Descending
+  - paragraph: order
+  - paragraph: up to
+  - button "10":
+    - paragraph: "10"
+  - paragraph: results
+- button "Toggle query builder":
+- button "Events":
+  - text: Events
+- combobox "Search with query language..."
+- button "Query language help":
+- button "Pause":
+- button "Stop":
+  - text: Stop
+- button "Actions menu":
+- text: You're on the free plan with 200K events per day. If you exceed your limit, your events will be sampled.
+- link "Upgrade your plan.":
+  - /url: /7d64fbacdea3648b74e69d4077704952/workers/plans
+- generic "timestamp":
+  - generic: Timestamp
+  - generic: GMT+7
+  - button "Fields":
+    - text: Fields
+- generic "-dollar-metadata-dot-level": Level
+- button:
+- button "Remove column":
+- generic "-dollar-metadata-dot-message": Message
+- button:
+- button "Remove column":
+- generic: 2026-10-23 05:17:25.213
+- generic: GMT+7
+- generic: info
+- generic: 17 * * * *
+- textbox "Search properties..."
+- 'button "Copy { \"level\": \"info\", \"messag"':
+- text: "{"
+- generic: "\"message\":"
+- generic: "\"17 * * * *\","
+- generic: "\"level\":"
+- generic: "\"info\","
+- generic: "\"$workers\":"
+- generic: "{"
+- generic: "\"scriptName\":"
+- generic: "\"chii-instagram-links\","
+- generic: "\"scriptVersion\":"
+- generic: "{"
+- generic: "\"id\":"
+- generic: "\"2d39bf4d-47c2-4234-a569-31851737cf97\""
+- generic: "},"
+- generic: "\"eventType\":"
+- generic: "\"scheduled\","
+- generic: "\"executionModel\":"
+- generic: "\"stateless\","
+- generic: "\"truncated\":"
+- generic: false,
+- generic: "\"event\":"
+- generic: "{"
+- generic: "\"cron\":"
+- generic: "\"17 * * * *\","
+- generic: "\"scheduledTime\":"
+- generic: 1792707444.278,
+- generic: "},"
+- generic: "\"wallTimeMs\":"
+- generic: 22,
+- generic: "\"cpuTimeMs\":"
+- generic: 0,
+- generic: "\"outcome\":"
+- generic: "\"ok\""
+- generic: "},"
+- generic: "\"$metadata\":"
+- generic: "{"
+- generic: "\"id\":"
+- generic: "\"01M5JV1GEX0000000000000005\","
+- generic: "\"requestId\":"
+- generic: "\"9b98dd4b9b501284ec0ba276a3728750\","
+- generic: "\"traceId\":"
+- generic: "\"fc62f092e775cdc0b91da1e20bc7d632\","
+- generic: "\"trigger\":"
+- generic: "\"17 * * * *\","
+- generic: "\"service\":"
+- generic: "\"chii-instagram-links\","
+- generic: "\"level\":"
+- generic: "\"info\","
+- generic: "\"message\":"
+- generic: "\"17 * * * *\","
+- generic: "\"account\":"
+- generic: "\"7d64fbacdea3648b74e69d4077704952\","
+- generic: "\"provider\":"
+- generic: "\"cloudflare-streaming\","
+- generic: "\"type\":"
+- generic: "\"cf-worker-event\","
+- generic: "\"origin\":"
+- generic: "\"scheduled\","
+- generic: "}"
+- text: "}"
+- status
+- region "Notifications"
+- generic: "0"
+- dialog:
+  - paragraph: Select Fields
+  - paragraph: Add or remove columns from the events table
+  - button "Close" [active]:
+  - textbox "Search..."
+  - paragraph: 2 selected
+  - button "S $metadata.level":
+    - button:
+    - generic: S
+    - paragraph: $metadata.level
+  - button "S $metadata.message":
+    - button:
+    - generic: S
+    - paragraph: $metadata.message
+  - status
+  - paragraph: 19 fields
+  - listbox:
+    - button "S $metadata.account":
+      - generic: S
+      - paragraph: $metadata.account
+    - button "N $metadata.duration":
+      - generic: "N"
+      - paragraph: $metadata.duration
+    - button "N $metadata.endTime":
+      - generic: "N"
+      - paragraph: $metadata.endTime
+    - button "S $metadata.error":
+      - generic: S
+      - paragraph: $metadata.error
+    - button "S $metadata.errorTemplate":
+      - generic: S
+      - paragraph: $metadata.errorTemplate
+    - button "S $metadata.fingerprint":
+      - generic: S
+      - paragraph: $metadata.fingerprint
+    - button "S $metadata.id":
+      - generic: S
+      - paragraph: $metadata.id
+    - button "N $metadata.latency":
+      - generic: "N"
+      - paragraph: $metadata.latency
+    - button "S $metadata.messageTemplate":
+      - generic: S
+      - paragraph: $metadata.messageTemplate
+    - button "S $metadata.origin":
+      - generic: S
+      - paragraph: $metadata.origin
+    - button "S $metadata.requestId":
+      - generic: S
+      - paragraph: $metadata.requestId
+    - button "S $metadata.spanId":
+      - generic: S
+      - paragraph: $metadata.spanId
+    - button "S $metadata.spanName":
+      - generic: S
+      - paragraph: $metadata.spanName
+    - button "N $metadata.startTime":
+      - generic: "N"
+      - paragraph: $metadata.startTime
+    - button "N $metadata.traceDuration":
+      - generic: "N"
+      - paragraph: $metadata.traceDuration
+    - button "S $metadata.traceId":
+      - generic: S
+      - paragraph: $metadata.traceId
+    - button "S $metadata.transactionName":
+      - generic: S
+      - paragraph: $metadata.transactionName
+    - button "S $metadata.trigger":
+      - generic: S
+      - paragraph: $metadata.trigger
+    - button "S $metadata.type":
+      - generic: S
+      - paragraph: $metadata.type
