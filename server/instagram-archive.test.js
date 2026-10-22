@@ -1,5 +1,6 @@
 import test from 'node:test';
 import bundledBootstrap from './instagram-bootstrap.js';
+import routes from '../public/_routes.json' with { type: 'json' };
 import assert from 'node:assert/strict';
 import bootstrap from '../public/data/instagram-archive.json' with { type: 'json' };
 import { publicInstagramArchive, selectInstagramShowcase } from '../src/instagram-showcase.js';
@@ -8,6 +9,10 @@ import { onRequest } from '../functions/api/instagram-archive.js';
 
 const fresh = { id: 'NewChii12345', url: 'https://www.instagram.com/p/NewChii12345/' };
 const now = Date.parse('2026-10-22T03:00:00+07:00');
+test('Pages routes the public archive request to its Function', () => {
+  assert.ok(routes.include.includes('/api/instagram-archive'));
+  assert.ok(!routes.exclude.includes('/api/instagram-archive'));
+});
 function storage() {
   const records = new Map(), writes = [];
   return { records, writes, async get(key) { return records.has(key) ? JSON.parse(records.get(key)) : null; },
