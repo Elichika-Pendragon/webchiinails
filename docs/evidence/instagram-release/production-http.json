@@ -1,0 +1,78 @@
+{
+  "checkedAt": "2026-10-22T21:55:39.198Z",
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "cache": "public, max-age=0, must-revalidate",
+      "archiveGallery": true,
+      "script": "/_astro/Page.astro_astro_type_script_index_0_lang.CRTdE921.js"
+    },
+    {
+      "path": "/custom-sets",
+      "status": 200,
+      "cache": "public, max-age=0, must-revalidate",
+      "archiveGallery": true,
+      "script": "/_astro/Page.astro_astro_type_script_index_0_lang.CRTdE921.js"
+    },
+    {
+      "path": "/book",
+      "status": 200,
+      "cache": "public, max-age=0, must-revalidate",
+      "robots": "<meta name=\"robots\" content=\"noindex, nofollow\">",
+      "xRobots": null
+    },
+    {
+      "path": "/book/approve",
+      "status": 200,
+      "cache": "no-store",
+      "robots": "<meta name=\"robots\" content=\"noindex, nofollow\">",
+      "xRobots": "noindex, nofollow"
+    },
+    {
+      "path": "/api/instagram-archive",
+      "status": 200,
+      "cache": "public, max-age=60, s-maxage=300",
+      "keys": [
+        "version",
+        "profile",
+        "posts",
+        "recentIds",
+        "pinnedIds"
+      ],
+      "posts": 279,
+      "recentIds": [
+        "Ddbohf_TKUi",
+        "DdbD7ocz6nT",
+        "Ddbps3lz-I2",
+        "DdbqjqZk85b",
+        "DdbndIhzZvv",
+        "DdbsB53k5zH",
+        "DdbCvIVT9mg",
+        "DdbCQmBzEhT",
+        "DaWs50wTqEu",
+        "DaVi1ZFz6Lp",
+        "DdbBa0qzrxL"
+      ]
+    },
+    {
+      "path": "/api/booking/status",
+      "status": 200,
+      "cache": "private, no-store, max-age=0",
+      "body": {
+        "enabled": true
+      }
+    },
+    {
+      "path": "/sitemap.xml",
+      "status": 200,
+      "cache": "public, max-age=0, must-revalidate",
+      "privateBookingExcluded": true
+    },
+    {
+      "path": "/api/instagram-archive",
+      "method": "POST",
+      "status": 405
+    }
+  ]
+}

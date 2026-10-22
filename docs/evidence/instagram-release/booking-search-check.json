@@ -1,0 +1,32 @@
+{
+  "checkedAt": "2026-10-22T21:47:34.151Z",
+  "checks": [
+    {
+      "path": "/book",
+      "status": 200,
+      "robotsMeta": "<meta name=\"robots\" content=\"noindex, nofollow\">",
+      "xRobotsTag": null
+    },
+    {
+      "path": "/book/approve",
+      "status": 200,
+      "robotsMeta": "<meta name=\"robots\" content=\"noindex, nofollow\">",
+      "xRobotsTag": "noindex, nofollow"
+    },
+    {
+      "path": "/sitemap.xml",
+      "status": 200,
+      "privateBookingExcluded": true
+    },
+    {
+      "path": "/robots.txt",
+      "status": 200,
+      "body": "User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: https://chiinails.pages.dev/sitemap.xml\n"
+    },
+    {
+      "path": "/api/instagram-archive",
+      "status": 200,
+      "posts": 279
+    }
+  ]
+}

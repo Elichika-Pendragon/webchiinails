@@ -1,0 +1,70 @@
+{
+  "openingBeforeReload": [
+    {
+      "src": "/images/jessica-red-silver-720.webp",
+      "width": 634.3333740234375
+    },
+    {
+      "src": "/images/jessica-forest-characters-720.webp",
+      "width": 634.3333740234375
+    },
+    {
+      "src": "/images/jessica-spider-art-720.webp",
+      "width": 634.3333740234375
+    },
+    {
+      "src": "/images/jessica-cat-characters-720.webp",
+      "width": 311.16668701171875
+    },
+    {
+      "src": "/images/jessica-press-on-collection-720.webp",
+      "width": 311.16668701171875
+    }
+  ],
+  "openingAfterReload": [
+    {
+      "src": "/images/jessica-spider-art-720.webp",
+      "w": 634.3333740234375
+    },
+    {
+      "src": "/images/jessica-press-on-collection-720.webp",
+      "w": 634.3333740234375
+    },
+    {
+      "src": "/images/jessica-red-silver-720.webp",
+      "w": 311.16668701171875
+    },
+    {
+      "src": "/images/jessica-cat-characters-720.webp",
+      "w": 311.16668701171875
+    }
+  ],
+  "mobileWidthsTested": [
+    320,
+    390
+  ],
+  "mobilePageOverflow": false,
+  "gallery": {
+    "cards": 12,
+    "iframeTitles": [],
+    "links": [
+      "https://www.instagram.com/reel/Ddbohf_TKUi/",
+      "https://www.instagram.com/reel/DdbD7ocz6nT/",
+      "https://www.instagram.com/reel/Ddbps3lz-I2/",
+      "https://www.instagram.com/p/DRzg-Xfk6Ct/",
+      "https://www.instagram.com/p/DaUJg5lE-Li/",
+      "https://www.instagram.com/p/DaUUnyUk132/",
+      "https://www.instagram.com/p/DXszjSrk7zj/",
+      "https://www.instagram.com/p/DDGUaQGS3Pe/",
+      "https://www.instagram.com/reel/DDH1VI5Swi-/",
+      "https://www.instagram.com/reel/DKitRuRTqAz/",
+      "https://www.instagram.com/p/DRzb2Ysk0sN/",
+      "https://www.instagram.com/p/C-EhtPxSsCY/"
+    ],
+    "scrollLeft": 330.6666564941406,
+    "scrollWidth": 375,
+    "width": 375
+  },
+  "instagramDelayedUntilVisible": true,
+  "instagramEmbedResult": "Native embeds and direct diagnostic iframe remained blank in this browser check; gallery fallback images and direct links verified."
+}

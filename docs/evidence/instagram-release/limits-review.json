@@ -1,0 +1,49 @@
+{
+  "checkedAt": "2026-10-22T21:44:11.691Z",
+  "accountPlan": "Workers Free, confirmed in dashboard",
+  "accountDashboardBeforeRelease": {
+    "browserRunPeriod": "Oct 1 to Today",
+    "quickActions": 9,
+    "browserHoursDisplayed": 0,
+    "sessionCount": 0,
+    "kvReads": 0,
+    "kvWrites": 0,
+    "kvStorageBytes": 0,
+    "workersBuildMinutes": {
+      "used": 7,
+      "allowance": 3000
+    },
+    "workersPeriod": "Oct 1 to Oct 22",
+    "workerRequests": 1620
+  },
+  "verifiedFreeLimits": {
+    "browserSecondsPerDay": 600,
+    "workerRequestsPerDay": 100000,
+    "workerCpuMsPerRequest": 10,
+    "cronTriggersPerAccount": 5,
+    "kvReadsPerDay": 100000,
+    "kvWritesPerDay": 1000,
+    "kvStorageBytes": 1000000000
+  },
+  "collector": {
+    "schedule": "17 * * * *",
+    "maxAttemptsPerUtcDay": 24,
+    "retry": "No immediate retry; one-hour backoff",
+    "reservedBrowserSecondsPerAttempt": 15,
+    "admissionBudgetSecondsPerDay": 360,
+    "admissionBudgetIsNotHardPlatformTimeout": true,
+    "estimatedWritesPer24Successes": 72,
+    "seedBytes": 20139,
+    "previousMeasuredBrowserMs": [
+      1307.519,
+      3538.778
+    ],
+    "initialIntegrationWallMs": 5823
+  },
+  "references": [
+    "https://developers.cloudflare.com/browser-run/limits/",
+    "https://developers.cloudflare.com/browser-run/pricing/",
+    "https://developers.cloudflare.com/kv/platform/limits/"
+  ],
+  "limitations": "Rounded account browser-hours display does not establish exact daily remaining seconds. No billing activated. Initial successful collector execution was remote test-scheduled; natural hourly production delivery remains pending."
+}

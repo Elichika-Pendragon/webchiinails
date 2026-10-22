@@ -1,0 +1,24 @@
+{
+  "verifiedAt": "2026-10-22T21:56:42.533Z",
+  "commit": "55b5f9f7c4880a5c942b064657ee7460f8784bc8",
+  "pagesDeployment": "5fe0943a-16d0-45cd-83bb-6d10fa066c54",
+  "collectorVersion": "2d39bf4d-47c2-4234-a569-31851737cf97",
+  "collector": "chii-instagram-links",
+  "cron": "17 * * * *",
+  "publicLinkKV": "b1a374c1ec0d45e4a64aa85b1bcafee1",
+  "tests": {
+    "passed": 510,
+    "failed": 0
+  },
+  "browserJsGzipBytes": 29210,
+  "productionChanged": true,
+  "newCredentials": false,
+  "billingEnabled": false,
+  "limitations": [
+    "Natural hourly delivery and genuinely new post discovery not yet observed.",
+    "279 accessible unique links; Instagram displayed 280.",
+    "Meta embeds remained blank in the final browser check, including a standalone public iframe diagnostic; local photo/direct-link fallback works.",
+    "Mobile checks are browser viewport simulations, not physical older Android or carrier measurements.",
+    "Daily browser admission budget is an estimate, not a hard timeout or account-wide cap."
+  ]
+}
