@@ -2,6 +2,7 @@ export const salon = {
   name: 'Chii Nails',
   geo: { latitude: -2.9707861, longitude: 104.7923294 },
   instagram: 'https://www.instagram.com/chii.nails_/',
+  shopee: 'https://id.shp.ee/1isrkeoe',
   whatsapp: 'https://wa.me/6285111028211',
   custom: 'https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.',
   mapsSource: 'https://share.google/jFSExFb9oiM3cob89',

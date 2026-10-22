@@ -80,6 +80,19 @@ test('one hourly attempt persists the union and subsequent delivery does not lau
   assert.equal(calls, 1);
 });
 
+test('natural hourly deliveries remain due despite clock jitter or an initial off-schedule test', async () => {
+  const store = storage(); let calls = 0;
+  const env = { INSTAGRAM_SCRAPING_ENABLED: 'true', INSTAGRAM_LINKS: store, BROWSER: {} };
+  const discover = async () => { calls++; return { links: [fresh], browserMs: 2500 }; };
+  const at = timestamp => Date.parse(timestamp);
+  await refreshInstagramArchive(env, bootstrap, { now: at('2026-10-22T21:34:46Z'), discover });
+  assert.equal((await refreshInstagramArchive(env, bootstrap, { now: at('2026-10-22T22:17:25Z'), discover })).status, 'fresh');
+  assert.equal((await refreshInstagramArchive(env, bootstrap, { now: at('2026-10-22T22:59:59Z'), discover })).status, 'not-due');
+  assert.equal((await refreshInstagramArchive(env, bootstrap, { now: at('2026-10-22T23:17:00Z'), discover })).status, 'fresh');
+  assert.equal(calls, 3);
+  assert.equal((await store.get(REFRESH_KEY)).attempts, 3);
+});
+
 test('failed discovery never replaces the saved archive, while daily admission budget stops new browser calls', async () => {
   const store = storage(); await store.put(ARCHIVE_KEY, JSON.stringify(bootstrap));
   const before = store.records.get(ARCHIVE_KEY); let calls = 0;

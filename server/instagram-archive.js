@@ -45,8 +45,11 @@ export async function refreshInstagramArchive(env, bootstrap, {
   const store = env.INSTAGRAM_LINKS;
   if (!store || !env.BROWSER) return { status: 'unconfigured' };
   const state = await store.get(REFRESH_KEY, 'json');
-  const elapsed = now - Date.parse(state?.attemptedAt);
-  if (Number.isFinite(elapsed) && elapsed < CHECK_INTERVAL_MS) return { status: 'not-due' };
+  const lastAttempt = Date.parse(state?.attemptedAt);
+  // Cron delivery can jitter: deduplicate the scheduled UTC hour rather than
+  // requiring 60 elapsed minutes, which could skip an early hourly delivery.
+  if (Number.isFinite(lastAttempt)
+    && Math.floor(now / CHECK_INTERVAL_MS) <= Math.floor(lastAttempt / CHECK_INTERVAL_MS)) return { status: 'not-due' };
   const day = new Date(now).toISOString().slice(0, 10);
   // Budget successful and failed attempts conservatively at 15 seconds each.
   // This is an admission budget, not a claim of a platform-enforced hard timeout.
