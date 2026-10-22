@@ -100,7 +100,7 @@ class MonthlyPhotosTest(unittest.TestCase):
                 self.assertLess(len(data), 240_000)
 
     def test_visual_duplicate_check_survives_another_encoding(self):
-        image = Image.effect_noise((900, 1200), 60).convert('RGB')
+        image = Image.radial_gradient('L').resize((900, 1200)).convert('RGB')
         original, recompressed = io.BytesIO(), io.BytesIO()
         image.save(original, 'JPEG', quality=90)
         image.resize((720, 960)).save(recompressed, 'WEBP', quality=80)
