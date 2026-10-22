@@ -4,7 +4,8 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { posts, salon } from '../src/content.js';
 import { normalizeFeed, selectHeroMedia } from '../src/feed-data.js';
-import { studioPhotos, photoSourceSet } from '../src/studio-photos.js';
+import { photoSourceSet } from '../src/studio-photos.js';
+import studioPhotos from './fixtures/studio-original.json' with { type: 'json' };
 import { selectInstagramShowcase } from '../src/instagram-showcase.js';
 import archiveFixture from '../public/data/instagram-archive.json' with { type: 'json' };
 
@@ -55,7 +56,7 @@ class Node {
   scrollBy(options) { this.lastScroll = options; this.scrollLeft += options.left; }
   scrollTo(options) { this.lastScroll = options; this.scrollLeft = options.left; }
 }
-function harness({ hero = true, curatedHero = false, gallery = true, archive = false, heroSlide = false, heroSlideMobile = false, photoRandom = 0.999, photoReduced = true, controls = false, response, maps = [], idle = true, intersection = true } = {}) {
+function harness({ hero = true, curatedHero = false, gallery = true, archive = false, heroSlide = false, heroSlideMobile = false, photos = studioPhotos, portfolioCount = 0, photoRandom = 0.999, photoReduced = true, controls = false, response, maps = [], idle = true, intersection = true } = {}) {
   const document = new Node('document'); document.readyState = 'loading'; document.body = new Node('body'); document.append(document.body); document.createElement = tag => { const node = new Node(tag); node.owner = document; return node; }; document.createTextNode = text => { const node = document.createElement(''); node.textContent = text; return node; };
   const make = (tag, className, parent = document.body) => { const node = document.createElement(tag); node.className = className; parent?.append(node); return node; };
   const heroes = [];
@@ -78,14 +79,28 @@ function harness({ hero = true, curatedHero = false, gallery = true, archive = f
     const previous = make('button', '', section); previous.setAttribute('aria-label', 'Postingan sebelumnya'); const next = make('button', '', section); next.setAttribute('aria-label', 'Postingan berikutnya'); make('span', '', section).setAttribute('aria-live', 'polite');
   }
   let heroFeature, slideLink, slideLinks = [];
+  let portfolio, photoMore;
+  if (portfolioCount) {
+    portfolio = make('div', 'studio-portfolio'); portfolio.setAttribute('id', 'studio-portfolio');
+    for (let index = 0; index < portfolioCount; index++) {
+      const figure = make('figure', '', portfolio); const img = make('img', 'photo', figure);
+      if (index < 6) img.src = `/images/photo-${index}.webp`;
+      else {
+        figure.hidden = true; figure.setAttribute('data-photo-deferred', '');
+        img.setAttribute('data-photo-src', `/images/photo-${index}.webp`);
+        img.setAttribute('data-photo-srcset', `/images/photo-${index}-360.webp 360w`);
+      }
+    }
+    photoMore = make('button', ''); photoMore.setAttribute('data-photo-more', '');
+  }
   if (heroSlide) {
     heroFeature = make('section', 'mosaic'); heroFeature.setAttribute('data-hero-slideshow', '');
     for (let index = 0; index < 4; index++) {
       const panel = make('div', index === 0 ? 'mosaic-feature' : 'mosaic-support', heroFeature);
       const link = make('a', 'mosaic-photo-link', panel); link.dataset.curated = 'true'; link.href = '/custom-sets#studio-portfolio';
       if (heroSlideMobile && index > 0) { link.width = 0; link.height = 0; }
-      const img = make('img', 'photo', link); img.src = `/images/${studioPhotos[index].name}-720.webp`; img.alt = studioPhotos[index].alt;
-      img.setAttribute('srcset', photoSourceSet(studioPhotos[index])); img.setAttribute('sizes', index === 0 ? '(max-width: 720px) calc(100vw - 40px), 642px' : '200px');
+      const img = make('img', 'photo', link); img.src = `/images/${photos[index].name}-720.webp`; img.alt = photos[index].alt;
+      img.setAttribute('srcset', photoSourceSet(photos[index])); img.setAttribute('sizes', index === 0 ? '(max-width: 720px) calc(100vw - 40px), 642px' : '200px');
       slideLinks.push(link);
     }
     slideLink = slideLinks[0];
@@ -106,7 +121,7 @@ function harness({ hero = true, curatedHero = false, gallery = true, archive = f
   let timerId = 0;
   class Observer { constructor(callback, options) { this.callback = callback; this.options = options; observers.push(this); } observe(node) { this.node = node; } disconnect() { this.disconnected = true; } }
   const photoMotion = { matches: photoReduced, addEventListener(type, handler) { (this.events ||= {})[type] = handler; }, emit(matches) { this.matches = matches; this.events?.change?.(); } };
-  const context = { Math: Object.assign(Object.create(Math), { random: () => photoRandom }), document, posts, salon, normalizeFeed, selectHeroMedia, selectInstagramShowcase, studioPhotos, photoSourceSet, URL, AbortController, Promise, getComputedStyle: () => ({ visibility: 'visible' }), matchMedia: query => query === '(prefers-reduced-motion: reduce)' ? photoMotion : { matches: true }, innerHeight: 800,
+  const context = { Math: Object.assign(Object.create(Math), { random: () => photoRandom }), document, posts, salon, normalizeFeed, selectHeroMedia, selectInstagramShowcase, studioPhotos: photos, photoSourceSet, URL, AbortController, Promise, getComputedStyle: () => ({ visibility: 'visible' }), matchMedia: query => query === '(prefers-reduced-motion: reduce)' ? photoMotion : { matches: true }, innerHeight: 800,
     setTimeout: (fn, delay) => { const id = ++timerId; timers.set(id, { fn, delay }); return id; }, clearTimeout: id => timers.delete(id), setInterval: (fn, delay) => { intervals.push({ fn, delay, active: true }); return intervals.length; }, clearInterval: id => { if (intervals[id - 1]) intervals[id - 1].active = false; },
     addEventListener: (type, handler) => { (events[type] ||= []).push(handler); }, removeEventListener: (type, handler) => { events[type] = (events[type] || []).filter(item => item !== handler); }, IntersectionObserver: Observer, ResizeObserver: Observer, MutationObserver: Observer,
     fetch: (...args) => { fetches.push(args); return response ? response(...args) : Promise.resolve({ ok: false }); },
@@ -115,13 +130,47 @@ function harness({ hero = true, curatedHero = false, gallery = true, archive = f
   if (!intersection) delete context.IntersectionObserver;
   context.window = context;
   vm.runInNewContext(`${controller}\nglobalThis.qa={updateHero,updateGallery,states,setMenu,setChat};`, context, { timeout: 1000 });
-  return { ...context.qa, window: context, document, heroes, track, heroFeature, slideLink, slideLinks, photoMotion, menu, trigger, panel, close, mapAreas, events, timers, intervals, fetches, observers, idleCallbacks, fire: (type, event) => { for (const fn of events[type] || []) fn(event); } };
+  return { ...context.qa, window: context, document, heroes, track, portfolio, photoMore, heroFeature, slideLink, slideLinks, photoMotion, menu, trigger, panel, close, mapAreas, events, timers, intervals, fetches, observers, idleCallbacks, fire: (type, event) => { for (const fn of events[type] || []) fn(event); } };
 }
 // make(..., null) is used for detached nodes just like document.createElement.
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const photoTimers = app => app.intervals.filter(timer => timer.active && timer.delay === 8000);
 const exposePhotos = app => app.observers.find(observer => observer.node === app.heroFeature)?.callback([{ isIntersecting: true }]);
 const tickPhoto = app => { const active = photoTimers(app); assert.equal(active.length, 1); active[0].fn(); return active[0].fn; };
+
+test('a fifty-photo gallery keeps later URLs inert and reveals only six per intersection', () => {
+  const app = harness({ hero: false, gallery: false, portfolioCount: 50 });
+  const images = app.portfolio.querySelectorAll('img');
+  assert.equal(images.filter(img => img.src).length, 6);
+  const observer = app.observers.find(item => item.node === app.portfolio.children[5]);
+  observer.callback([{ target: app.portfolio.children[5], isIntersecting: false }]);
+  assert.equal(images.filter(img => img.src).length, 6);
+  observer.callback([{ target: app.portfolio.children[5], isIntersecting: true }]);
+  assert.equal(images.filter(img => img.src).length, 12);
+  assert.equal(app.portfolio.children.filter(figure => !figure.hidden).length, 12);
+  assert.equal(images[12].src, null);
+  for (let index = 0; index < 7; index++) app.photoMore.emit('click');
+  assert.equal(images.filter(img => img.src).length, 50);
+  assert.equal(app.photoMore.hidden, true);
+});
+
+test('gallery batches have an explicit fallback when IntersectionObserver is unavailable', () => {
+  const app = harness({ hero: false, gallery: false, portfolioCount: 16, intersection: false });
+  app.photoMore.emit('click');
+  assert.equal(app.portfolio.querySelectorAll('img').filter(img => img.src).length, 12);
+});
+
+test('a fifty-photo carousel still loads only one next image and stops offscreen', async () => {
+  const photos = Array.from({ length: 50 }, (_, index) => ({ ...studioPhotos[0], name: `monthly/test-${index}` }));
+  const app = harness({ hero: false, gallery: false, heroSlide: true, photos });
+  exposePhotos(app); tickPhoto(app);
+  assert.equal(app.heroFeature.querySelectorAll('img').length, 5);
+  const pending = app.heroFeature.querySelector('.hero-photo-next');
+  await pending.onload();
+  assert.equal(app.heroFeature.querySelectorAll('img').length, 4);
+  app.observers.find(item => item.node === app.heroFeature).callback([{ isIntersecting: false }]);
+  assert.equal(photoTimers(app).length, 0);
+});
 
 test('new visits randomize the whole opening mosaic without duplicate photos or changing the source catalog', () => {
   const a = harness({ hero: false, gallery: false, heroSlide: true, photoRandom: 0.1 });

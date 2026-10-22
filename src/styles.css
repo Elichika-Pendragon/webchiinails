@@ -81,6 +81,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 @media(max-width:720px){.mosaic-caption.container{align-items:flex-start;flex-direction:column;gap:16px;padding-block:24px}.mosaic-caption.container .button{width:100%}.studio-portfolio{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 16px}.studio-portfolio figcaption{font-size:14px}}
 @media(max-width:540px){.studio-portfolio{grid-template-columns:minmax(0,1fr)}}
 .hero-mobile-contact{display:none}.mosaic-photo-link .hero-photo-next{opacity:0;transition:opacity .6s cubic-bezier(.22,1,.36,1);pointer-events:none}.mosaic-photo-link .hero-photo-next.is-visible{opacity:1}
+.gallery{overflow-anchor:none}.studio-portfolio figure[hidden]{display:none}.studio-photo-more{display:block;min-height:44px;padding:10px 0;margin:-24px 0 32px;background:transparent;border:0;color:var(--rose);text-decoration:underline;text-underline-offset:4px}.studio-photo-more[hidden]{display:none}
 @media(max-width:720px){.mosaic-caption.container .hero-mobile-contact{display:inline-flex;width:100%}}
 @media(prefers-reduced-motion:reduce){.mosaic-photo-link .hero-photo-next{transition:none}}
 @media(max-width:960px){.navigation{border-radius:0 0 var(--radius-media) var(--radius-media)}.navigation .mobile-nav-link{display:flex}.navigation .mobile-booking{display:flex;align-items:center}.navigation>a:active{background:var(--blush)}.navigation .mobile-booking:active{background:#8d2d55}}

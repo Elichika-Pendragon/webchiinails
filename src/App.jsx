@@ -33,9 +33,10 @@ export function Header() {
   </header>;
 }
 
-function Photo({ name, alt, className = '', priority = false, sizes = '(max-width: 720px) calc(100vw - 40px), (max-width: 1100px) 45vw, 552px' }) {
+function Photo({ name, alt, className = '', priority = false, deferred = false, sizes = '(max-width: 720px) calc(100vw - 40px), (max-width: 1100px) 45vw, 552px' }) {
   const photo = studioPhoto(name);
-  return <img className={`photo ${className}`} src={photo ? `/images/${name}-720.webp` : image(name)} srcSet={photo ? photoSourceSet(photo) : undefined} sizes={photo ? sizes : undefined} alt={alt || photo?.alt} style={photo ? { objectPosition: photo.position } : undefined} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding="async" width={photo?.width || 720} height={photo?.height || 960} />;
+  const src = photo ? `/images/${name}-${photo.widths.includes(720) ? 720 : photo.widths.at(-1)}.webp` : image(name);
+  return <img className={`photo ${className}`} src={deferred ? undefined : src} srcSet={photo && !deferred ? photoSourceSet(photo) : undefined} data-photo-src={deferred ? src : undefined} data-photo-srcset={photo && deferred ? photoSourceSet(photo) : undefined} sizes={photo ? sizes : undefined} alt={alt || photo?.alt} style={photo ? { objectPosition: photo.position } : undefined} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding="async" width={photo?.width || 720} height={photo?.height || 960} />;
 }
 
 function HeroPhoto({ post, priority = false, compact = false }) {
@@ -127,9 +128,9 @@ function InstagramPost({ post, active, priority = false }) {
 }
 
 function StudioPortfolio({ priority = false }) {
-  return <div id="studio-portfolio" className="studio-portfolio" aria-label="Pilihan karya Chii Nails">
-    {studioPhotos.map((photo, index) => <figure key={photo.name}><Photo name={photo.name} priority={priority && index === 0} sizes="(max-width: 540px) calc(100vw - 40px), (max-width: 720px) calc((100vw - 56px) / 2), (max-width: 1100px) calc((100vw - 112px) / 3), (max-width: 1440px) calc((100vw - 176px) / 3), 421px" /><figcaption>{photo.title}</figcaption></figure>)}
-  </div>;
+  return <><div id="studio-portfolio" className="studio-portfolio" aria-label="Pilihan karya Chii Nails">
+    {studioPhotos.map((photo, index) => <figure key={photo.name} hidden={index >= 6} data-photo-deferred={index >= 6 ? '' : undefined}><Photo name={photo.name} deferred={index >= 6} priority={priority && index === 0} sizes="(max-width: 540px) calc(100vw - 40px), (max-width: 720px) calc((100vw - 56px) / 2), (max-width: 1100px) calc((100vw - 112px) / 3), (max-width: 1440px) calc((100vw - 176px) / 3), 421px" /><figcaption>{photo.title}</figcaption></figure>)}
+  </div>{studioPhotos.length > 6 && <button type="button" className="text-link studio-photo-more" data-photo-more aria-controls="studio-portfolio">Lihat foto lainnya ↓</button>}</>;
 }
 
 function InstagramSlider({ eagerPreview = false }) {
@@ -169,7 +170,7 @@ function InstagramSlider({ eagerPreview = false }) {
 }
 
 function AboutIntro({ full = false }) {
-  return <section className="section container about-grid"><Photo name="jessica-press-on-collection" /><div><p className="eyebrow">MEET CHII</p><h2>Small studio.<br />So much imagination.</h2><p>Chii Nails adalah studio dan salon nail art di Palembang untuk kamu yang suka detail personal. Kami bangga bisa mengkreasikan desain sesuai permintaanmu—bawa warna, karakter, atau referensi yang kamu suka, lalu ceritakan ide set berikutnya.</p><p className="small accent">Nail art · Extensions · Custom press-on</p><LinkButton secondary>Kirim desain inspirasimu</LinkButton>{!full && <a className="text-link" href="/about">Tentang Chii & aturan booking →</a>}</div></section>;
+  return <section className="section container about-grid"><Photo name={studioPhotos.at(-1).name} /><div><p className="eyebrow">MEET CHII</p><h2>Small studio.<br />So much imagination.</h2><p>Chii Nails adalah studio dan salon nail art di Palembang untuk kamu yang suka detail personal. Kami bangga bisa mengkreasikan desain sesuai permintaanmu—bawa warna, karakter, atau referensi yang kamu suka, lalu ceritakan ide set berikutnya.</p><p className="small accent">Nail art · Extensions · Custom press-on</p><LinkButton secondary>Kirim desain inspirasimu</LinkButton>{!full && <a className="text-link" href="/about">Tentang Chii & aturan booking →</a>}</div></section>;
 }
 
 function WhyChii() {

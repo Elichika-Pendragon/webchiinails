@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "refreshMonth": null,
+  "photos": [
+    {
+      "name": "jessica-french-gold",
+      "title": "French, with a little gold.",
+      "alt": "French manicure putih dan pink dengan garis emas dan bunga timbul karya Chii",
+      "width": 1080,
+      "height": 1440,
+      "widths": [
+        360,
+        720,
+        1080
+      ],
+      "position": "50% 45%",
+      "addedMonth": "2026-10",
+      "source": "owner",
+      "visualHash": "62c383621b683de035d82a9b8a934d50750176416c236d4c7f866f816fc0de25"
+    },
+    {
+      "name": "jessica-red-silver",
+      "title": "A little more dramatic.",
+      "alt": "Nail art merah maroon dengan detail silver dan bentuk kuku almond",
+      "width": 1080,
+      "height": 1440,
+      "widths": [
+        360,
+        720,
+        1080
+      ],
+      "position": "50% 46%",
+      "addedMonth": "2026-10",
+      "source": "owner",
+      "visualHash": "7cac2c4f3c533ca50ce931d135a03d203c00738058809c8063003a0c6e0928f1"
+    },
+    {
+      "name": "jessica-forest-characters",
+      "title": "Tiny characters. Big personality.",
+      "alt": "Sepuluh press-on hijau dan pink dengan karakter hutan, stroberi, dan detail timbul",
+      "width": 900,
+      "height": 1600,
+      "widths": [
+        360,
+        720,
+        900
+      ],
+      "position": "50% 58%",
+      "addedMonth": "2026-10",
+      "source": "owner",
+      "visualHash": "ffc001ff000349e340053d8525d131513451345931690c8d7a401e5298000002"
+    },
+    {
+      "name": "jessica-cat-characters",
+      "title": "For the cat people.",
+      "alt": "Press-on warna pastel cerah dengan lukisan wajah kucing yang berbeda di setiap kuku",
+      "width": 1080,
+      "height": 1440,
+      "widths": [
+        360,
+        720,
+        1080
+      ],
+      "position": "50% 55%",
+      "addedMonth": "2026-10",
+      "source": "owner",
+      "visualHash": "c3f1c9e38fff31ff590f59c764516463355b684769536d593c8b4629f2682b60"
+    },
+    {
+      "name": "jessica-spider-art",
+      "title": "Your character, your way.",
+      "alt": "Nail art merah bertema laba-laba dengan detail jaring putih dan hitam",
+      "width": 1080,
+      "height": 1440,
+      "widths": [
+        360,
+        720,
+        1080
+      ],
+      "position": "50% 42%",
+      "addedMonth": "2026-10",
+      "source": "owner",
+      "visualHash": "78603a70167e0e5728533c5a5ca83d0278006040a000000000000108214a8ef0"
+    },
+    {
+      "name": "jessica-press-on-collection",
+      "title": "Made to be yours.",
+      "alt": "Tiga set press-on Chii dengan desain karakter merah, pastel, dan hitam silver",
+      "width": 1080,
+      "height": 1440,
+      "widths": [
+        360,
+        720,
+        1080
+      ],
+      "position": "50% 57%",
+      "addedMonth": "2026-10",
+      "source": "owner",
+      "visualHash": "0073900b81c08b9c9657926338e26cd3ac67b0c397e3dcd2b8f6731cef8c99f0"
+    }
+  ]
+}

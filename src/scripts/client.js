@@ -101,6 +101,38 @@ function updateHero(feed) {
 if (heroLinks.length) updateHero(posts);
 
 const gallery = document.querySelector('#gallery');
+// Sources for later photos are inert attributes until a six-photo batch is
+// reached. Native lazy loading alone can otherwise fetch far below the fold.
+const portfolio = document.querySelector('#studio-portfolio');
+const photoMore = document.querySelector('[data-photo-more]');
+if (portfolio && photoMore) {
+  let batchObserver, observedFigure;
+  const observeLastPhoto = () => {
+    observedFigure = [...portfolio.querySelectorAll('figure')].filter(figure => !figure.hidden).at(-1);
+    if (observedFigure && !photoMore.hidden) batchObserver?.observe(observedFigure);
+  };
+  const revealBatch = () => {
+    batchObserver?.disconnect();
+    const pending = [...portfolio.querySelectorAll('[data-photo-deferred]')];
+    pending.slice(0, 6).forEach(figure => {
+      const img = figure.querySelector('img');
+      if (!img) return;
+      img.srcset = img.getAttribute('data-photo-srcset') || '';
+      img.src = img.getAttribute('data-photo-src');
+      img.removeAttribute('data-photo-srcset'); img.removeAttribute('data-photo-src');
+      figure.hidden = false; figure.removeAttribute('data-photo-deferred');
+    });
+    photoMore.hidden = pending.length <= 6;
+    if (!photoMore.hidden) observeLastPhoto();
+  };
+  photoMore.addEventListener('click', revealBatch);
+  if ('IntersectionObserver' in window) {
+    batchObserver = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.target === observedFigure && entry.isIntersecting) && shown(portfolio)) revealBatch();
+    }, { rootMargin: '0px', threshold: 1 });
+    observeLastPhoto();
+  }
+}
 // Rotate one visible mosaic tile at a time; Instagram remains a manual gallery.
 const heroSlideshow = document.querySelector('[data-hero-slideshow]');
 if (heroSlideshow) {

@@ -1,0 +1,47 @@
+name: Monthly studio photos
+on:
+  schedule:
+    # First day of each month, 09:43 Asia/Jakarta. GitHub may deliver cron late.
+    - cron: '43 2 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: monthly-studio-photos
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -r scripts/monthly-photos-requirements.txt
+      - run: npm install --global pnpm@11.25.0
+      - run: pnpm install --frozen-lockfile
+      - run: python -m unittest discover -s scripts -p 'test_monthly_photos.py'
+      - run: python scripts/monthly_photos.py
+      - run: pnpm test
+      - run: pnpm build
+      - name: Publish only a verified batch
+        shell: bash
+        run: |
+          git add -- src/studio-collection.json src/studio-photo-catalog.json public/images
+          if git diff --cached --quiet; then
+            echo 'This month is already refreshed; no deployment needed.'
+            exit 0
+          fi
+          git config user.name 'Chii photo refresh'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "Refresh monthly studio photo collection"
+          # Normal push: concurrent site changes cause failure, never overwrite.
+          git push origin HEAD:main
