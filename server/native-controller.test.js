@@ -5,6 +5,8 @@ import vm from 'node:vm';
 import { posts, salon } from '../src/content.js';
 import { normalizeFeed, selectHeroMedia } from '../src/feed-data.js';
 import { studioPhotos, photoSourceSet } from '../src/studio-photos.js';
+import { selectInstagramShowcase } from '../src/instagram-showcase.js';
+import archiveFixture from '../public/data/instagram-archive.json' with { type: 'json' };
 
 // Execute the real browser entry with bounded DOM/event adapters. No browser,
 // third-party script, real timer, network request or account is used by this test.
@@ -53,7 +55,7 @@ class Node {
   scrollBy(options) { this.lastScroll = options; this.scrollLeft += options.left; }
   scrollTo(options) { this.lastScroll = options; this.scrollLeft = options.left; }
 }
-function harness({ hero = true, curatedHero = false, gallery = true, heroSlide = false, heroSlideMobile = false, photoReduced = true, controls = false, response, maps = [], idle = true, intersection = true } = {}) {
+function harness({ hero = true, curatedHero = false, gallery = true, archive = false, heroSlide = false, heroSlideMobile = false, photoReduced = true, controls = false, response, maps = [], idle = true, intersection = true } = {}) {
   const document = new Node('document'); document.readyState = 'loading'; document.body = new Node('body'); document.append(document.body); document.createElement = tag => { const node = new Node(tag); node.owner = document; return node; }; document.createTextNode = text => { const node = document.createElement(''); node.textContent = text; return node; };
   const make = (tag, className, parent = document.body) => { const node = document.createElement(tag); node.className = className; parent?.append(node); return node; };
   const heroes = [];
@@ -71,6 +73,7 @@ function harness({ hero = true, curatedHero = false, gallery = true, heroSlide =
   let track;
   if (gallery) {
     const section = make('section', ''); section.setAttribute('id', 'gallery'); track = make('div', 'instagram-track', section);
+    if (archive) track.dataset.instagramArchive = '/api/instagram-archive';
     for (const post of posts) { const card = make('article', 'instagram-slide', track); const preview = make('div', 'post-placeholder', card); make('img', 'photo', preview).src = `/images/${post.image}.webp`; make('p', '', preview).textContent = 'Instagram post'; const link = make('a', 'post-original', card); link.href = post.url; link.append(document.createTextNode(`${post.title} `), make('span', '', null)); }
     const previous = make('button', '', section); previous.setAttribute('aria-label', 'Postingan sebelumnya'); const next = make('button', '', section); next.setAttribute('aria-label', 'Postingan berikutnya'); make('span', '', section).setAttribute('aria-live', 'polite');
   }
@@ -103,7 +106,7 @@ function harness({ hero = true, curatedHero = false, gallery = true, heroSlide =
   let timerId = 0;
   class Observer { constructor(callback, options) { this.callback = callback; this.options = options; observers.push(this); } observe(node) { this.node = node; } disconnect() { this.disconnected = true; } }
   const photoMotion = { matches: photoReduced, addEventListener(type, handler) { (this.events ||= {})[type] = handler; }, emit(matches) { this.matches = matches; this.events?.change?.(); } };
-  const context = { document, posts, salon, normalizeFeed, selectHeroMedia, studioPhotos, photoSourceSet, URL, AbortController, Promise, getComputedStyle: () => ({ visibility: 'visible' }), matchMedia: query => query === '(prefers-reduced-motion: reduce)' ? photoMotion : { matches: true }, innerHeight: 800,
+  const context = { document, posts, salon, normalizeFeed, selectHeroMedia, selectInstagramShowcase, studioPhotos, photoSourceSet, URL, AbortController, Promise, getComputedStyle: () => ({ visibility: 'visible' }), matchMedia: query => query === '(prefers-reduced-motion: reduce)' ? photoMotion : { matches: true }, innerHeight: 800,
     setTimeout: (fn, delay) => { const id = ++timerId; timers.set(id, { fn, delay }); return id; }, clearTimeout: id => timers.delete(id), setInterval: (fn, delay) => { intervals.push({ fn, delay, active: true }); return intervals.length; }, clearInterval: id => { if (intervals[id - 1]) intervals[id - 1].active = false; },
     addEventListener: (type, handler) => { (events[type] ||= []).push(handler); }, removeEventListener: (type, handler) => { events[type] = (events[type] || []).filter(item => item !== handler); }, IntersectionObserver: Observer, ResizeObserver: Observer, MutationObserver: Observer,
     fetch: (...args) => { fetches.push(args); return response ? response(...args) : Promise.resolve({ ok: false }); },
@@ -385,4 +388,34 @@ test('map observer/idle fallbacks still delay loading and remove scroll watchers
   app.mapAreas[0].top = 900; app.fire('scroll', {});
   assert.equal(app.mapAreas[0].querySelectorAll('iframe').length, 1); assert.equal(app.mapAreas[1].querySelectorAll('iframe').length, 0);
   assert.equal(app.events.scroll.length, 1); assert.equal(app.events.resize.length, 1);
+});
+
+test('archive gallery fetches once only when nearby and renders 3 recent plus 9 random without a polling timer', async () => {
+  const app = harness({ hero: false, archive: true, response: async url => {
+    assert.equal(url, '/api/instagram-archive');
+    return { ok: true, json: async () => archiveFixture };
+  } });
+  assert.equal(app.fetches.length, 0);
+  const section = app.document.querySelector('#gallery');
+  const observer = app.observers.find(item => item.node === app.track);
+  assert.equal(observer.options.rootMargin, '0px');
+  observer.callback([{ isIntersecting: true }]);
+  await settle();
+  assert.equal(app.fetches.length, 1); assert.equal(app.track.children.length, 12);
+  assert.deepEqual(app.track.children.slice(0, 3).map(card => card.querySelector('.post-original').href),
+    archiveFixture.recentIds.map(id => archiveFixture.posts.find(post => post.id === id).url));
+  assert.equal(app.intervals.some(timer => timer.delay === 300000), false);
+  assert.ok(app.track.querySelectorAll('.post-link-only').length >= 8);
+  observer.callback([{ isIntersecting: true }]); await settle();
+  assert.equal(app.fetches.length, 1);
+});
+
+test('unavailable archive keeps the four original posts and working swipe controls', async () => {
+  const app = harness({ hero: false, archive: true });
+  const section = app.document.querySelector('#gallery');
+  app.observers.find(item => item.node === app.track).callback([{ isIntersecting: true }]);
+  await settle();
+  assert.equal(app.track.children.length, 4);
+  app.track.emit('keydown', { key: 'ArrowRight' });
+  assert.ok(app.track.lastScroll.left > 0);
 });

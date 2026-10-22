@@ -1,6 +1,7 @@
 import { posts, salon } from '../content.js';
 import { normalizeFeed, selectHeroMedia } from '../feed-data.js';
 import { studioPhotos, photoSourceSet } from '../studio-photos.js';
+import { selectInstagramShowcase } from '../instagram-showcase.js';
 
 // This is the only first-party browser entry. React renders HTML at build time.
 const localImage = name => `/images/${name || 'maroon'}.webp`;
@@ -199,6 +200,23 @@ const counter = gallery?.querySelector('[aria-live]');
 let galleryActive = false;
 let scriptPromise;
 const states = new Map();
+const showcaseSeed = Math.random();
+let archiveRequest;
+async function loadInstagramArchive() {
+  if (!track?.dataset.instagramArchive || archiveRequest) return archiveRequest;
+  archiveRequest = (async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      const response = await fetch(track.dataset.instagramArchive, { signal: controller.signal });
+      if (!response.ok) return;
+      const selection = selectInstagramShowcase(await response.json(), { seed: showcaseSeed, previews: posts });
+      if (selection.length) updateGallery(selection);
+    } catch { /* Keep the initial gallery on weak connections. */ }
+    finally { clearTimeout(timeout); }
+  })();
+  return archiveRequest;
+}
 function loadInstagram() {
   if (window.instgrm?.Embeds) return Promise.resolve();
   if (!scriptPromise) scriptPromise = new Promise((resolve, reject) => {
@@ -212,6 +230,11 @@ function loadInstagram() {
 }
 function previewFor(post) {
   const wrapper = element('div', 'post-placeholder');
+  if (post.linkOnly && !post.imageUrl && !post.image) {
+    wrapper.className += ' post-link-only';
+    wrapper.append(element('p', 'small muted embed-status', 'Postingan dari arsip Chii Nails'));
+    return wrapper;
+  }
   const img = element('img', 'photo');
   img.src = post.imageUrl || localImage(post.image); img.alt = post.alt;
   img.loading = 'lazy'; img.decoding = 'async';
@@ -326,13 +349,20 @@ if (track) {
   });
   const activate = () => {
     if (galleryActive || !shown(gallery)) return;
-    galleryActive = true; for (const state of states.values()) observeCard(state); updatePosition();
+    galleryActive = true;
+    if (track.dataset.instagramArchive) {
+      loadInstagramArchive().finally(() => { for (const state of states.values()) observeCard(state); updatePosition(); });
+    } else { for (const state of states.values()) observeCard(state); updatePosition(); }
   };
   if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting) && shown(gallery)) { activate(); observer.disconnect(); } }, { rootMargin: '250px' });
-    observer.observe(gallery);
+    const observer = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting) && shown(gallery)) { activate(); observer.disconnect(); } }, { rootMargin: track.dataset.instagramArchive ? '0px' : '250px' });
+    observer.observe(track.dataset.instagramArchive ? track : gallery);
   } else {
-    const maybeActivate = () => { if (shown(gallery) && gallery.getBoundingClientRect().top < innerHeight + 250) activate(); };
+    const maybeActivate = () => {
+      const target = track.dataset.instagramArchive ? track : gallery;
+      const rect = target.getBoundingClientRect();
+      if (shown(gallery) && rect.top < innerHeight + (track.dataset.instagramArchive ? 0 : 250) && rect.bottom > 0) activate();
+    };
     addEventListener('scroll', maybeActivate, { passive: true }); addEventListener('resize', maybeActivate, { passive: true }); maybeActivate();
   }
   if ('ResizeObserver' in window) new ResizeObserver(updatePosition).observe(track);
@@ -392,7 +422,7 @@ document.querySelectorAll('.map-area').forEach(area => {
 });
 
 // Shared public API poll; no account credentials or Meta code enter this bundle.
-if (heroLinks.length || track) {
+if (heroLinks.length || (track && !track.dataset.instagramArchive)) {
   let busy = false, pending;
   const refresh = async () => {
     if (busy || document.hidden) return;
@@ -402,7 +432,7 @@ if (heroLinks.length || track) {
       const response = await fetch('/api/instagram', { signal: controller.signal });
       if (!response.ok) return;
       const feed = normalizeFeed(await response.json());
-      if (feed.length) { updateHero(feed); updateGallery(feed); }
+      if (feed.length) { updateHero(feed); if (!track?.dataset.instagramArchive) updateGallery(feed); }
     } catch { /* Keep the local photographs or last successful feed. */ }
     finally { clearTimeout(timeout); busy = false; }
   };
