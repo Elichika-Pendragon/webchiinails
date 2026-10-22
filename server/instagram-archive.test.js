@@ -1,4 +1,5 @@
 import test from 'node:test';
+import bundledBootstrap from './instagram-bootstrap.js';
 import assert from 'node:assert/strict';
 import bootstrap from '../public/data/instagram-archive.json' with { type: 'json' };
 import { publicInstagramArchive, selectInstagramShowcase } from '../src/instagram-showcase.js';
@@ -14,6 +15,7 @@ function storage() {
 }
 
 test('manual seed contains 279 distinct real captured links and records the 280-count discrepancy', () => {
+  assert.deepEqual(bundledBootstrap, bootstrap);
   const archive = publicInstagramArchive(bootstrap);
   assert.equal(archive.posts.length, 279);
   assert.equal(new Set(archive.posts.map(post => post.id)).size, 279);

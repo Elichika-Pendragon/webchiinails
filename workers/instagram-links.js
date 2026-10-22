@@ -1,4 +1,4 @@
-import bootstrap from '../public/data/instagram-archive.json' with { type: 'json' };
+import bootstrap from '../server/instagram-bootstrap.js';
 import { refreshInstagramArchive } from '../server/instagram-archive.js';
 
 export default {

@@ -1,4 +1,4 @@
-import bootstrap from '../../public/data/instagram-archive.json' with { type: 'json' };
+import bootstrap from '../../server/instagram-bootstrap.js';
 import { publicInstagramArchive } from '../../src/instagram-showcase.js';
 
 // Visitors only read saved public links. This endpoint never launches a scraper.
