@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-22T22:09:05.956Z",
+  "commit": "218a744",
+  "pagesDeployment": "3b097610-e51c-4ed5-a1b6-db8f870dd283",
+  "entryMatchesLocal": true,
+  "browserFile": "client.BqadHk3x.js",
+  "assetStatus": 200,
+  "hasRetry": true,
+  "hasSlowNotice": true,
+  "testsPassed": 513,
+  "browserJsGzipBytes": 29389
+}
