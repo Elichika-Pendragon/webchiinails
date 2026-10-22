@@ -264,11 +264,13 @@ function previewFor(post) {
 function stopEmbed(state) {
   state.cancelled = true;
   state.nearObserver?.disconnect(); state.mutation?.disconnect(); clearTimeout(state.timeout);
+  state.retry?.remove(); state.retry = null;
   state.host?.remove();
 }
 function embedPost(state) {
   if (state.started || !galleryActive || !shown(gallery)) return;
   state.started = true; state.cancelled = false;
+  state.card.setAttribute('aria-busy', 'true');
   const host = element('div', 'instagram-host'); state.host = host;
   const quote = element('blockquote', 'instagram-media');
   quote.setAttribute('data-instgrm-permalink', state.post.url);
@@ -277,27 +279,52 @@ function embedPost(state) {
   quote.append(link); host.append(quote); state.card.prepend(host);
   const status = state.card.querySelector('.post-placeholder p');
   if (status) { status.className = 'small muted embed-status'; status.textContent = 'Memuat postingan Instagram…'; }
+  const current = () => !state.cancelled && state.host === host;
+  const offerRetry = () => {
+    if (state.retry) return;
+    const retry = element('button', 'text-link embed-retry', 'Coba muat ulang postingan');
+    retry.type = 'button'; retry.setAttribute('aria-label', `Muat ulang Instagram: ${state.post.title}`);
+    retry.addEventListener('click', () => {
+      if (!state.card.parentNode || !galleryActive || !shown(gallery)) return;
+      stopEmbed(state); state.started = false;
+      const preview = state.card.querySelector('.post-fallback');
+      if (preview) preview.className = 'post-placeholder';
+      embedPost(state);
+    });
+    state.retry = retry;
+    state.card.insertBefore(retry, state.card.querySelector('.post-original'));
+  };
   const failure = () => {
-    if (state.cancelled) return;
+    if (!current()) return;
     stopEmbed(state);
+    state.card.setAttribute('aria-busy', 'false');
     const preview = state.card.querySelector('.post-placeholder');
     if (preview) { preview.className = 'post-fallback'; preview.querySelector('p').textContent = 'Instagram belum bisa dimuat di browser ini.'; }
+    offerRetry();
   };
   const check = () => {
-    if (state.cancelled) return;
+    if (!current()) return;
     const iframe = host.querySelector('iframe');
     if (!iframe) return;
     iframe.title = `Instagram: ${state.post.title}`;
     if (iframe.getBoundingClientRect().height > 100) {
       host.classList.add('is-loaded');
+      state.card.setAttribute('aria-busy', 'false');
       state.card.querySelector('.post-placeholder')?.remove();
+      state.retry?.remove(); state.retry = null;
       clearTimeout(state.timeout); state.mutation?.disconnect();
     }
   };
   state.mutation = new MutationObserver(check);
   state.mutation.observe(host, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'height'] });
-  loadInstagram().then(() => { if (!state.cancelled) { window.instgrm?.Embeds?.process(); check(); } }).catch(failure);
-  state.timeout = setTimeout(() => { if (!host.classList.contains('is-loaded')) failure(); }, 16000);
+  loadInstagram().then(() => { if (current()) { window.instgrm?.Embeds?.process(); check(); } }).catch(failure);
+  state.timeout = setTimeout(() => {
+    if (!current() || host.classList.contains('is-loaded')) return;
+    // Slow is not failed: Meta can finish after its SDK queue and this notice.
+    // Keep the frame and observer alive so a late post replaces the preview.
+    if (status) status.textContent = 'Instagram masih dimuat. Tunggu sebentar atau coba muat ulang.';
+    offerRetry();
+  }, 16000);
 }
 function observeCard(state) {
   if (!galleryActive || state.started) return;

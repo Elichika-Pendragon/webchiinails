@@ -357,6 +357,54 @@ test('gallery keyboard control does not steal arrow keys from nested links; Esca
   app.menu.emit('click'); app.document.emit('keydown', { key: 'Escape' }); assert.equal(app.menu.getAttribute('aria-expanded'), 'false'); assert.equal(app.document.activeElement, app.menu);
 });
 
+test('a slow native Instagram post survives the notice and replaces its preview when ready', async () => {
+  const app = harness({ hero: false });
+  app.observers.find(observer => observer.node === app.document.querySelector('#gallery')).callback([{ isIntersecting: true }]);
+  const state = app.states.get(posts[0].id);
+  app.observers.find(observer => observer.node === state.card).callback([{ isIntersecting: true }]);
+  const frame = app.document.createElement('iframe'); frame.height = 0; state.host.append(frame);
+  app.window.instgrm = { Embeds: { process() {} } };
+  app.document.querySelector('script').onload(); await settle();
+  const mutation = state.mutation, host = state.host;
+  [...app.timers.values()].find(timer => timer.delay === 16000).fn();
+  assert.equal(host.parentNode, state.card, 'A slow response must not destroy its native frame');
+  assert.equal(state.cancelled, false); assert.notEqual(mutation.disconnected, true);
+  assert.ok(state.retry); assert.equal(state.card.getAttribute('aria-busy'), 'true');
+  frame.height = 640; mutation.callback([]);
+  assert.equal(host.classList.contains('is-loaded'), true);
+  assert.equal(state.card.querySelector('.post-placeholder'), null);
+  assert.equal(state.retry, null); assert.equal(state.card.getAttribute('aria-busy'), 'false');
+});
+
+test('an Instagram script error can be retried without duplicate hosts or stale completion', async () => {
+  const app = harness({ hero: false });
+  app.observers.find(observer => observer.node === app.document.querySelector('#gallery')).callback([{ isIntersecting: true }]);
+  const state = app.states.get(posts[0].id);
+  app.observers.find(observer => observer.node === state.card).callback([{ isIntersecting: true }]);
+  const oldHost = state.host, oldMutation = state.mutation;
+  app.document.querySelector('script').onerror(); await settle();
+  assert.equal(oldHost.parentNode, null); assert.ok(state.retry);
+  state.retry.emit('click');
+  assert.notEqual(state.host, oldHost); assert.equal(state.card.querySelectorAll('.instagram-host').length, 1);
+  assert.equal(app.document.querySelectorAll('script').length, 1);
+  oldMutation.callback([]);
+  assert.equal(state.host.classList.contains('is-loaded'), false);
+  assert.ok(state.card.querySelector('.post-placeholder'));
+});
+
+test('removing a slow Instagram card clears its retry control and ignores late completion', () => {
+  const app = harness({ hero: false });
+  app.observers.find(observer => observer.node === app.document.querySelector('#gallery')).callback([{ isIntersecting: true }]);
+  const state = app.states.get(posts[0].id);
+  app.observers.find(observer => observer.node === state.card).callback([{ isIntersecting: true }]);
+  [...app.timers.values()].find(timer => timer.delay === 16000).fn();
+  const retry = state.retry, mutation = state.mutation;
+  app.updateGallery(posts.slice(1));
+  assert.equal(retry.parentNode, null); assert.equal(state.host.parentNode, null);
+  mutation.callback([]); retry.emit('click');
+  assert.equal(state.cancelled, true); assert.equal(state.card.parentNode, null);
+});
+
 test('polling pauses while hidden, avoids overlap, aborts on pagehide and resumes safely', async () => {
   let resolve;
   const app = harness({ gallery: false, response: () => new Promise(done => { resolve = done; }) });

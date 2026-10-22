@@ -102,3 +102,5 @@ html{scroll-padding-top:calc(var(--site-header-height) + 16px)}
   }
 }
 .post-placeholder.post-link-only{min-height:330px;display:grid;place-items:center;background:var(--blush)}
+
+.embed-retry{min-height:44px;padding:10px 16px;align-self:flex-start}
