@@ -1,6 +1,6 @@
 # Shopee contact option
 
-The contact panel includes “Checkout Our Shopee”, linking to the owner-supplied https://id.shp.ee/1isrkeoe (verified redirect to https://shopee.co.id/chii.shoppu). It opens a new tab with noopener noreferrer.
+The contact panel title is “Shopee” with “Checkout Our Shopee” below it, linking to the owner-supplied https://id.shp.ee/1isrkeoe (verified redirect to https://shopee.co.id/chii.shoppu). It opens a new tab with noopener noreferrer. Corrected wording was published in 621729d and reconfirmed in the monthly photo release.
 
 Logo: Shopee brand silhouette from Simple Icons, https://github.com/simple-icons/simple-icons/blob/develop/icons/shopee.svg. The SVG is self-hosted at public/images/shopee.svg and recolored to the existing contact-icon brown (#775759). Original vector path retained; 1,222 bytes. No third-party logo request is made by visitors.
 

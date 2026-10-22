@@ -1,0 +1,16 @@
+[
+  {
+    "key": "archive-v1",
+    "lastSuccessAt": "2026-10-22T23:17:24.278Z",
+    "newIds": [],
+    "posts": 279
+  },
+  {
+    "attemptedAt": "2026-10-22T23:17:24.278Z",
+    "attempts": 3,
+    "day": "2026-10-22",
+    "key": "refresh-v1",
+    "reservedMs": 45000,
+    "status": "fresh"
+  }
+]

@@ -1,0 +1,26 @@
+{
+  "deferred": 10,
+  "gallerySources": 6,
+  "galleryTotal": 16,
+  "iframes": 0,
+  "mosaic": [
+    {
+      "loaded": true,
+      "src": "https://chiinails.pages.dev/images/monthly/ig-3988974571675957445-4e7f6b308f-1080.webp"
+    },
+    {
+      "loaded": true,
+      "src": "https://chiinails.pages.dev/images/monthly/ig-3988797890436678835-4e4468daae-1080.webp"
+    },
+    {
+      "loaded": true,
+      "src": "https://chiinails.pages.dev/images/monthly/ig-3433053042558645819-05ed9bb6db-720.webp"
+    },
+    {
+      "loaded": true,
+      "src": "https://chiinails.pages.dev/images/monthly/ig-3395863750434817413-ca3f5f1879-720.webp"
+    }
+  ],
+  "scrollWidth": 1265,
+  "width": 1265
+}

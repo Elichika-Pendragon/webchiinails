@@ -12,3 +12,4 @@ dist/
 .worker-build/
 
 .astro/
+__pycache__/
