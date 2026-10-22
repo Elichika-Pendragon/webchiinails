@@ -259,7 +259,9 @@ def refresh(root=ROOT, month=None, fetch=download):
     public_pending.write_text(json.dumps([{key: photo[key] for key in PUBLIC_FIELDS} for photo in photos],
                                         ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     public_pending.replace(public_catalog)
-    kept = {p['name'] for p in photos}
+    fixed_file = root / 'src/studio-fixed-photos.json'
+    fixed_names = {p['name'] for p in json.loads(fixed_file.read_text(encoding='utf-8'))} if fixed_file.exists() else set()
+    kept = {p['name'] for p in photos} | fixed_names
     for photo in old:
         name = photo['name']
         if name not in kept and re.fullmatch(r'(?:monthly/ig-\d+-[a-f0-9]{10}|jessica-[a-z-]+)', name):

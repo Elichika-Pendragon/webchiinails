@@ -7,7 +7,8 @@ const collection = JSON.parse(await readFile(new URL('../src/studio-collection.j
 const photoCatalog = JSON.parse(await readFile(new URL('../src/studio-photo-catalog.json', import.meta.url), 'utf8'));
 assert.ok(photoCatalog.length >= 4 && photoCatalog.length <= 50, 'Studio photo pool stays between four and fifty images');
 assert.deepEqual(photoCatalog, collection.photos.map(photo => Object.fromEntries(['name', 'title', 'alt', 'width', 'height', 'widths', 'position'].map(key => [key, photo[key]]))), 'Public photo catalog agrees with verified retention state');
-for (const photo of photoCatalog) for (const width of photo.widths) {
+const fixedPhotos = JSON.parse(await readFile(new URL('../src/studio-fixed-photos.json', import.meta.url), 'utf8'));
+for (const photo of [...photoCatalog, ...fixedPhotos]) for (const width of photo.widths) {
   assert.ok((await stat(new URL(`images/${photo.name}-${width}.webp`, root))).isFile(), 'Every responsive photo variant exists');
 }
 async function walk(folder) {

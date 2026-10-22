@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { salon, services, bookingRules } from './content';
 import { InstagramFeedProvider, useInstagramFeed } from './instagram-feed.jsx';
-import { studioPhotos, studioPhoto, photoSourceSet } from './studio-photos.js';
+import { studioPhotos, studioPhoto, aboutStudioPhoto, photoSourceSet } from './studio-photos.js';
 import PriceList from './PriceList.jsx';
 import './styles.css';
 
@@ -170,7 +170,7 @@ function InstagramSlider({ eagerPreview = false }) {
 }
 
 function AboutIntro({ full = false }) {
-  return <section className="section container about-grid"><Photo name={studioPhotos.at(-1).name} /><div><p className="eyebrow">MEET CHII</p><h2>Small studio.<br />So much imagination.</h2><p>Chii Nails adalah studio dan salon nail art di Palembang untuk kamu yang suka detail personal. Kami bangga bisa mengkreasikan desain sesuai permintaanmu—bawa warna, karakter, atau referensi yang kamu suka, lalu ceritakan ide set berikutnya.</p><p className="small accent">Nail art · Extensions · Custom press-on</p><LinkButton secondary>Kirim desain inspirasimu</LinkButton>{!full && <a className="text-link" href="/about">Tentang Chii & aturan booking →</a>}</div></section>;
+  return <section className="section container about-grid"><Photo name={aboutStudioPhoto.name} /><div><p className="eyebrow">MEET CHII</p><h2>Small studio.<br />So much imagination.</h2><p>Chii Nails adalah studio dan salon nail art di Palembang untuk kamu yang suka detail personal. Kami bangga bisa mengkreasikan desain sesuai permintaanmu—bawa warna, karakter, atau referensi yang kamu suka, lalu ceritakan ide set berikutnya.</p><p className="small accent">Nail art · Extensions · Custom press-on</p><LinkButton secondary>Kirim desain inspirasimu</LinkButton>{!full && <a className="text-link" href="/about">Tentang Chii & aturan booking →</a>}</div></section>;
 }
 
 function WhyChii() {

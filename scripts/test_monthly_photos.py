@@ -128,6 +128,7 @@ class MonthlyPhotosTest(unittest.TestCase):
                 file.write_bytes(b'old asset')
             catalog = root / 'src/studio-collection.json'
             catalog.write_text(json.dumps({'version': 1, 'refreshMonth': '2026-09', 'photos': old}))
+            (root / 'src/studio-fixed-photos.json').write_text(json.dumps([old[-1]]))
             ids = [f'Post123{i}' for i in range(10)]
             archive = {'version': 1, 'profile': 'chii.nails_',
                        'posts': [{'id': key, 'url': f'https://www.instagram.com/p/{key}/'} for key in ids]}
@@ -152,7 +153,8 @@ class MonthlyPhotosTest(unittest.TestCase):
             self.assertEqual([p['selection'] for p in state['photos'][:10]], ['recent'] * 5 + ['archive'] * 5)
             self.assertEqual(state['photos'][10:], old[:40])
             for item in old[-6:]:
-                self.assertFalse((root / f"public/images/{item['name']}-360.webp").exists())
+                self.assertEqual((root / f"public/images/{item['name']}-360.webp").exists(), item == old[-1])
+            self.assertNotIn(old[-1], state['photos'], 'Fixed section assets still age out of the gallery pool')
             self.assertNotIn('fbcdn', catalog.read_text(encoding='utf-8'))
             self.assertNotIn('visualHash', (root / 'src/studio-photo-catalog.json').read_text(encoding='utf-8'))
             for item in state['photos'][:10]:

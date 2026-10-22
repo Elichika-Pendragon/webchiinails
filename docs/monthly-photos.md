@@ -43,7 +43,9 @@ six image sources. Subsequent URLs stay inert until the user reaches the last
 visible photo, revealing six more at a time. A keyboard-accessible button is
 also available. The existing randomized opening mosaic and automatic eight-
 second one-image fade use the same active pool. Offscreen/hidden rotation
-pauses. About-page photography uses the active pool so originals can age out.
+pauses. The owner-approved Meet Chii photo is a fixed section asset, outside the
+rotating collection. Its gallery entry ages out normally, while its responsive
+files remain available for the unchanged About section.
 
 Validation: 11 Python tests cover owner/media filtering, mixed carousels, source
 URL restrictions, metadata stripping, no-upscaling, similarity, six-month
