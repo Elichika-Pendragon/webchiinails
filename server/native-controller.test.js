@@ -55,7 +55,7 @@ class Node {
   scrollBy(options) { this.lastScroll = options; this.scrollLeft += options.left; }
   scrollTo(options) { this.lastScroll = options; this.scrollLeft = options.left; }
 }
-function harness({ hero = true, curatedHero = false, gallery = true, archive = false, heroSlide = false, heroSlideMobile = false, photoReduced = true, controls = false, response, maps = [], idle = true, intersection = true } = {}) {
+function harness({ hero = true, curatedHero = false, gallery = true, archive = false, heroSlide = false, heroSlideMobile = false, photoRandom = 0.999, photoReduced = true, controls = false, response, maps = [], idle = true, intersection = true } = {}) {
   const document = new Node('document'); document.readyState = 'loading'; document.body = new Node('body'); document.append(document.body); document.createElement = tag => { const node = new Node(tag); node.owner = document; return node; }; document.createTextNode = text => { const node = document.createElement(''); node.textContent = text; return node; };
   const make = (tag, className, parent = document.body) => { const node = document.createElement(tag); node.className = className; parent?.append(node); return node; };
   const heroes = [];
@@ -106,7 +106,7 @@ function harness({ hero = true, curatedHero = false, gallery = true, archive = f
   let timerId = 0;
   class Observer { constructor(callback, options) { this.callback = callback; this.options = options; observers.push(this); } observe(node) { this.node = node; } disconnect() { this.disconnected = true; } }
   const photoMotion = { matches: photoReduced, addEventListener(type, handler) { (this.events ||= {})[type] = handler; }, emit(matches) { this.matches = matches; this.events?.change?.(); } };
-  const context = { document, posts, salon, normalizeFeed, selectHeroMedia, selectInstagramShowcase, studioPhotos, photoSourceSet, URL, AbortController, Promise, getComputedStyle: () => ({ visibility: 'visible' }), matchMedia: query => query === '(prefers-reduced-motion: reduce)' ? photoMotion : { matches: true }, innerHeight: 800,
+  const context = { Math: Object.assign(Object.create(Math), { random: () => photoRandom }), document, posts, salon, normalizeFeed, selectHeroMedia, selectInstagramShowcase, studioPhotos, photoSourceSet, URL, AbortController, Promise, getComputedStyle: () => ({ visibility: 'visible' }), matchMedia: query => query === '(prefers-reduced-motion: reduce)' ? photoMotion : { matches: true }, innerHeight: 800,
     setTimeout: (fn, delay) => { const id = ++timerId; timers.set(id, { fn, delay }); return id; }, clearTimeout: id => timers.delete(id), setInterval: (fn, delay) => { intervals.push({ fn, delay, active: true }); return intervals.length; }, clearInterval: id => { if (intervals[id - 1]) intervals[id - 1].active = false; },
     addEventListener: (type, handler) => { (events[type] ||= []).push(handler); }, removeEventListener: (type, handler) => { events[type] = (events[type] || []).filter(item => item !== handler); }, IntersectionObserver: Observer, ResizeObserver: Observer, MutationObserver: Observer,
     fetch: (...args) => { fetches.push(args); return response ? response(...args) : Promise.resolve({ ok: false }); },
@@ -122,6 +122,29 @@ const settle = () => new Promise(resolve => setImmediate(resolve));
 const photoTimers = app => app.intervals.filter(timer => timer.active && timer.delay === 8000);
 const exposePhotos = app => app.observers.find(observer => observer.node === app.heroFeature)?.callback([{ isIntersecting: true }]);
 const tickPhoto = app => { const active = photoTimers(app); assert.equal(active.length, 1); active[0].fn(); return active[0].fn; };
+
+test('new visits randomize the whole opening mosaic without duplicate photos or changing the source catalog', () => {
+  const a = harness({ hero: false, gallery: false, heroSlide: true, photoRandom: 0.1 });
+  const b = harness({ hero: false, gallery: false, heroSlide: true, photoRandom: 0.8 });
+  const sources = app => app.slideLinks.map(link => link.querySelector('img').src);
+  assert.notDeepEqual(sources(a), sources(b));
+  assert.equal(new Set(sources(a)).size, 4);
+  assert.equal(a.heroFeature.querySelectorAll('img').length, 4);
+  assert.equal(studioPhotos[0].name, 'jessica-french-gold');
+  const current = sources(a); a.fire('pageshow');
+  assert.deepEqual(sources(a), current, 'Returning to the open document must not reshuffle it');
+});
+
+test('mobile randomizes only its visible opening photo and restores the fallback on load failure', () => {
+  const app = harness({ hero: false, gallery: false, heroSlide: true, heroSlideMobile: true, photoRandom: 0.1 });
+  const first = app.slideLink.querySelector('img');
+  assert.notEqual(first.src, `/images/${studioPhotos[0].name}-720.webp`);
+  app.slideLinks.slice(1).forEach((link, index) => assert.equal(link.querySelector('img').src, `/images/${studioPhotos[index + 1].name}-720.webp`));
+  first.onerror();
+  assert.equal(first.src, `/images/${studioPhotos[0].name}-720.webp`);
+  assert.equal(first.alt, studioPhotos[0].alt);
+  exposePhotos(app); assert.equal(photoTimers(app).length, 1);
+});
 
 test('desktop mosaic changes one tile at a time in round-robin order without duplicate designs', async () => {
   const app = harness({ hero: false, gallery: false, heroSlide: true, photoReduced: false });

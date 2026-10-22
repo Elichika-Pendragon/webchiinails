@@ -111,6 +111,25 @@ if (heroSlideshow) {
     const bounds = slot.link.getBoundingClientRect();
     return slot.base && bounds.width > 0 && bounds.height > 0;
   });
+  // Each page visit gets a fresh arrangement; hidden mobile panels stay lazy.
+  const openingPhotos = studioPhotos.map((_, index) => index);
+  for (let index = openingPhotos.length - 1; index > 0; index--) {
+    const other = Math.floor(Math.random() * (index + 1));
+    [openingPhotos[index], openingPhotos[other]] = [openingPhotos[other], openingPhotos[index]];
+  }
+  visiblePhotoSlots().forEach((slot, position) => {
+    const index = openingPhotos[position], photo = studioPhotos[index];
+    if (!photo || index === slot.index) return;
+    const original = studioPhotos[slot.index], originalIndex = slot.index;
+    const render = value => {
+      slot.base.alt = value.alt; slot.base.width = value.width; slot.base.height = value.height;
+      slot.base.style.objectPosition = value.position;
+      slot.base.srcset = photoSourceSet(value);
+      slot.base.src = `/images/${value.name}-720.webp`;
+    };
+    slot.base.onerror = () => { slot.base.onerror = null; slot.index = originalIndex; render(original); };
+    slot.index = index; render(photo);
+  });
   const photoMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let panelCursor = 0, poolCursor = 0, pendingPhoto = null;
   let photoTimer = null, fadeTimer = null, loadTimer = null, photoGeneration = 0;
