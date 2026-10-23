@@ -42,7 +42,7 @@ Use the committed configs in `workers/booking-processor.wrangler.jsonc`, `bookin
 
 ## Release order
 
-1. Inspect branch/diff and existing bindings. Back up before any intended schema change. `migrations/0001` through `0009` are already part of the released setup; apply only unapplied additive migrations in numeric order. Do not reset booking/price data or repeat resource creation.
+1. Inspect branch/diff and existing bindings. Back up before any intended schema change. `migrations/0001` through `0011` are part of the released setup (0010/0011 applied 24 October 2026; see `docs/evidence/order-codes-2026-10-24/README.md`); apply only unapplied additive migrations in numeric order. Do not reset booking/price data or repeat resource creation.
 2. Run relevant tests and `pnpm build`. Include Python tests when importer behavior changes. Use isolated providers/bindings for write tests.
 3. For private-worker changes, deploy the intended config and verify its existing bindings before activating dependent Pages code. Retain authorization boundaries and disabled public URLs. Do not activate billing as an incidental deploy step.
 4. Commit and push to `main` through normal Git integration. Confirm the actual Pages deployment succeeded; a pushed commit alone is not production proof. A docs-only `[skip ci]` commit does not require a runtime deployment.

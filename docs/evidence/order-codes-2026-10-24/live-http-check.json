@@ -1,0 +1,184 @@
+{
+  "checkedAt": "2026-10-23T18:08:27.809Z",
+  "sourceCommit": "6453f08805f2299d7265baab1613053a91f5b26e",
+  "production": "https://chiinails.pages.dev",
+  "results": [
+    {
+      "path": "/",
+      "method": "GET",
+      "status": 200,
+      "ms": 277,
+      "robots": null,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/about",
+      "method": "GET",
+      "status": 200,
+      "ms": 489,
+      "robots": null,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/custom-sets",
+      "method": "GET",
+      "status": 200,
+      "ms": 491,
+      "robots": null,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/services",
+      "method": "GET",
+      "status": 200,
+      "ms": 501,
+      "robots": null,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/book",
+      "method": "GET",
+      "status": 200,
+      "ms": 27,
+      "robots": null,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/visit",
+      "method": "GET",
+      "status": 200,
+      "ms": 382,
+      "robots": null,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/book/manage",
+      "method": "GET",
+      "status": 200,
+      "ms": 383,
+      "robots": "noindex, nofollow",
+      "cache": "no-store"
+    },
+    {
+      "path": "/prices",
+      "method": "GET",
+      "status": 200,
+      "ms": 431,
+      "robots": "noindex, nofollow",
+      "cache": "no-store"
+    },
+    {
+      "path": "/api/booking/status",
+      "method": "GET",
+      "status": 200,
+      "ms": 17,
+      "robots": "noindex, nofollow",
+      "cache": "private, no-store, max-age=0"
+    },
+    {
+      "path": "/sitemap.xml",
+      "method": "GET",
+      "status": 200,
+      "ms": 19,
+      "robots": null,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/receipt",
+      "method": "GET",
+      "status": 200,
+      "ms": 396,
+      "robots": "noindex, nofollow",
+      "cache": "no-store"
+    },
+    {
+      "path": "/book/approve",
+      "method": "GET",
+      "status": 200,
+      "ms": 415,
+      "robots": "noindex, nofollow",
+      "cache": "no-store"
+    },
+    {
+      "path": "/api/booking/codes",
+      "method": "GET",
+      "status": 401,
+      "ms": 20,
+      "robots": "noindex, nofollow",
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/api/booking/prices",
+      "method": "GET",
+      "status": 401,
+      "ms": 17,
+      "robots": "noindex, nofollow",
+      "cache": "no-store, max-age=0"
+    },
+    {
+      "path": "/api/booking/review?token=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "method": "GET",
+      "status": 401,
+      "ms": 18,
+      "robots": "noindex, nofollow",
+      "cache": "private, no-store, max-age=0"
+    },
+    {
+      "path": "/api/booking/order-editor",
+      "method": "POST",
+      "status": 401,
+      "ms": 22,
+      "robots": "noindex, nofollow",
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/api/booking/orders",
+      "method": "POST",
+      "status": 403,
+      "ms": 25,
+      "robots": "noindex, nofollow",
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/api/booking/receipt",
+      "method": "POST",
+      "status": 404,
+      "ms": 20,
+      "robots": "noindex, nofollow",
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/api/booking/admission",
+      "method": "GET",
+      "status": 200,
+      "ms": 52,
+      "robots": "noindex, nofollow",
+      "cache": "private, no-store, max-age=0"
+    },
+    {
+      "path": "/api/booking/orders",
+      "method": "POST",
+      "status": 404,
+      "ms": 64,
+      "robots": "noindex, nofollow",
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/api/booking/orders",
+      "method": "POST",
+      "status": 403,
+      "ms": 62,
+      "robots": "noindex, nofollow",
+      "cache": "private, no-store"
+    },
+    {
+      "path": "/api/booking/requests",
+      "method": "POST",
+      "status": 403,
+      "ms": 549,
+      "robots": "noindex, nofollow",
+      "cache": "private, no-store, max-age=0"
+    }
+  ],
+  "noCustomerBookingOrCalendarMutation": true
+}

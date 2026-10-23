@@ -1,6 +1,6 @@
 # Order references, booking access and printable receipts
 
-Reviewed 24 October 2026. Production activation is authorized by the owner for this release; deployment evidence is recorded separately. Do not treat a local test or successful Git push as proof that production is running the change.
+Reviewed 24 October 2026. Production release is verified at source commit `6453f08`; see [deployment evidence](evidence/order-codes-2026-10-24/README.md). Do not treat a local test or successful Git push as proof that production is running the change.
 
 ## Customer and owner flow
 

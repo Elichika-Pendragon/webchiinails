@@ -22,6 +22,8 @@ Reviewed **23 October 2026** against the current source. Start with the current 
 
 ## Release records and evidence
 
+Latest: [Order-code and printable-receipt production release — 24 October 2026](evidence/order-codes-2026-10-24/README.md).
+
 [23 October checkpoint](RELEASE-CHECKPOINT-2026-10-23.md) links the final audit, booking restore fix, pricing, monthly imports and live release evidence. [Evidence index](evidence/README.md) is the entry point for captured results. Evidence retains its original dates, revisions and test scope.
 
 Other dated reports, the original React README, migration/performance reports and earlier booking plans are historical. They can describe superseded policies, unverified steps that were later completed, or an older architecture. In particular, do not use earlier 10% DP, stateless upload processing or Meta-token setup notes as today's production instructions. The current guides above take precedence; the source and committed Worker configs define the implementation.
