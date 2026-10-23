@@ -57,3 +57,7 @@ The existing rose/blush identity is retained. Replace the static price cards and
 Keep one native details/summary estimate with current count and total, selected line items and WhatsApp confirmation. Each checkbox references its current price as an accessible description; the summary accessible name includes its current total. The optional kit/glue use the same menu, and kit contents remain expandable. Default selection is empty. Static prices remain visible when JavaScript is unavailable. Use the same fetched owner-editable catalog, stable IDs and existing combination rules.
 
 The previous separate-category form and its card/dropdown styles are removed. No new fonts, assets, runtime framework, server bindings or migration. Preserve approved Meet Chii, other public copy and booking rules. See docs/TAP-TO-BUILD-2026-10-23.md for test scope.
+
+## Visible estimate while browsing — 23 October 2026
+
+The single native estimate disclosure appears before the service menu and stays below the sticky site header while customers browse it, on desktop and mobile. It stays within the pricing section and leaves the floating chat control available. Long expanded breakdowns scroll within a viewport-bounded area with their total/header still visible; no new scroll listener, duplicate total, dependency or network request is added. Removing an item keeps keyboard focus in the breakdown. Reset closes it and returns focus to its summary. Moving keyboard focus back to the service menu collapses the breakdown so it cannot cover the focused choice.

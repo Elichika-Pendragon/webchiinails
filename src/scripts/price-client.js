@@ -20,7 +20,8 @@ export function initPrices(root) {
     input: root.querySelector(`[data-menu-choice="${field.id}"]`),
     quantity: root.querySelector(`[data-menu-quantity="${field.id}"]`),
   }]));
-  const inputFor = id => id === 'kit' ? kit : id === 'glue' ? glue : controls.get(id)?.input;
+  const summary = root.querySelector('[data-estimate-summary]');
+  root.querySelector('.price-menu').addEventListener('focusin', () => { summary.open = false; });
 
   function render() {
     const focusedRemove = document.activeElement?.closest('[data-remove-service]')?.dataset.removeService;
@@ -87,15 +88,18 @@ export function initPrices(root) {
   });
   list.addEventListener('click', event => {
     const button = event.target.closest('[data-remove-service]'); if (!button) return;
+    const removeIndex = [...list.querySelectorAll('[data-remove-service]')].indexOf(button);
     const id = button.dataset.removeService;
     if (id === 'kit') kit.checked = false;
     else if (id === 'glue') glue.checked = false;
     else selections = selections.filter(item => item.id !== id);
-    render(); announce('Pilihan dihapus.'); inputFor(id)?.focus();
+    render(); announce('Pilihan dihapus.');
+    const remaining = list.querySelectorAll('[data-remove-service]');
+    (remaining[Math.min(removeIndex, remaining.length - 1)] || summary.querySelector('summary')).focus({ preventScroll: true });
   });
   reset.addEventListener('click', () => {
     selections = []; kit.checked = false; glue.checked = false;
-    render(); announce('Pilihan dikosongkan.'); controls.get(serviceChoices[0].id).input.focus();
+    render(); announce('Pilihan dikosongkan.'); summary.open = false; summary.querySelector('summary').focus({ preventScroll: true });
   });
   for (const input of root.querySelectorAll('[data-menu-choice],[data-kit-choice],[data-glue-choice]')) input.disabled = false;
   render();

@@ -35,6 +35,10 @@ export default function PriceList() {
     <header className="price-heading"><h2 id="price-heading">Your next set.</h2><p className="muted">Ketuk layanan untuk menggabungkan pilihan dan menghitung estimasi.</p></header>
     <p className="price-sync-status" data-prices-status="" role="status">Harga sesuai daftar di halaman.</p>
     <button className="text-link price-retry" type="button" data-prices-retry="" hidden>Coba periksa harga lagi</button>
+    <details id="estimate-summary" className="price-quote" data-estimate-summary="">
+      <summary aria-label="Belum ada pilihan. Estimasi Rp0. Lihat rincian."><span className="price-quote-label"><span data-estimate-count="">Belum ada pilihan</span><small>Lihat rincian · belum ongkir</small></span><output data-estimate-total="" aria-live="polite">Rp0</output><svg className="price-quote-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m5 7.5 5 5 5-5" stroke="currentColor" strokeWidth="1.5" /></svg></summary>
+      <div className="price-quote-details"><ul className="price-quote-lines" data-estimate-lines="" aria-label="Rincian estimasi"></ul><p data-estimate-empty="">Ketuk layanan di bawah untuk mulai.</p><p className="price-quote-terms">Harga tiap pilihan dijumlahkan tanpa diskon kombinasi. Konfirmasikan satuan stiker / aksesori dan harga akhir melalui WhatsApp.</p><div className="price-quote-actions"><a className="button" data-estimate-link="" href={salon.custom} target="_blank" rel="noopener noreferrer" hidden>Konfirmasi via WhatsApp ↗</a><button className="text-link" type="button" data-estimate-reset="" hidden>Kosongkan pilihan</button></div></div>
+    </details>
     <div className="price-menu">
       {menuGroups.map(group => <section className="price-menu-group" id={`price-${group.id}`} key={group.id} aria-labelledby={`price-title-${group.id}`}>
         <header className="price-menu-heading"><h3 id={`price-title-${group.id}`}>{group.title}</h3>{group.note && <p>{group.note}</p>}</header>
@@ -50,10 +54,6 @@ export default function PriceList() {
       </section>
     </div>
     <p className="sr-only" data-calculator-feedback="" role="status" aria-live="polite"></p>
-    <details id="estimate-summary" className="price-quote" data-estimate-summary="">
-      <summary aria-label="Belum ada pilihan. Estimasi Rp0. Lihat rincian."><span className="price-quote-label"><span data-estimate-count="">Belum ada pilihan</span><small>Lihat rincian · belum ongkir</small></span><output data-estimate-total="" aria-live="polite">Rp0</output><svg className="price-quote-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m5 7.5 5 5 5-5" stroke="currentColor" strokeWidth="1.5" /></svg></summary>
-      <div className="price-quote-details"><ul className="price-quote-lines" data-estimate-lines="" aria-label="Rincian estimasi"></ul><p data-estimate-empty="">Ketuk layanan di atas untuk mulai.</p><p className="price-quote-terms">Harga tiap pilihan dijumlahkan tanpa diskon kombinasi. Konfirmasikan satuan stiker / aksesori dan harga akhir melalui WhatsApp.</p><div className="price-quote-actions"><a className="button" data-estimate-link="" href={salon.custom} target="_blank" rel="noopener noreferrer" hidden>Konfirmasi via WhatsApp ↗</a><button className="text-link" type="button" data-estimate-reset="" hidden>Kosongkan pilihan</button></div></div>
-    </details>
     <noscript><p className="price-quote-terms">Daftar harga tetap dapat dibaca. Aktifkan JavaScript untuk menghitung estimasi.</p></noscript>
     <p className="price-footer"><a className="text-link" href="/about#booking-rules">Booking wajib DP · tidak menerima walk-in.</a></p>
   </section>;
