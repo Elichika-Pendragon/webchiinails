@@ -1,5 +1,7 @@
 import { priceFields, validPrices, validPriceSnapshot, MAX_PRICE } from '../pricing.js';
 
+import { initOrderEditor } from './order-editor.js';
+
 const main = document.querySelector('.price-editor');
 if (main) {
   const byId = id => document.getElementById(`prices-${id}`);
@@ -11,6 +13,7 @@ if (main) {
   const maxFields = new Map(priceFields.map(field => [field.id, form.querySelector(`[data-price-max="${field.id}"]`)]));
   let session = null, snapshot = null, busy = false, dirty = false, conflict = false, uncertain = false;
   let googleLoading = null;
+  const orders = initOrderEditor(main.querySelector('[data-order-editor]'), { getSession: () => session, getPrices: () => api('/api/booking/prices') });
   const setStatus = (text, error = false) => { status.textContent = text; status.dataset.tone = error ? 'error' : 'normal'; };
   const message = error => ({
     AUTH_FORBIDDEN: 'Akun ini bukan akun pemilik Chii. Pilih akun Google pemilik.',
@@ -70,7 +73,7 @@ if (main) {
     conflict = false; uncertain = false; reload.hidden = true; sync();
   }
   function showSignIn(text) {
-    session = null; signInPanel.hidden = false; signIn.hidden = false; googleButton.hidden = true;
+    session = null; orders.setSession(null); signInPanel.hidden = false; signIn.hidden = false; googleButton.hidden = true;
     googleButton.replaceChildren(); retry.hidden = true;
     setStatus(text); sync();
   }
@@ -85,7 +88,7 @@ if (main) {
       if (!session.authenticated) { showSignIn('Masuk dengan akun pemilik untuk mengubah harga.'); return; }
       const latest = await api('/api/booking/prices');
       if (!dirty || discard) fill(latest);
-      signInPanel.hidden = true; form.hidden = false;
+      signInPanel.hidden = true; form.hidden = false; orders.setSession(session);
       setStatus('Akses pemilik terverifikasi. Harga baru tampil di website dalam sekitar satu menit setelah disimpan.');
     } catch (error) { fail(error); }
     finally { setBusy(false); }
@@ -153,7 +156,7 @@ if (main) {
   reload.addEventListener('click', () => load({ discard: true }));
   signOut.addEventListener('click', async () => {
     if (busy) return;
-    if (dirty) { setStatus('Simpan perubahan atau muat ulang halaman untuk membuang perubahan sebelum keluar.', true); return; }
+    if (dirty || orders.isDirty?.()) { setStatus('Simpan perubahan harga / rincian pesanan atau muat ulang halaman untuk membuangnya sebelum keluar.', true); return; }
     setBusy(true);
     try {
       await api('/api/booking/auth/session', { method: 'DELETE', headers: { 'X-CSRF-Token': session.csrfToken } });

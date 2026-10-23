@@ -1,0 +1,27 @@
+---
+import { serviceChoices } from '../pricing.js';
+---
+<section class="order-editor" data-order-editor hidden aria-labelledby="order-editor-heading">
+  <h2 id="order-editor-heading">Rincian pesanan</h2>
+  <p class="price-editor-note">Masukkan kode kalkulator pelanggan untuk memeriksa atau mengubah pilihan. Ini tidak mengubah daftar harga atau booking yang sudah dikirim.</p>
+  <form data-order-find>
+    <label for="owner-order-code">Kode pilihan · 5 karakter<input id="owner-order-code" maxlength="5" autocomplete="off" spellcheck="false" autocapitalize="characters" required /></label>
+    <button class="button button-secondary" type="submit">Cari pesanan</button>
+  </form>
+  <p data-order-editor-status class="price-editor-note" role="status" aria-live="polite"></p>
+  <form data-order-edit hidden>
+    <p data-order-version class="price-editor-note"></p>
+    <fieldset><legend>Pilihan layanan</legend>
+      {serviceChoices.map(item => <div class="order-edit-row">
+        <label class="order-edit-choice" for={`order-${item.id}`}><input id={`order-${item.id}`} type="checkbox" data-order-choice={item.id} /><span>{item.name}{item.detail && <small>{item.detail}</small>}</span></label>
+        {item.quantityMax > 1 && <label class="order-edit-quantity" for={`order-qty-${item.id}`}>Jumlah<input id={`order-qty-${item.id}`} type="number" inputmode="numeric" min="1" max={item.quantityMax} step="1" value="1" data-order-quantity={item.id} disabled /></label>}
+      </div>)}
+      <label class="order-edit-choice" for="order-kit"><input id="order-kit" type="checkbox" data-order-kit /><span>Base kit press-on</span></label>
+      <label class="order-edit-choice" for="order-glue"><input id="order-glue" type="checkbox" data-order-glue /><span>Super glue nails MXBON</span></label>
+    </fieldset>
+    <p data-order-preview class="order-detail"></p>
+    <button class="button approval-button" data-order-save type="submit">Simpan rincian pesanan</button>
+    <button class="text-link" data-order-reload type="button">Muat ulang versi tersimpan</button>
+    <p class="price-editor-note">Simpan mempertahankan kode yang sama. Estimasi dihitung dengan harga website tersimpan; harga akhir dan DP tetap diisi sesuai konsultasi pada halaman booking.</p>
+  </form>
+</section>

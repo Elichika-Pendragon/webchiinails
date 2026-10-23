@@ -2,6 +2,8 @@
 import '../styles.css';
 import '../approval.css';
 import '../price-editor.css';
+import '../order.css';
+import OrderEditor from '../components/OrderEditor.astro';
 import { brandHead } from '../../scripts/seo.mjs';
 import { priceGroups } from '../content.js';
 import { priceFields, MAX_PRICE } from '../pricing.js';
@@ -22,6 +24,7 @@ import { priceFields, MAX_PRICE } from '../pricing.js';
       <a href="/custom-sets#price-list" class="approval-back">Lihat daftar harga</a>
     </div></header>
     <main id="main" class="approval-page price-editor" aria-busy="true">
+      <a class="text-link" href="/book/manage">Kelola kode booking →</a>
       <h1>Kelola harga.</h1>
       <p class="approval-lead">Ubah harga menu dan paket press-on di sini. Daftar harga website dan kalkulator memakai harga yang sama.</p>
       <p id="prices-status" class="approval-status" role="status" aria-live="polite" aria-atomic="true">Memeriksa akses…</p>
@@ -33,6 +36,7 @@ import { priceFields, MAX_PRICE } from '../pricing.js';
         <div id="prices-google-button" class="approval-google-button" hidden></div>
         <p class="approval-small">Jika halaman masuk tidak muncul dari WhatsApp, buka tautan ini di Chrome atau Safari.</p>
       </section>
+      <OrderEditor />
       <form id="prices-form" hidden>
         <p class="price-editor-help">Semua nominal dalam rupiah. Ketik angka tanpa titik, misalnya <strong>25000</strong>. Untuk harga tetap, kosongkan kolom harga tertinggi.</p>
         <fieldset><legend>Paket press-on</legend>

@@ -15,6 +15,7 @@ import { getBookingCalendarMonth, getBookingMonthBounds } from './booking-month.
 import { normalizeBookingDesign, getOperatingHours, getBookingDateBounds, calculatePayment } from './booking.js';
 import { PAYMENT_PROOF_MAX_BYTES, paymentProofBytes, PaymentProofValidationError } from './booking-proofs.js';
 import { BookingAdmissionError, issueBookingAdmission, preflightBookingAdmission, submissionAdmission, isBookingAdmissionConfigured } from './booking-admission.js';
+import { BookingCodeError, verifyBookingCode, withBookingCodeAdmission } from './booking-codes.js';
 import { createPublicBookingCalendar } from './booking-occupancy-cache.js';
 
 const encoder = new TextEncoder();
@@ -118,6 +119,9 @@ function errorResponse(error) {
     ({ code, message, status, allow } = error);
   } else if (error instanceof BookingAuthError) {
     const safe = new BookingAuthError(error.code);
+    ({ code, message, status } = safe);
+  } else if (error instanceof BookingCodeError) {
+    const safe = new BookingCodeError(error.code);
     ({ code, message, status } = safe);
   } else if (error instanceof BookingAdmissionError) {
     const safe = new BookingAdmissionError(error.code);
@@ -294,6 +298,7 @@ export function createBookingHttpHandlers(overrides = {}) {
   const issueAdmission = overrides.issueBookingAdmission ?? issueBookingAdmission;
   const preflightAdmission = overrides.preflightBookingAdmission ?? preflightBookingAdmission;
   const admitSubmission = overrides.submissionAdmission ?? submissionAdmission;
+  const guardCode = overrides.guardBookingCode ?? (async (env, input, admission) => withBookingCodeAdmission(admission, await verifyBookingCode(env, input.bookingCode, input.whatsapp, { now })));
   const publicCalendar = overrides.createPublicBookingCalendar ?? createPublicBookingCalendar;
   const createCalendar = overrides.createGoogleCalendarProvider ?? createGoogleCalendarProvider;
   const bodyTimeoutMs = overrides.bodyTimeoutMs ?? 5000;
@@ -364,14 +369,14 @@ export function createBookingHttpHandlers(overrides = {}) {
       try {
       const context = await preflightAdmission(request, env, authOptions);
       const input = await readBookingSubmission(request, proofBodyTimeoutMs);
-      if (Object.keys(input).some(key => !REQUEST_FIELDS.includes(key) && !['paymentMode', 'deposit', 'designType', 'durationMinutes', 'proof', 'turnstileToken'].includes(key)) || REQUEST_FIELDS.some(key => typeof input[key] !== 'string')
+      if (Object.keys(input).some(key => !REQUEST_FIELDS.includes(key) && !['paymentMode', 'deposit', 'designType', 'durationMinutes', 'proof', 'turnstileToken', 'bookingCode'].includes(key)) || REQUEST_FIELDS.some(key => typeof input[key] !== 'string')
         || (input.paymentMode !== undefined && !['deposit', 'full'].includes(input.paymentMode))
         || (input.deposit !== undefined && (typeof input.deposit !== 'string' || !/^\d{1,16}$/.test(input.deposit) || !calculatePayment(input.agreedPrice, input.paymentMode, input.deposit)))
         || (input.designType !== undefined && typeof input.designType !== 'string') || (input.durationMinutes !== undefined && typeof input.durationMinutes !== 'string')
         || !normalizeBookingDesign(input.designType, input.durationMinutes)
         || typeof input.turnstileToken !== 'string' || input.turnstileToken.length > 2048) throw new BookingHttpError('BOOKING_INPUT');
-      const { turnstileToken, ...booking } = input;
-      const admission = admitSubmission(env, context, { ...authOptions, turnstileToken });
+      const { turnstileToken, bookingCode, ...booking } = input;
+      const admission = await guardCode(env, { bookingCode, whatsapp: booking.whatsapp }, admitSubmission(env, context, { ...authOptions, turnstileToken }));
       return json(await createRequest(env, booking, { now, calendar: calendar(env), admission }), 201);
       } finally { activeCreations--; }
     }),

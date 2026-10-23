@@ -478,3 +478,28 @@ export async function getBookingAvailability(env, input, { now, calendar } = {})
   result.slots = candidates.map(slot => ({ time: slot.time, available: slot.start > latest && !blocked.some(interval => interval.start < slot.end && interval.end > slot.start) }));
   return result;
 }
+
+
+// Customer receipt capability is domain-separated from owner review access.
+async function receiptToken(secret, id) {
+  const bytes = await hmac(secret, `chiinails:customer-receipt:v1:${id}`);
+  return `${id}.${btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`;
+}
+export async function issueBookingReceipt(env, token, { owner, now } = {}) {
+  const config = configuration(env); verifyOwner(config, owner);
+  const row = await lookup(config, token, clockOption(now)(), false);
+  if (row.status !== 'accepted') throw failure('REQUEST_STATE', 409);
+  return { receiptUrl: `${config.origin}/receipt#r=${await receiptToken(config.secret, row.id)}`, whatsapp: row.whatsapp };
+}
+export async function readBookingReceipt(env, token, { now } = {}) {
+  const config = configuration(env);
+  if (typeof token !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.[A-Za-z0-9_-]{43}$/.test(token)) throw failure('REQUEST_NOT_FOUND', 404);
+  const id = token.slice(0, 36), expected = await receiptToken(config.secret, id);
+  let different = 0; for (let i = 0; i < expected.length; i++) different |= expected.charCodeAt(i) ^ token.charCodeAt(i);
+  if (different) throw failure('REQUEST_NOT_FOUND', 404);
+  const row = await byId(config, id);
+  if (!row || !['accepted', 'cancelled'].includes(row.status) || !row.calendar_event_id) throw failure('REQUEST_NOT_FOUND', 404);
+  const item = summary(row, clockOption(now)());
+  const { name, status, agreedPrice, deposit, remainingBalance, startISO, endISO, designType, durationMinutes, paymentPolicy } = item;
+  return { receipt: { number: `CHII-${row.id.toUpperCase()}`, name, status, agreedPrice, deposit, remainingBalance, startISO, endISO, designType, durationMinutes, paymentPolicy } };
+}

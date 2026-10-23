@@ -29,8 +29,10 @@ for (const file of javascript) {
   raw += Buffer.byteLength(source); gzip += gzipSync(source).length;
 }
 const bookingPage = { path: '/book', file: 'book.html' };
+const receiptPage = {path:'/receipt',file:'receipt.html'};
+const codeManagerPage = {path:'/book/manage',file:'book/manage.html'};
 const approvalPage = { path: '/book/approve', file: 'book/approve.html' };
-for (const page of [...seoPages, bookingPage, approvalPage, { path: '/prices', file: 'prices.html' }]) {
+for (const page of [...seoPages, bookingPage, approvalPage, receiptPage, codeManagerPage, { path: '/prices', file: 'prices.html' }]) {
   const html = await readFile(new URL(page.file, root), 'utf8');
   for (const match of html.matchAll(/(?:src|href)="(\/(?:images|fonts|_astro)\/[^"?#]+)(?:[?#][^"]*)?"/g)) {
     assert.ok((await stat(new URL(`.${match[1]}`, root))).isFile(), `${page.path}: asset ${match[1]} exists`);
@@ -73,3 +75,15 @@ if (sitemap) assert.ok(!(await readFile(sitemap, 'utf8')).includes('/prices'), '
 
 const functionRoutes = JSON.parse(await readFile(new URL('_routes.json', root), 'utf8'));
 assert.ok(functionRoutes.include.includes('/api/prices') && functionRoutes.include.includes('/api/booking/*'), 'Price read and authenticated edit endpoints reach Pages Functions');
+
+for (const page of [receiptPage,codeManagerPage]) {
+  const html=await readFile(new URL(page.file,root),'utf8');
+  assert.match(html,/<meta name="robots" content="noindex, nofollow"/);
+  assert.match(html,/<meta name="referrer" content="no-referrer"/);
+  assert.ok(!/astro-island|client:load|client:visible|BOOKING_AUTH_SECRET|BOOKING_LINK_SECRET|BOOKING_OWNER_EMAIL/.test(html));
+  if(sitemap)assert.ok(!(await readFile(sitemap,'utf8')).includes(page.path));
+}
+const orderInput=bookingHtml.match(/<input\b[^>]*id="booking-order-code"[^>]*>/)?.[0]||'';
+assert.ok(orderInput && !/required|pattern=/.test(orderInput),'Calculator code is optional');
+assert.match(bookingHtml,/<input\b[^>]*name="agreedPrice"[^>]*required/);
+assert.ok(!/<input\b[^>]*name="agreedPrice"[^>]*readonly/.test(bookingHtml),'Imported estimate remains editable');

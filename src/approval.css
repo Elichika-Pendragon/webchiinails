@@ -43,3 +43,5 @@
 .approval-page .button-secondary:not(:disabled):active{background:var(--blush);border-color:var(--rose)}
 @media(max-width:360px){.approval-header-inner,.approval-page{width:calc(100% - 32px)}.approval-summary>div{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:12px}.approval-signin{padding:18px}}
 @media(prefers-reduced-motion:reduce){.approval-page .approval-button{transition:none}}
+
+#approval-receipt-send{margin-top:12px}

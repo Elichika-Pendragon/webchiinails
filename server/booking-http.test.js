@@ -57,6 +57,7 @@ function fixture(extra = {}) {
   const admission=Object.freeze({syntheticAdmission:true});
   const provider = { availability() {}, createApprovedAppointment() {}, reconcileApprovedAppointment() {}, readAppointmentState() {}, verifyCalendarWriteAccess() {} };
   const options = {
+    guardBookingCode: async (env, input, admission) => admission, // Synthetic boundary; real code gate has SQLite integration tests.
     now: () => current,
     createBookingRequest: async (config, body, settings) => { calls.push(['create', config, body, settings]); return created; },
     getBookingRequest: async (config, token, settings) => { calls.push(['read', config, token, settings]); return summary; },

@@ -1,5 +1,7 @@
 import { BOOKING_DESIGNS, LEGACY_BOOKING_DESIGN_LABELS, calculateLegacyPayment, calculatePayment, normalizeBookingDesign } from '../../server/booking.js';
 
+import { initApprovalReceipt } from './approval-receipt.js';
+
 const main = document.querySelector('.approval-page');
 
 if (main) {
@@ -31,6 +33,7 @@ if (main) {
   const controllers = new Set();
   let session = null;
   let summary = null;
+  const receipt = initApprovalReceipt({ api, getSession: () => session, getToken: () => token });
   let active = true;
   let busy = false;
   let googleLoading = null;
@@ -94,7 +97,7 @@ if (main) {
   }
 
   function clearPrivateDetails() {
-    summary = null;
+    summary = null; receipt.clear();
     requestPanel.hidden = true;
     actions.hidden = true;
     recoverButton.hidden = true;
@@ -193,7 +196,7 @@ if (main) {
 
   function renderSummary(data) {
     const item = checkedSummary(data);
-    summary = item;
+    summary = item; receipt.render(item);
     signInPanel.hidden = true;
     retryButton.hidden = true;
     requestPanel.hidden = false;

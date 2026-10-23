@@ -9,6 +9,7 @@ Reviewed **23 October 2026** against the current source. Start with the current 
 | Setup and project overview | [Root README](../README.md) |
 | Architecture, files, APIs and bindings | [Developer guide](DEVELOPER-GUIDE.md) |
 | Deployment, recovery and configuration | [Deployment](../DEPLOYMENT.md) |
+| Order references, private access and printable receipts | [Order codes and receipts](ORDER-CODES-AND-RECEIPTS.md) |
 | Booking, payment, receipts and owner authorization | [Booking](BOOKING.md) |
 | Private upload processor | [Processor design](BOOKING-CPU-PROCESSOR.md) |
 | All-service calculator and owner price editor | [Prices](pricing.md) |

@@ -62,3 +62,7 @@ Migrations `0001` through `0009` are additive and belong to the existing databas
 Use `pnpm test` for the Node suite and `pnpm build` for HTML/SEO/assets assertions. The monthly importer has separate Python tests documented in the [README](../README.md). Exercise customer controls at desktop, 390px and 320px, including restore with receipt, failed preparation, stale/offline availability and explicit retry. Keep the reserved calendar/receipt/status space that prevents restore layout movement.
 
 Use isolated bindings/provider fixtures for write and failure tests. Production smoke checks should read public endpoints, verify unauthorized private access is denied and inspect the deployed assets. Real bookings, Calendar writes, price changes or manual scraper invocations are operational actions, not default smoke tests. Do not claim physical Android/iPhone or actual bank-payment verification from browser simulations.
+
+## Order codes and printable receipts — 24 October 2026
+
+See [implementation, API boundaries, limits and operational flow](ORDER-CODES-AND-RECEIPTS.md). Public five-character estimates, owner-issued private booking access and Jessica’s final acceptance are independent. Receipt printing uses the browser; no PDF storage or media service is added.

@@ -1,0 +1,25 @@
+---
+import '../../styles.css';
+import '../../approval.css';
+import '../../booking-codes.css';
+import { brandHead } from '../../../scripts/seo.mjs';
+---
+<!doctype html>
+<html lang="id">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="robots" content="noindex, nofollow" /><meta name="referrer" content="no-referrer" /><title>Kelola kode booking | Chii Nails</title><Fragment set:html={brandHead()} /><link rel="preload" href="/fonts/dm-sans-latin-variable.woff2" as="font" type="font/woff2" crossorigin /></head>
+<body>
+  <header class="approval-header"><div class="approval-header-inner"><a href="/" class="approval-brand" aria-label="Chii Nails — Beranda"><img src="/images/logo-brand.webp" width="80" height="52" alt="Chii Nails Nail Art Studio" /></a><a class="approval-back" href="/prices">Kelola harga →</a></div></header>
+  <main id="main" class="approval-page code-manager" aria-busy="true">
+    <h1>Kode booking.</h1><p class="approval-lead">Buat kode akses booking setelah konsultasi. Kode ini terpisah dari kode pilihan 5 karakter pada kalkulator. Kode dapat dipakai kembali oleh nomor WhatsApp yang terdaftar hingga dinonaktifkan.</p>
+    <p id="codes-status" class="approval-status" role="status" aria-live="polite">Memeriksa akses…</p>
+    <noscript><p>Aktifkan JavaScript untuk mengelola kode.</p></noscript>
+    <section id="codes-signin-panel" class="approval-signin" hidden><h2>Masuk sebagai pemilik.</h2><p>Hanya akun Google pemilik Chii yang dapat membuat dan menonaktifkan kode.</p><button id="codes-signin" class="button approval-button" type="button">Lanjutkan dengan Google</button><div id="codes-google-button" class="approval-google-button" hidden></div></section>
+    <section id="codes-workspace" hidden>
+      <form id="codes-form"><label for="codes-name">Nama pelanggan<input id="codes-name" name="name" required minlength="2" maxlength="80" autocomplete="off" /></label><label for="codes-phone">Nomor WhatsApp<input id="codes-phone" name="whatsapp" type="tel" required maxlength="40" inputmode="tel" autocomplete="off" placeholder="08… atau +628…" /></label><p class="approval-small">Membuat kode untuk nomor yang sama mengganti kode akses lamanya. Permintaan dan booking yang sudah dibuat tetap ada.</p><button id="codes-issue" class="button approval-button" type="submit">Buat / ganti kode akses</button></form>
+      <section id="codes-result" class="code-result" hidden aria-labelledby="codes-result-heading"><h2 id="codes-result-heading">Kode siap dibagikan.</h2><p id="codes-created" class="code-value"></p><textarea id="codes-share" readonly rows="5" aria-label="Pesan untuk pelanggan"></textarea><button id="codes-copy" class="button button-secondary" type="button">Salin pesan & tautan</button><p class="approval-small">Kode asli hanya ditampilkan saat dibuat. Jika hilang, buat kode pengganti.</p></section>
+      <h2 class="code-list-heading">Pelanggan terbaru</h2><p class="approval-small">Maksimal 50 pelanggan terakhir. Untuk pelanggan lama, masukkan nomornya di atas untuk membuat kode pengganti. Satu booking atau permintaan aktif per pelanggan, jeda 15 menit dan maksimal 3 pengiriman baru per 24 jam.</p><ul id="codes-list" class="code-list"></ul>
+      <button id="codes-signout" class="text-link approval-retry" type="button">Keluar dari akun pemilik</button>
+    </section>
+    <button id="codes-retry" class="text-link approval-retry" type="button" hidden>Coba lagi</button>
+  </main><script src="../../scripts/booking-code-manager.js"></script>
+</body></html>

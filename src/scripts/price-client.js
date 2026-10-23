@@ -1,4 +1,8 @@
 import { defaultPrices, priceFields, serviceChoices, calculateServices, priceRange, rupiah, validPriceSnapshot } from '../pricing.js';
+import '../order.css';
+import { orderChoices } from '../order-code.js';
+import { orderApi, orderSession } from './order-api.js';
+import { createBookingChallenge } from './booking-challenge.js';
 import { salon } from '../content.js';
 
 export function initPrices(root) {
@@ -10,6 +14,40 @@ export function initPrices(root) {
   const retry = root.querySelector('[data-prices-retry]');
   const link = root.querySelector('[data-estimate-link]');
   const list = root.querySelector('[data-estimate-lines]');
+  const bookLink = root.querySelector('[data-estimate-book]');
+  let customerCode = '', savedSignature = '', attempt = null, generating = false;
+  const codeCreate = root.querySelector('[data-estimate-code-create]');
+  const codeCopy = root.querySelector('[data-order-code-copy]');
+  const challenge = createBookingChallenge({ api: orderSession, container: root.querySelector('[data-order-code-challenge]') });
+  window.addEventListener('pagehide', () => challenge.cancel());
+  const readChoices = () => orderChoices({ selections, kit: kit.checked, glue: glue.checked });
+  const codeStatus = root.querySelector('[data-estimate-code-status]');
+  codeCreate.addEventListener('click', async () => {
+    if (generating) return;
+    let choices;
+    try { choices = readChoices(); } catch { return; }
+    const signature = JSON.stringify(choices);
+    if (!attempt || attempt.signature !== signature) attempt = { signature, key: crypto.randomUUID() };
+    const requestKey = attempt.key;
+    generating = true; codeCreate.disabled = true; codeStatus.hidden = false; codeStatus.textContent = 'Menyimpan pilihan dan membuat kode…';
+    try {
+      const session = await challenge.verify();
+      const order = await orderApi('/api/booking/orders', { action: 'create', choices, key: requestKey, token: session.token }, { 'X-Booking-Nonce': session.nonce });
+      if (JSON.stringify(readChoices()) !== signature) { codeStatus.textContent = 'Pilihan berubah saat kode dibuat. Buat kode lagi untuk pilihan terbaru.'; return; }
+      customerCode = order.code; savedSignature = signature;
+      codeStatus.textContent = `Kode pilihan: ${customerCode}. Berlaku 30 hari. Kirim kepada Chii atau masukkan di formulir booking untuk melihat rincian. Kode ini tidak memesan jadwal atau memberi akses booking.`;
+      render();
+    } catch (error) { codeStatus.textContent = error.code?.startsWith('CHALLENGE') ? 'Pemeriksaan keamanan belum selesai. Pilihan tetap ada; coba lagi.' : error.message || 'Kode belum dapat dibuat. Pilihan tetap ada; coba lagi.'; }
+    finally { generating = false; codeCreate.disabled = Boolean(customerCode) || !(selections.length || kit.checked || glue.checked); }
+  });
+  codeCopy.addEventListener('click', async () => {
+    if (!customerCode) return;
+    try { await navigator.clipboard.writeText(customerCode); codeStatus.textContent = `Kode ${customerCode} tersalin. Tempel di formulir booking atau kirim kepada Chii.`; }
+    catch { codeStatus.textContent = `Salin kode secara manual: ${customerCode}`; }
+  });
+  bookLink.addEventListener('click', () => {
+    try { sessionStorage.removeItem('chii:calculator:v1'); if (customerCode) sessionStorage.setItem('chii:order-code', customerCode); else sessionStorage.removeItem('chii:order-code'); } catch {}
+  });
   const feedback = root.querySelector('[data-calculator-feedback]');
   const reset = root.querySelector('[data-estimate-reset]');
   const title = field => `${field.name}${field.detail ? ` · ${field.detail}` : ''}`;
@@ -61,7 +99,10 @@ export function initPrices(root) {
     text('[data-estimate-count]', countLabel);
     root.querySelector('[data-estimate-summary] > summary').setAttribute('aria-label', `${countLabel}. Estimasi ${priceRange(result.min, result.max)}. Lihat rincian.`);
     root.querySelector('[data-estimate-empty]').hidden = result.lines.length > 0;
-    link.hidden = reset.hidden = result.lines.length === 0;
+    link.hidden = reset.hidden = bookLink.hidden = result.lines.length === 0;
+    if (customerCode && (result.lines.length === 0 || JSON.stringify(readChoices()) !== savedSignature)) { customerCode = ''; codeStatus.textContent = 'Pilihan berubah. Buat kode lagi untuk menyimpan rincian terbaru.'; codeStatus.hidden = false; }
+    codeCopy.hidden = !customerCode;
+    codeCreate.disabled = generating || Boolean(customerCode) || result.lines.length === 0;
     list.replaceChildren();
     for (const line of result.lines) {
       const row = document.createElement('li');
@@ -74,8 +115,9 @@ export function initPrices(root) {
       row.append(name, value, remove); list.append(row);
     }
     if (focusedRemove) list.querySelector(`[data-remove-service="${focusedRemove}"]`)?.focus();
-    const message = `Halo Chii, saya ingin konsultasi layanan berikut:\n${result.lines.map(line => `- ${title(line)}${line.quantity > 1 ? ` × ${line.quantity}` : ''}: ${priceRange(line.min, line.max)}`).join('\n')}\nEstimasi: ${priceRange(result.min, result.max)} (belum ongkir). Mohon konfirmasi kombinasi layanan, satuan tambahan dan harga akhir.`;
-    link.href = `${salon.whatsapp}?text=${encodeURIComponent(message)}`;
+    const message = `Halo Chii, saya ingin konsultasi layanan berikut:\n${result.lines.map(line => `- ${title(line)}${line.quantity > 1 ? ` × ${line.quantity}` : ''}: ${priceRange(line.min, line.max)}`).join('\n')}\nEstimasi: ${priceRange(result.min, result.max)} (belum ongkir). Mohon konfirmasi kombinasi layanan, satuan tambahan dan harga akhir. Setelah konsultasi, mohon kode untuk melanjutkan di https://chiinails.pages.dev/book.`;
+    const codeMessage = customerCode ? `\n\nKode dari kalkulator: ${customerCode} (rincian pilihan, bukan kode akses booking). Mohon periksa sebelum menyepakati harga dan durasi.` : '';
+    link.href = `${salon.whatsapp}?text=${encodeURIComponent(message + codeMessage)}`;
   }
 
   root.addEventListener('change', event => {
@@ -109,7 +151,7 @@ export function initPrices(root) {
     (remaining[Math.min(removeIndex, remaining.length - 1)] || summary.querySelector('summary')).focus({ preventScroll: true });
   });
   reset.addEventListener('click', () => {
-    selections = []; kit.checked = false; glue.checked = false;
+    selections = []; kit.checked = false; glue.checked = false; customerCode = ''; codeStatus.hidden = true; codeStatus.textContent = '';
     render(); announce('Pilihan dikosongkan.'); summary.open = false; summary.querySelector('summary').focus({ preventScroll: true });
   });
   for (const input of root.querySelectorAll('[data-menu-choice],[data-kit-choice],[data-glue-choice]')) input.disabled = false;

@@ -175,6 +175,13 @@ async function verifyTurnstile(configuration, context, token, idempotencyHash, p
   finally { clearTimeout(timeout); }
 }
 
+// Estimates use the same verified challenge without reserving receipt/booking capacity.
+export async function verifyOrderAdmission(env, context, token, requestHash, payloadHash, { fetch: fetcher = globalThis.fetch?.bind(globalThis), now } = {}) {
+  const configuration = config(env), current = time(now);
+  if (!contexts.has(context) || context.origin !== configuration.origin || context.expiresAt <= current || !digestPattern.test(requestHash) || !digestPattern.test(payloadHash)) throw fail('ADMISSION_REQUIRED');
+  await verifyTurnstile(configuration, context, token, requestHash, payloadHash, fetcher, current);
+}
+
 export function submissionAdmission(env, context, {turnstileToken,fetch:fetcher=globalThis.fetch?.bind(globalThis),now} = {}) {
   const configuration=config(env);
   if (!context || !contexts.has(context) || context.origin!==configuration.origin) throw fail('ADMISSION_REQUIRED',403);

@@ -70,7 +70,7 @@ function harness(options = {}) {
     };
     return { ok: true, status: 200, json: async () => data };
   };
-  vm.runInNewContext(source, { document, window, URL: TestURL, Intl, fetch, AbortController, DOMException, BOOKING_DESIGNS, LEGACY_BOOKING_DESIGN_LABELS, calculatePayment, calculateLegacyPayment, normalizeBookingDesign });
+  vm.runInNewContext(source, { initApprovalReceipt: () => ({ render() {}, clear() {} }), document, window, URL: TestURL, Intl, fetch, AbortController, DOMException, BOOKING_DESIGNS, LEGACY_BOOKING_DESIGN_LABELS, calculatePayment, calculateLegacyPayment, normalizeBookingDesign });
   return { nodes, fields, main, calls, window, config, objectUrls, revokedUrls, get scripts() { return scripts; }, posts: () => calls.filter(call => call.request.method === 'POST') };
 }
 

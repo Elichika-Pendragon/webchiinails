@@ -1,0 +1,24 @@
+---
+import '../styles.css';
+import '../receipt.css';
+---
+<!doctype html>
+<html lang="id">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><meta name="robots" content="noindex, nofollow" /><meta name="referrer" content="no-referrer" /><title>Kuitansi pembayaran | Chii Nails</title><meta name="theme-color" content="#ffd2e6" /><link rel="preload" href="/fonts/dm-sans-latin-variable.woff2" as="font" type="font/woff2" crossorigin /></head>
+<body class="receipt-page">
+  <main class="receipt-document" aria-busy="true">
+    <header class="receipt-heading"><img src="/images/logo-brand.webp" width="96" height="96" alt="Chii Nails Nail Art Studio" /><div><h1>Kuitansi pembayaran</h1><p>Chii Nails · Palembang</p></div></header>
+    <p id="receipt-status" class="receipt-screen-only" role="status" aria-live="polite">Memuat kuitansi…</p>
+    <noscript><p>Aktifkan JavaScript untuk membuka kuitansi dari tautan pribadi ini.</p></noscript>
+    <section id="receipt-details" hidden aria-label="Detail kuitansi">
+      <p id="receipt-number" class="receipt-number"></p><p id="receipt-state" class="receipt-state"></p>
+      <dl class="receipt-summary"><div><dt>Pelanggan</dt><dd data-receipt="name"></dd></div><div><dt>Tanggal kunjungan · WIB</dt><dd data-receipt="date"></dd></div><div><dt>Waktu · WIB</dt><dd data-receipt="time"></dd></div></dl>
+      <table><caption>Layanan sesuai konsultasi</caption><thead><tr><th scope="col">Layanan</th><th scope="col">Jumlah</th></tr></thead><tbody><tr><td data-receipt="design"></td><td>1 booking</td></tr></tbody></table>
+      <dl class="receipt-totals"><div><dt>Harga total</dt><dd data-receipt="total"></dd></div><div><dt>Pembayaran diterima</dt><dd data-receipt="paid"></dd></div><div><dt>Sisa pembayaran</dt><dd data-receipt="balance"></dd></div></dl>
+      <p class="receipt-note">Diterbitkan dari booking yang telah diterima Chii setelah pemeriksaan pembayaran. Jumlah di atas mencatat pembayaran yang telah dikonfirmasi; sisa pembayaran masih harus dilunasi jika ada.</p>
+      <footer>Terima kasih sudah memilih Chii Nails.</footer>
+    </section>
+    <nav class="receipt-actions receipt-screen-only" aria-label="Tindakan kuitansi"><button id="receipt-print" type="button" class="button" disabled>Print / Save as PDF</button><button id="receipt-retry" type="button" class="text-link" hidden>Coba lagi</button></nav>
+    <p class="receipt-screen-only receipt-help">Pada menu cetak browser, pilih printer atau Simpan sebagai PDF.</p>
+  </main><script src="../scripts/receipt-client.js"></script>
+</body></html>
