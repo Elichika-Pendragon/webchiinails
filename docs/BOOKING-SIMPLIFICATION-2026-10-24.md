@@ -20,4 +20,4 @@ Desktop 1280px, mobile 390px and small-phone 320px captures show the remaining o
 
 The fresh Impeccable finish review returned **ship** with no material fixes for this narrow existing-form refinement. No new assets or visual system changes.
 
-Private processor version: `645be503-aad8-4c81-93ff-c61edea6c0db`. Website release verification is recorded after deployment.
+Private processor version: `645be503-aad8-4c81-93ff-c61edea6c0db`. Production code-free release verified at source `d0f07f9`, Pages `0db9ed12-9422-4de2-9805-d5722da57e0b`; optional calculator field remains and private invitation field is absent. Later payment controls are documented in `BALANCE-PAYMENTS-AND-RECEIPTS.md`.

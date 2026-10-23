@@ -22,7 +22,7 @@ POST `/api/booking/settle` requires the existing exact-owner Google session, CSR
 
 Additive `0012-booking-payment-events.sql` was applied to existing `chiinails-booking` using the authorized Cloudflare account. It changes no binding, permission, credential or paid plan and updates/deletes no booking/proof/Calendar data. Empty-table count confirmed zero before release. Recovery bookmark: `00000075-00000000-0000510d-c66a0eda33e0ccc5fab620b1560caf1a` (do not restore automatically). No production payment event was manufactured for testing.
 
-The private booking processor remains `645be503-aad8-4c81-93ff-c61edea6c0db`; this owner/receipt change runs in existing Pages Functions and needs no new Worker service. Application release verification is recorded after the Git deployment.
+The private booking processor remains `645be503-aad8-4c81-93ff-c61edea6c0db`; this owner/receipt change runs in existing Pages Functions and needs no new Worker service. Production is verified at source `b65e0cd`, Pages deployment `e0d1d0c3-5592-4e16-96af-197bc22b7be7`,24 October2026 03:16:34 WIB. All14 live checks pass; see [release proof](evidence/payment-settlement-2026-10-24/README.md).
 
 ## Evidence
 
