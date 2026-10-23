@@ -128,9 +128,11 @@ function InstagramPost({ post, active, priority = false }) {
 }
 
 function StudioPortfolio({ priority = false }) {
+  // The permanent Meet Chii photograph already has its own home on About.
+  const galleryPhotos = studioPhotos.filter(photo => photo.name !== aboutStudioPhoto.name);
   return <><div id="studio-portfolio" className="studio-portfolio" aria-label="Pilihan karya Chii Nails">
-    {studioPhotos.map((photo, index) => <figure key={photo.name} hidden={index >= 6} data-photo-deferred={index >= 6 ? '' : undefined}><Photo name={photo.name} deferred={index >= 6} priority={priority && index === 0} sizes="(max-width: 540px) calc(100vw - 40px), (max-width: 720px) calc((100vw - 56px) / 2), (max-width: 1100px) calc((100vw - 112px) / 3), (max-width: 1440px) calc((100vw - 176px) / 3), 421px" /><figcaption>{photo.title}</figcaption></figure>)}
-  </div>{studioPhotos.length > 6 && <button type="button" className="text-link studio-photo-more" data-photo-more aria-controls="studio-portfolio">Lihat foto lainnya ↓</button>}</>;
+    {galleryPhotos.map((photo, index) => <figure key={photo.name} hidden={index >= 6} data-photo-deferred={index >= 6 ? '' : undefined}><Photo name={photo.name} deferred={index >= 6} priority={priority && index === 0} sizes="(max-width: 540px) calc(100vw - 40px), (max-width: 720px) calc((100vw - 56px) / 2), (max-width: 1100px) calc((100vw - 112px) / 3), (max-width: 1440px) calc((100vw - 176px) / 3), 421px" /><figcaption>{photo.title}</figcaption></figure>)}
+  </div>{galleryPhotos.length > 6 && <button type="button" className="text-link studio-photo-more" data-photo-more aria-controls="studio-portfolio">Lihat foto lainnya ↓</button>}</>;
 }
 
 function InstagramSlider({ eagerPreview = false }) {
