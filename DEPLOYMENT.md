@@ -42,7 +42,7 @@ Use the committed configs in `workers/booking-processor.wrangler.jsonc`, `bookin
 
 ## Release order
 
-1. Inspect branch/diff and existing bindings. Back up before any intended schema change. `migrations/0001` through `0011` are part of the released setup (0010/0011 applied 24 October 2026; see `docs/evidence/order-codes-2026-10-24/README.md`); apply only unapplied additive migrations in numeric order. Do not reset booking/price data or repeat resource creation.
+1. Inspect branch/diff and existing bindings. Back up before any intended schema change. `migrations/0001` through `0012` are part of the released setup (0010/0011 applied 24 October 2026; see `docs/evidence/order-codes-2026-10-24/README.md`); apply only unapplied additive migrations in numeric order. Do not reset booking/price data or repeat resource creation.
 2. Run relevant tests and `pnpm build`. Include Python tests when importer behavior changes. Use isolated providers/bindings for write tests.
 3. For private-worker changes, deploy the intended config and verify its existing bindings before activating dependent Pages code. Retain authorization boundaries and disabled public URLs. Do not activate billing as an incidental deploy step.
 4. Commit and push to `main` through normal Git integration. Confirm the actual Pages deployment succeeded; a pushed commit alone is not production proof. A docs-only `[skip ci]` commit does not require a runtime deployment.
@@ -59,3 +59,5 @@ For upload trouble, use the new-submission stop flag and investigate without rep
 ## Limits
 
 Pages static assets, Functions/Workers CPU and requests, D1 storage/operations, Images, Browser Rendering, KV and GitHub Actions each have separate quotas. Some account quotas are shared with other projects. The code's caps and caches reduce use but do not establish the account's current remaining allowance. Inspect the authorized dashboard and current provider documentation before capacity decisions; old screenshot counts and test latencies are dated evidence. No R2 receipt bucket, paid feed subscription or VPS is used by this setup.
+
+Payment audit migration 0012 applied 24 October 2026; see `docs/BALANCE-PAYMENTS-AND-RECEIPTS.md` for immutable snapshots, owner-only settlement and release evidence.

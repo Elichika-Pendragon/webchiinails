@@ -45,3 +45,9 @@
 @media(prefers-reduced-motion:reduce){.approval-page .approval-button{transition:none}}
 
 #approval-receipt-send{margin-top:12px}
+
+.approval-payment-controls{margin-block:24px 16px}
+.approval-payment-controls[hidden]{display:none}
+.approval-payment-confirm{display:flex;align-items:flex-start;gap:12px;min-height:44px;font-size:14px;line-height:1.65;cursor:pointer}
+.approval-payment-confirm input{width:20px;height:20px;flex:0 0 20px;margin-top:2px;accent-color:var(--rose)}
+.approval-payment-controls button{margin-top:12px;white-space:normal}

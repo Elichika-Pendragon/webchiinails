@@ -18,6 +18,7 @@ if (main) {
   const state = document.getElementById('approval-state');
   const outcome = document.getElementById('approval-outcome');
   const calendarLink = document.getElementById('approval-calendar-link');
+  const balanceRow = document.getElementById('approval-balance-row');
   const paymentLabel = document.getElementById('approval-payment-label');
   const paymentNote = document.getElementById('approval-payment-note');
   const durationLabel = document.getElementById('approval-duration-label');
@@ -33,7 +34,11 @@ if (main) {
   const controllers = new Set();
   let session = null;
   let summary = null;
-  const receipt = initApprovalReceipt({ api, getSession: () => session, getToken: () => token });
+  const receipt = initApprovalReceipt({ api, getSession: () => session, getToken: () => token, onPayment(payment, item) {
+    paymentLabel.textContent='Pembayaran diterima';
+    document.querySelectorAll('[data-approval-value]').forEach(node=>{if(node.dataset.approvalValue==='deposit')node.textContent=currency.format(payment.paidAmount);if(node.dataset.approvalValue==='remainingBalance')node.textContent=payment.amountDue===null?'—':currency.format(payment.amountDue);});
+    balanceRow.hidden=item.status==='cancelled';
+  } });
   let active = true;
   let busy = false;
   let googleLoading = null;
@@ -196,7 +201,9 @@ if (main) {
 
   function renderSummary(data) {
     const item = checkedSummary(data);
-    summary = item; receipt.render(item);
+    summary = item;
+    balanceRow.hidden=item.status==='cancelled';
+    receipt.render(item);
     signInPanel.hidden = true;
     retryButton.hidden = true;
     requestPanel.hidden = false;

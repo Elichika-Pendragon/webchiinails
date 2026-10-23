@@ -485,11 +485,43 @@ async function receiptToken(secret, id) {
   const bytes = await hmac(secret, `chiinails:customer-receipt:v1:${id}`);
   return `${id}.${btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`;
 }
-export async function issueBookingReceipt(env, token, { owner, now } = {}) {
-  const config = configuration(env); verifyOwner(config, owner);
-  const row = await lookup(config, token, clockOption(now)(), false);
-  if (row.status !== 'accepted') throw failure('REQUEST_STATE', 409);
-  return { receiptUrl: `${config.origin}/receipt#r=${await receiptToken(config.secret, row.id)}`, whatsapp: row.whatsapp };
+async function paymentState(config, row) {
+  const original=summary(row), events=await config.db.prepare('SELECT kind,amount,initial_payment,agreed_price,recorded_at FROM booking_payment_events WHERE request_id=?').bind(row.id).all();
+  if (!Array.isArray(events?.results)) throw failure('BOOKING_STORAGE');
+  let balancePaid=0, settledAt=null, cancelledPaymentVerified=false;
+  for (const event of events.results) {
+    if (event.initial_payment!==original.deposit || event.agreed_price!==original.agreedPrice || !Number.isSafeInteger(event.recorded_at)) throw failure('BOOKING_STORAGE');
+    if (event.kind==='balance_received' && event.amount===original.remainingBalance && event.amount>0) { balancePaid=event.amount; settledAt=new Date(event.recorded_at).toISOString(); }
+    else if (event.kind==='cancelled_payment_verified' && event.amount===original.deposit) cancelledPaymentVerified=true;
+    else throw failure('BOOKING_STORAGE');
+  }
+  return { initialPayment:original.deposit, paidAmount:original.deposit+balancePaid, amountDue:row.status==='cancelled'?null:original.remainingBalance-balancePaid, settledAt, cancelledPaymentVerified };
+}
+async function paymentEvent(config,row,kind,owner,current) {
+  const item=summary(row), amount=kind==='balance_received'?item.remainingBalance:item.deposit;
+  const status=kind==='balance_received'?'accepted':'cancelled';
+  await run(config.db.prepare(`INSERT INTO booking_payment_events(id,request_id,kind,amount,initial_payment,agreed_price,recorded_by,recorded_at)
+    SELECT ?,id,?,?,?,?,?,? FROM booking_requests WHERE id=? AND status=? AND agreed_price=?
+      AND COALESCE(custom_payment_amount,CASE WHEN payment_mode IS NULL OR payment_mode='legacy' THEN deposit ELSE payment_amount END)=?
+    ON CONFLICT(request_id,kind) DO NOTHING`).bind(crypto.randomUUID(),kind,amount,item.deposit,item.agreedPrice,owner,current,row.id,status,item.agreedPrice,item.deposit));
+}
+export async function recordBookingSettlement(env, token, { owner, now, confirmed, expectedAmount } = {}) {
+  const config=configuration(env), subject=verifyOwner(config,owner), current=clockOption(now)();
+  const row=await lookup(config,token,current,false), item=summary(row,current);
+  if (row.status!=='accepted' || confirmed!==true || !Number.isSafeInteger(expectedAmount) || expectedAmount!==item.remainingBalance || expectedAmount<1) throw failure('REQUEST_STATE',409);
+  await paymentEvent(config,row,'balance_received',subject,current);
+  const payment=await paymentState(config,row);
+  if (!payment.settledAt || payment.amountDue!==0) throw failure('REQUEST_STATE',409);
+  return { payment };
+}
+export async function issueBookingReceipt(env, token, { owner, now, confirmPayment=false } = {}) {
+  const config = configuration(env), subject=verifyOwner(config, owner), current=clockOption(now)();
+  const row = await lookup(config, token, current, false);
+  if (!['accepted','cancelled'].includes(row.status)) throw failure('REQUEST_STATE',409);
+  if (row.status==='cancelled' && confirmPayment===true) await paymentEvent(config,row,'cancelled_payment_verified',subject,current);
+  const payment=await paymentState(config,row);
+  if (row.status==='cancelled' && !row.calendar_event_id && !payment.cancelledPaymentVerified) throw failure('REQUEST_STATE',409);
+  return { receiptUrl: `${config.origin}/receipt#r=${await receiptToken(config.secret, row.id)}`, whatsapp: row.whatsapp, payment };
 }
 export async function readBookingReceipt(env, token, { now } = {}) {
   const config = configuration(env);
@@ -498,8 +530,10 @@ export async function readBookingReceipt(env, token, { now } = {}) {
   let different = 0; for (let i = 0; i < expected.length; i++) different |= expected.charCodeAt(i) ^ token.charCodeAt(i);
   if (different) throw failure('REQUEST_NOT_FOUND', 404);
   const row = await byId(config, id);
-  if (!row || !['accepted', 'cancelled'].includes(row.status) || !row.calendar_event_id) throw failure('REQUEST_NOT_FOUND', 404);
+  if (!row || !['accepted', 'cancelled'].includes(row.status)) throw failure('REQUEST_NOT_FOUND', 404);
+  const payment=await paymentState(config,row);
+  if (row.status==='cancelled' && !row.calendar_event_id && !payment.cancelledPaymentVerified) throw failure('REQUEST_NOT_FOUND',404);
   const item = summary(row, clockOption(now)());
   const { name, status, agreedPrice, deposit, remainingBalance, startISO, endISO, designType, durationMinutes, paymentPolicy } = item;
-  return { receipt: { number: `CHII-${row.id.toUpperCase()}`, name, status, agreedPrice, deposit, remainingBalance, startISO, endISO, designType, durationMinutes, paymentPolicy } };
+  return { receipt: { number: `CHII-${row.id.toUpperCase()}`, name, status, agreedPrice, deposit, remainingBalance, startISO, endISO, designType, durationMinutes, paymentPolicy, paidAmount:payment.paidAmount, amountDue:payment.amountDue, settledAt:payment.settledAt } };
 }

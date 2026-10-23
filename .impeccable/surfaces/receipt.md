@@ -17,3 +17,5 @@ FORM: A single-column receipt sheet is the specified structure. Preserve the pay
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
 The logo is the pre-existing owner-supplied export documented in DESIGN.md. No raster is created or replaced by this feature. Review evidence uses synthetic customer data and no real WhatsApp sends.
+
+Current payment extension: sending is always optional. Explicitly confirmed balance receipt adds one audit event and updates the same customer link to Lunas. A cancelled receipt shows cancellation and received funds, with no amount due or refund claim. Preserve the quiet existing document and owner summary.

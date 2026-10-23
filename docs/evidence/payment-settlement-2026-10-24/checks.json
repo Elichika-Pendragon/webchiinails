@@ -1,0 +1,27 @@
+{
+  "tests": 560,
+  "failed": 0,
+  "productionBuild": true,
+  "browserJsAggregateRaw": 120923,
+  "browserJsAggregateGzip": 44298,
+  "ownerViewports": [
+    1280,
+    390,
+    320
+  ],
+  "receiptViewports": [
+    1280,
+    390
+  ],
+  "partialStatus": "Belum Lunas",
+  "paidStatus": "Lunas",
+  "cancelledAmountDue": null,
+  "sameReceiptLinkAfterSettlement": true,
+  "doublePaymentEventsPrevented": true,
+  "schema": "0012-booking-payment-events",
+  "productionAuditRowsBeforeRelease": 0,
+  "recoveryBookmark": "00000075-00000000-0000510d-c66a0eda33e0ccc5fab620b1560caf1a",
+  "finishReview": "ship",
+  "realCustomerPaymentsModified": 0,
+  "realWhatsAppMessagesSent": 0
+}

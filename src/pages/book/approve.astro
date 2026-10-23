@@ -52,7 +52,7 @@ import { brandHead } from '../../../scripts/seo.mjs';
           <div><dt id="approval-duration-label">Waktu</dt><dd data-approval-value="time"></dd></div>
           <div><dt>Harga total</dt><dd data-approval-value="agreedPrice"></dd></div>
           <div><dt id="approval-payment-label">Pembayaran</dt><dd data-approval-value="deposit"></dd></div>
-          <div class="approval-balance"><dt>Sisa pembayaran</dt><dd data-approval-value="remainingBalance"></dd></div>
+          <div id="approval-balance-row" class="approval-balance"><dt>Sisa pembayaran</dt><dd data-approval-value="remainingBalance"></dd></div>
         </dl>
         <div id="approval-proof" class="approval-proof" hidden><button id="approval-proof-toggle" class="button button-secondary approval-button" type="button" aria-expanded="false" aria-controls="approval-proof-image">Lihat bukti pembayaran</button><p id="approval-proof-status" class="approval-small" role="status" aria-live="polite" aria-atomic="true"></p><img id="approval-proof-image" alt="Bukti pembayaran pelanggan" hidden /></div>
         <div id="approval-actions" class="approval-actions" hidden>
@@ -62,6 +62,7 @@ import { brandHead } from '../../../scripts/seo.mjs';
         </div>
         <button id="approval-recover" class="button button-secondary approval-button" type="button" hidden>Periksa penyimpanan</button>
         <a id="approval-calendar-link" class="button button-secondary approval-button" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" hidden>Lihat di Google Calendar</a>
+        <div id="approval-payment-controls" class="approval-payment-controls" hidden><label class="approval-payment-confirm" for="approval-payment-confirm"><input id="approval-payment-confirm" type="checkbox" /><span id="approval-payment-confirm-label"></span></label><button id="approval-payment-record" class="button button-secondary approval-button" type="button" disabled>Tandai Lunas</button></div>
         <a id="approval-receipt-send" class="button approval-button" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" hidden>Send receipt via WhatsApp</a>
         <p id="approval-receipt-status" class="approval-small" role="status" aria-live="polite"></p><button id="approval-receipt-retry" class="text-link approval-retry" type="button" hidden>Siapkan tautan kuitansi lagi</button>
         <p id="approval-outcome" class="approval-outcome" hidden></p>

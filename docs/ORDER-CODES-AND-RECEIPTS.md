@@ -32,11 +32,11 @@ Payment screenshots remain evidence for manual review, not proof that money arri
 
 ## Receipt boundary
 
-Receipt preparation requires Jessica's signed owner session, CSRF and an accepted booking. Receipt data comes from the accepted booking's service classification, appointment and immutable financial snapshot—not current calculator prices or client-submitted receipt text. DP receipts show DP received and the outstanding balance; only zero-balance receipts say Lunas.
+Receipt preparation requires Jessica's signed owner session and CSRF. Accepted bookings can be shared optionally. Cancelled bookings additionally require verified funds or a previously accepted Calendar booking. Receipt data comes from the accepted booking's service classification, appointment and immutable financial snapshot—not current calculator prices or client-submitted receipt text. DP receipts show DP received and the outstanding balance; only zero-balance receipts say Lunas.
 
 The customer capability is a domain-separated HMAC over the booking UUID. It is carried in the link's fragment and posted to a same-origin, bounded JSON endpoint for retrieval; it is not sent in the HTTP URL or query string. Signature verification happens before D1 lookup. The response exposes only the customer's printable receipt fields, never WhatsApp, payment-proof bytes, Calendar IDs, private access credentials or owner approval tokens. A receipt capability cannot authorize any mutation. Anyone with the full customer link can view that receipt; treat it as a private customer document. Rotating the signing secret invalidates these derived links.
 
-The accepted booking already holds the fixed monetary record; there is no PDF or new invoice table. A later cancellation is displayed as cancelled without claiming a refund. Final settlement/additional payments are not recorded by this change: Jessica must not label an outstanding balance as paid. Any future correction/settlement workflow must preserve audit history rather than silently editing an issued payment record.
+The booking keeps its fixed original monetary record; the current [balance-payment flow](BALANCE-PAYMENTS-AND-RECEIPTS.md) adds immutable audit events. There is no PDF or invoice-file table. A later cancellation is displayed as cancelled without claiming a refund. Jessica can reopen the same owner review link, confirm that the remaining funds were actually received, and select Tandai Lunas. The server records one immutable balance_received event in booking_payment_events without changing the original booking/DP snapshot. Duplicate or uncertain-response retries cannot add the payment twice. The existing customer receipt link then reads the updated paid amount and shows Lunas. Sending it through wa.me stays optional. Cancelled requests require explicit owner verification of received funds before a cancellation receipt can be prepared; those receipts have no amount due and make no refund claim.
 
 All owner/booking/receipt pages have noindex/nofollow and no-referrer, remain outside the five-page sitemap, and have no-store responses. Receipt pages load only local styles/fonts/logo and the small native controller. Print removes actions/help and uses a white A4 document with wrapping identifiers.
 
@@ -52,11 +52,11 @@ All owner/booking/receipt pages have noindex/nofollow and no-referrer, remain ou
 | Customer request limits | `server/booking-customer-limits.js`, existing `booking_requests` phone/created index |
 | Printable receipt | `/receipt`, POST `/api/booking/receipt`, owner POST `/api/booking/receipt-issue` |
 | Receipt authorization/data | `server/booking-receipts.js`, domain-separated helpers in `server/booking-requests.js` |
-| Schema | Additive migrations `0010-booking-access-codes.sql`, `0011-order-estimates.sql` |
+| Schema | Additive migrations `0010-booking-access-codes.sql`, `0011-order-estimates.sql`, `0012-booking-payment-events.sql` |
 
 ## Validation and release
 
-Current suite: 545 passing tests, including real SQLite transactions, signed synthetic Google-owner sessions, nonce/Origin/CSRF/challenge denial, collision/idempotency/expiry/quotas, owner edit conflicts, code-free phone-limit races and accepted-only receipt capabilities. Production build/asset guards also check optional lookup, editable price, local assets and private-page exclusion from sitemap. No real booking or Calendar event was created in these tests.
+Current suite: 560 passing tests, including real SQLite transactions, signed synthetic Google-owner sessions, nonce/Origin/CSRF/challenge denial, collision/idempotency/expiry/quotas, owner edit conflicts, code-free phone-limit races and accepted-only receipt capabilities. Production build/asset guards also check optional lookup, editable price, local assets and private-page exclusion from sitemap. No real booking or Calendar event was created in these tests.
 
 Isolated browser checks use synthetic customer/order data and mock transport: desktop 1280px, mobile 390px and small phone 320px. They exercise owner editing, latest-version lookup, preservation of typed DP, amount autofill, code generation and receipt/WhatsApp link preparation. They are not physical Android/iPhone tests, live owner authentication, real payment verification or actual WhatsApp delivery. Browser print styles are inspected; printer/Save-as-PDF destination choices are controlled by the customer browser.
 
