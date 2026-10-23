@@ -21,6 +21,17 @@ export function initPrices(root) {
     quantity: root.querySelector(`[data-menu-quantity="${field.id}"]`),
   }]));
   const summary = root.querySelector('[data-estimate-summary]');
+  if ('ResizeObserver' in window) {
+    const clearance = new ResizeObserver(() => {
+      summary.style.setProperty('--price-summary-clearance', `${summary.querySelector('summary').offsetHeight + 4}px`);
+    });
+    clearance.observe(summary.querySelector('summary'));
+  }
+  summary.addEventListener('toggle', () => {
+    if (summary.open && window.matchMedia('(max-width:720px) and (min-height:421px)').matches) {
+      summary.scrollIntoView({ block: 'start', behavior: 'instant' });
+    }
+  });
   root.querySelector('.price-menu').addEventListener('focusin', () => { summary.open = false; });
 
   function render() {

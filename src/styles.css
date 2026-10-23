@@ -109,7 +109,7 @@ html{scroll-padding-top:calc(var(--site-header-height) + 16px)}
 .price-sync-status{font-size:13px;line-height:1.65;color:var(--muted);max-width:70ch;margin-top:12px}
 .price-retry{min-height:44px;font-size:13px;text-decoration:underline;background:none;border:0}
 .price-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:36px 40px;margin-top:32px}
-.price-menu-group{min-width:0;scroll-margin-top:100px}.price-menu-heading{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:12px}
+.price-menu-group{min-width:0;scroll-margin-top:calc(var(--site-header-height) + 160px)}.price-menu-heading{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:12px}
 .price-menu-heading h3{font-size:30px;margin:0}.price-menu-heading p{font-size:12px;line-height:1.5;color:var(--rose);text-align:right}
 .price-menu-group>ul{list-style:none;margin:0;padding:0}.price-menu-item{border-top:1px solid var(--border)}
 .price-menu-row{display:grid;grid-template-columns:20px minmax(0,1fr) auto;align-items:center;gap:12px;min-height:56px;padding:12px 8px;cursor:pointer}
@@ -122,10 +122,10 @@ html{scroll-padding-top:calc(var(--site-header-height) + 16px)}
 .price-menu-stepper button:disabled{opacity:1;color:var(--muted);background:var(--blush);cursor:default}.price-menu-stepper output{min-width:24px;text-align:center;font-size:14px;font-variant-numeric:tabular-nums}
 .price-kit-details{margin-top:12px;font-size:13px;line-height:1.6}.price-kit-details summary{cursor:pointer;min-height:44px;padding-block:12px;color:var(--rose);text-decoration:underline;text-underline-offset:4px}.price-kit-details ul{margin:8px 0 0;padding-left:20px}.price-kit-details li{margin-bottom:6px}
 .price-quote{position:sticky;top:calc(var(--site-header-height) + 8px);z-index:30;margin-top:24px;background:var(--white);border-radius:var(--radius-card);box-shadow:0 4px 16px #7351561c;scroll-margin-top:calc(var(--site-header-height) + 16px)}
-.price-quote[open]{max-height:calc(100vh - var(--site-header-height) - 100px);max-height:calc(100dvh - var(--site-header-height) - 100px);overflow-y:auto;overscroll-behavior-y:contain;scrollbar-color:var(--rose) var(--blush)}
+.price-quote[open]{max-height:calc(100vh - var(--site-header-height) - 100px);max-height:calc(100dvh - var(--site-header-height) - 100px);overflow-y:auto;overscroll-behavior-y:contain;scroll-padding-block:var(--price-summary-clearance,132px) 4px;scrollbar-color:var(--rose) var(--blush)}
 .price-quote[open]>summary{position:sticky;top:0;z-index:1;background:var(--white);border-radius:var(--radius-card)}
 .price-quote>summary:focus-visible{outline-offset:-4px}
-.price-menu-row input,.price-menu-stepper button{scroll-margin-top:calc(var(--site-header-height) + 160px)}
+.price-menu-row,.price-menu-row input,.price-menu-stepper button{scroll-margin-top:calc(var(--site-header-height) + 160px)}
 .price-quote>summary{display:flex;align-items:center;gap:18px;list-style:none;min-height:84px;padding:18px 24px;cursor:pointer}.price-quote>summary::-webkit-details-marker{display:none}
 .price-quote-label{flex:1;font-size:15px;line-height:1.5}.price-quote-label small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .price-quote>summary output{font-size:23px;line-height:1.4;font-weight:500;font-variant-numeric:tabular-nums;color:var(--rose);text-align:right;overflow-wrap:anywhere}
@@ -141,3 +141,8 @@ html{scroll-padding-top:calc(var(--site-header-height) + 16px)}
 @media(hover:hover) and (pointer:fine){.price-menu-row:hover{background:var(--white)}.price-menu-stepper button:not(:disabled):hover{border-color:var(--rose)}}
 @media(max-width:720px){.price-guide{margin-top:40px;padding-top:40px}.price-heading h2{font-size:36px}.price-heading>p{font-size:14px}.price-menu{grid-template-columns:1fr;gap:28px;margin-top:24px}.price-menu-heading h3{font-size:29px}.price-menu-row{gap:10px;padding-inline:4px}.price-menu-name,.price-menu-rate{font-size:14px}.price-quote>summary{display:grid;grid-template-columns:minmax(0,1fr) 20px;padding:14px 16px;gap:4px 10px}.price-quote-label{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 12px;min-width:0;font-size:14px}.price-quote-label small{margin-top:0}.price-quote>summary output{grid-column:1;grid-row:2;text-align:left;font-size:20px}.price-quote-chevron{grid-column:2;grid-row:1 / 3}.price-quote-details{padding:0 16px 20px}.price-quote-lines li{grid-template-columns:minmax(0,1fr) auto;gap:6px 12px}.price-quote-lines li>span{grid-column:1 / -1}.price-quote-lines button{justify-self:end}.price-quote-actions{gap:12px}}
 @media(max-width:360px){.price-menu-row{grid-template-columns:18px minmax(0,1fr);gap:4px 8px}.price-menu-rate{grid-column:2;justify-self:start}.price-quote>summary{flex-wrap:wrap}.price-quote-label{min-width:0}.price-quote>summary output{font-size:19px}.price-quote-lines strong{white-space:normal;overflow-wrap:anywhere}}
+
+/* Leave room to browse choices below the expanded quote on small phones. */
+@media(max-width:720px){.price-quote{scroll-margin-top:0}.price-quote[open]{max-height:min(320px,calc(100vh - var(--site-header-height) - 232px - env(safe-area-inset-bottom)));max-height:min(320px,calc(100dvh - var(--site-header-height) - 232px - env(safe-area-inset-bottom)))}.price-menu{padding-bottom:calc(72px + env(safe-area-inset-bottom))}.price-quote-actions>.button{width:100%;min-height:44px;padding:12px 10px;font-size:13px;line-height:1.4}}
+/* An expanded breakdown uses normal page flow in a very short viewport. */
+@media(max-height:420px){.price-quote[open]{position:static;max-height:none;overflow:visible}.price-quote[open]>summary{position:static}}
