@@ -1,0 +1,24 @@
+{
+  "url": "https://chiinails.pages.dev/custom-sets",
+  "status": 200,
+  "browserScriptMatchesLocalBuild": true,
+  "scripts": [
+    "/_astro/Page.astro_astro_type_script_index_0_lang.BO6YaxyE.js"
+  ],
+  "all21Choices": true,
+  "checkedAt": "2026-10-23T00:23:18Z",
+  "commit": "d3ace81",
+  "nodeTests": 527,
+  "liveQuote": 83000,
+  "liveLines": [
+    "Nail polos 25000",
+    "Extension 10 kuku 30000",
+    "Glitter 5000",
+    "Remove nail gel 10 kuku 23000"
+  ],
+  "mobileClientWidth": 375,
+  "mobileScrollWidth": 375,
+  "currencyNoWrap": true,
+  "testTabsClosed": true,
+  "testServerStopped": true
+}
