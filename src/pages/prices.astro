@@ -1,0 +1,63 @@
+---
+import '../styles.css';
+import '../approval.css';
+import '../price-editor.css';
+import { brandHead } from '../../scripts/seo.mjs';
+import { priceGroups } from '../content.js';
+import { priceFields, MAX_PRICE } from '../pricing.js';
+---
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" /><meta name="referrer" content="no-referrer" />
+    <meta name="theme-color" content="#ffd2e6" /><title>Kelola harga | Chii Nails</title>
+    <Fragment set:html={brandHead()} />
+    <link rel="preload" href="/fonts/dm-sans-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Lewati ke pengaturan harga</a>
+    <header class="approval-header"><div class="approval-header-inner">
+      <a href="/" class="approval-brand" aria-label="Chii Nails — Beranda"><img src="/images/logo-brand.webp" width="80" height="52" alt="Chii Nails Nail Art Studio" /></a>
+      <a href="/custom-sets#price-list" class="approval-back">Lihat daftar harga</a>
+    </div></header>
+    <main id="main" class="approval-page price-editor" aria-busy="true">
+      <h1>Kelola harga.</h1>
+      <p class="approval-lead">Ubah harga menu dan paket press-on di sini. Daftar harga website dan kalkulator memakai harga yang sama.</p>
+      <p id="prices-status" class="approval-status" role="status" aria-live="polite" aria-atomic="true">Memeriksa akses…</p>
+      <noscript><p class="approval-notice">Aktifkan JavaScript untuk masuk dan mengubah harga.</p></noscript>
+      <section id="prices-signin-panel" class="approval-signin" hidden aria-labelledby="prices-signin-title">
+        <h2 id="prices-signin-title">Masuk sebagai pemilik.</h2>
+        <p>Hanya akun Google pemilik Chii yang dapat menyimpan perubahan harga.</p>
+        <button id="prices-signin" class="button approval-button" type="button">Lanjutkan dengan Google</button>
+        <div id="prices-google-button" class="approval-google-button" hidden></div>
+        <p class="approval-small">Jika halaman masuk tidak muncul dari WhatsApp, buka tautan ini di Chrome atau Safari.</p>
+      </section>
+      <form id="prices-form" hidden>
+        <p class="price-editor-help">Semua nominal dalam rupiah. Ketik angka tanpa titik, misalnya <strong>25000</strong>. Untuk harga tetap, kosongkan kolom harga tertinggi.</p>
+        <fieldset><legend>Paket press-on</legend>
+          <p class="price-editor-note">Estimasi 1 set = base kit + desain Nail Art / Cat Eye + glue jika dipilih.</p>
+          <div class="price-editor-kit">
+            <label for="price-base">Base kit · 10 kuku<input id="price-base" name="base" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="8" required data-price-base /></label>
+            <label for="price-glue">Super glue nails MXBON<input id="price-glue" name="glue" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="8" required data-price-glue /></label>
+          </div>
+        </fieldset>
+        {priceGroups.map(group => <fieldset><legend>{group.title}</legend><p class="price-editor-note">{group.note}</p>
+          {priceFields.filter(item => item.group === group.id).map(item => <div class="price-edit-row">
+            <p id={`label-${item.id}`}>{item.name}{item.detail && <small>{item.detail}</small>}</p>
+            <div class="price-edit-inputs">
+              <label for={`min-${item.id}`}>Harga / minimum<input id={`min-${item.id}`} type="text" inputmode="numeric" pattern="[0-9]+" maxlength="8" required data-price-min={item.id} aria-describedby={`label-${item.id}`} /></label>
+              <label for={`max-${item.id}`}>Tertinggi (opsional)<input id={`max-${item.id}`} type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" data-price-max={item.id} aria-describedby={`label-${item.id}`} /></label>
+            </div>
+          </div>)}
+        </fieldset>)}
+        <p class="price-editor-note">Maksimum nominal Rp{MAX_PRICE.toLocaleString('id-ID')}. Perubahan harga tidak mengubah nominal booking yang sudah dibuat.</p>
+        <div class="price-editor-save"><p id="prices-save-status" role="status" aria-live="polite">Belum ada perubahan.</p><button id="prices-save" class="button approval-button" type="submit" disabled>Simpan semua harga</button></div>
+        <button id="prices-reload" class="approval-retry text-link" type="button" hidden>Muat harga tersimpan (buang perubahan di form)</button>
+        <button id="prices-signout" class="approval-retry text-link" type="button">Keluar dari akun pemilik</button>
+      </form>
+      <button id="prices-retry" class="approval-retry text-link" type="button" hidden>Coba lagi</button>
+    </main>
+    <script src="../scripts/price-editor.js"></script>
+  </body>
+</html>

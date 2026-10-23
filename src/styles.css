@@ -105,3 +105,16 @@ html{scroll-padding-top:calc(var(--site-header-height) + 16px)}
 .post-placeholder.post-link-only{min-height:330px;display:grid;place-items:center;background:var(--blush)}
 
 .embed-retry{min-height:44px;padding:10px 16px;align-self:flex-start}
+
+/* Price tools extend the existing blush price panel with native controls. */
+.price-sync-status{font-size:13px;line-height:1.65;color:var(--muted);max-width:70ch;margin-top:16px}
+.price-retry{min-height:44px;font-size:13px;text-decoration:underline;background:none;border:0;cursor:pointer}
+.press-on-calculator label:not(.calculator-check){display:block;font-size:14px;font-weight:600;margin-top:20px;margin-bottom:8px}
+.press-on-calculator select{display:block;width:100%;min-width:0;min-height:48px;padding:10px 32px 10px 12px;background:var(--white);color:var(--ink);border:1px solid #b78e9f;border-radius:var(--radius-control);font:inherit;font-size:16px}
+.calculator-check{display:flex;align-items:center;gap:12px;min-height:48px;margin-top:12px;cursor:pointer;font-size:14px;line-height:1.5}
+.calculator-check input{width:20px;height:20px;flex-shrink:0;accent-color:var(--rose)}
+.calculator-check small{display:block;font-size:13px;color:var(--rose)}
+.press-on-calculator>p{font-size:12px;line-height:1.7;color:var(--muted);margin-top:16px}
+.calculator-contact{display:inline-flex;align-items:center;min-height:44px;font-size:13px;margin-top:8px;text-underline-offset:4px}
+.press-on-calculator [hidden],.price-guide [hidden]{display:none!important}
+@media(max-width:420px){.price-example dl>div{gap:10px}.price-example dd{white-space:normal;text-align:right}.press-on-total{max-width:100%}.press-on-total strong{overflow-wrap:anywhere}}

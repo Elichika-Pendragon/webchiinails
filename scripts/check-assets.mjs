@@ -30,7 +30,7 @@ for (const file of javascript) {
 }
 const bookingPage = { path: '/book', file: 'book.html' };
 const approvalPage = { path: '/book/approve', file: 'book/approve.html' };
-for (const page of [...seoPages, bookingPage, approvalPage]) {
+for (const page of [...seoPages, bookingPage, approvalPage, { path: '/prices', file: 'prices.html' }]) {
   const html = await readFile(new URL(page.file, root), 'utf8');
   for (const match of html.matchAll(/(?:src|href)="(\/(?:images|fonts|_astro)\/[^"?#]+)(?:[?#][^"]*)?"/g)) {
     assert.ok((await stat(new URL(`.${match[1]}`, root))).isFile(), `${page.path}: asset ${match[1]} exists`);
@@ -65,3 +65,11 @@ assert.ok(!/BOOKING_(?:LINK|AUTH)_SECRET|BOOKING_OWNER_EMAIL|GOOGLE_SERVICE_ACCO
 const sitemap = files.find(file => file.pathname.endsWith('/sitemap.xml'));
 if (sitemap) assert.ok(!(await readFile(sitemap, 'utf8')).includes('/book'), 'Booking preview is excluded from sitemap');
 console.log(JSON.stringify({ pages: seoPages.length, browserJsFiles: javascript.length, browserJsBytes: raw, browserJsGzipBytes: gzip, reactClientRuntime: false }, null, 2));
+
+const priceEditor = await readFile(new URL('prices.html', root), 'utf8');
+assert.match(priceEditor, /<meta name="robots" content="noindex, nofollow"/);
+assert.ok(!/astro-island|client:load|client:visible|BOOKING_OWNER_EMAIL|BOOKING_AUTH_SECRET|accounts\.google\.com\/gsi\/client/.test(priceEditor), 'Price editor contains no secret configuration, hydration or eager Google SDK');
+if (sitemap) assert.ok(!(await readFile(sitemap, 'utf8')).includes('/prices'), 'Owner editor is excluded from sitemap');
+
+const functionRoutes = JSON.parse(await readFile(new URL('_routes.json', root), 'utf8'));
+assert.ok(functionRoutes.include.includes('/api/prices') && functionRoutes.include.includes('/api/booking/*'), 'Price read and authenticated edit endpoints reach Pages Functions');

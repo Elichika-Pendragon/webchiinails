@@ -1,5 +1,10 @@
 {
   "version": 1,
-  "include": ["/api/instagram", "/api/instagram-archive", "/api/booking/*"],
+  "include": [
+    "/api/instagram",
+    "/api/instagram-archive",
+    "/api/booking/*",
+    "/api/prices"
+  ],
   "exclude": []
 }

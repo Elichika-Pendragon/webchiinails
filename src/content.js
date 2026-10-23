@@ -68,9 +68,9 @@ export const priceGroups = [
   ] },
 ];
 
-// Owner clarified that this is the finished set total, not a design-only fee.
+// Press-on estimates: owner approved menu design fees + base kit (23 Oct 2026).
 export const pressOnPricing = {
-  min: 25000, max: 155000, base: 22000, glue: 13000,
+  base: 22000, glue: 13000,
   exampleDesign: 40000,
   kit: ['Fake nails 10 pcs', 'Kikir kuku 1 pcs', 'Lem stiker 3 pcs', 'Wipe kering pink', 'Alcohol wipe', 'Wooden cuticle pusher'],
 };

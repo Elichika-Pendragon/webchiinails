@@ -1,3 +1,4 @@
+import { initPrices } from './price-client.js';
 import { posts, salon } from '../content.js';
 import { normalizeFeed, selectHeroMedia } from '../feed-data.js';
 import { studioPhotos, photoSourceSet } from '../studio-photos.js';
@@ -520,3 +521,6 @@ if (heroLinks.length || (track && !track.dataset.instagramArchive)) {
   addEventListener('pagehide', () => pending?.abort());
   addEventListener('pageshow', event => { if (event.persisted) refresh(); });
 }
+
+const priceGuide = document.querySelector('[data-price-guide]');
+if (priceGuide) initPrices(priceGuide);
