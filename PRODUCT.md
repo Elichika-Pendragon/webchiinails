@@ -20,12 +20,14 @@ Jessica agrees on the service and price before sharing `/book`. New bookings use
 
 - Static Astro on Cloudflare Pages, React at build time only, small native browser controllers; preserve mobile performance and existing white/blush/rose identity, logo and typography.
 - Keep the smooth sticky header and automatic fading photo mosaic across its visible tiles. Randomize each opening, avoid duplicate visible photos, pause when hidden/offscreen and respect reduced motion. Keep Instagram's separate row swipeable and deferred, like Maps.
-- Shared all-service calculator supports quantities, ranges and independent optional kit/glue. `/prices` lets the sole owner edit the persisted catalog; customer quotes already stored remain unchanged.
+- Shared all-service calculator has independent Nail Art, Cat Eye, Extension, Extras and Removal sections, one itemized estimate, quantities, ranges and optional kit/glue. `/prices` lets the sole owner edit the persisted catalog; customer quotes already stored remain unchanged.
 - Use the same hourly public-link collector and a separate monthly optimized still-photo import. Five recent plus five random older per successful month; no Reel covers/video; rolling pool 50 including originals. Keep the approved Meet Chii photo fixed and exclude its duplicate from the portfolio.
 - `/book`, `/book/approve` and `/prices` remain unlisted/noindex and absent from sitemap. Search directives do not replace server authorization. Keep a visible chat/contact affordance and the approved Shopee title/subtitle/link.
 - No payment gateway, automatic bank-transfer authenticity claim, WhatsApp chat reading, account-cookie scraping, incidental paid-plan activation or VPS. Private receipts stay in D1 with the documented 30-day post-appointment expiry/cleanup; public photos have separate retention.
 - Preserve per-tab draft/receipt recovery, explicit retry and existing reserved form space. Do not introduce extra hydration, unnecessary downloads or automatic submission on reconnection.
 - Future Figma changes require the owner's command. Google Console work is separate and currently stopped; do not restart it during routine code/docs maintenance.
+
+Public copy should explain each point once where practical. Remove repeated pitches; keep service/location facts, prices, essential warnings and booking rules visible or in usable disclosures. Never camouflage SEO text against its background.
 
 ## Verification and unresolved limits
 

@@ -3,9 +3,8 @@ import { salon } from '../content.js';
 
 export function initPrices(root) {
   let prices = defaultPrices;
-  const select = root.querySelector('[data-service-choice]');
-  const amount = root.querySelector('[data-add-quantity]');
-  const quantityLabel = root.querySelector('[data-add-quantity-label]');
+  const groups = [...root.querySelectorAll('[data-service-group]')];
+  let lastControl = groups[0].querySelector('[data-service-choice]');
   const kit = root.querySelector('[data-kit-choice]');
   const glue = root.querySelector('[data-glue-choice]');
   const status = root.querySelector('[data-prices-status]');
@@ -24,15 +23,25 @@ export function initPrices(root) {
     if (value !== undefined) node.textContent = value;
     return node;
   }
-  function selectionInput() {
+  function selectionInput(group) {
+    const select = group.querySelector('[data-service-choice]');
+    const amount = group.querySelector('[data-add-quantity]');
     const field = serviceChoices.find(item => item.id === select.value);
-    quantityLabel.hidden = field.quantityMax === 1;
-    amount.max = String(field.quantityMax); amount.value = '1'; amount.setCustomValidity('');
+    group.querySelector('[data-add-quantity-label]').hidden = !field || field.quantityMax === 1;
+    group.querySelector('[data-service-add]').disabled = !field;
+    amount.max = String(field?.quantityMax ?? 10); amount.value = '1'; amount.setCustomValidity('');
   }
   function render({ rows = true } = {}) {
+    if (!invalidQuantities.size) announce('');
+    groups.forEach(group => { group.querySelector('[data-group-feedback]').textContent = ''; });
     for (const field of priceFields) {
       const item = prices.items[field.id];
       text(`[data-price-id="${field.id}"]`, priceRange(item.price, item.max));
+    }
+    for (const option of root.querySelectorAll('[data-service-choice] option[value]:not([value=""])')) {
+      const field = serviceChoices.find(item => item.id === option.value);
+      const item = prices.items[field.id];
+      option.textContent = `${title(field)} · ${priceRange(item.price, item.max)}`;
     }
     text('[data-kit-price]', rupiah(prices.base)); text('[data-glue-price]', rupiah(prices.glue));
     const result = calculateServices(prices, selections, { kit: kit.checked, glue: glue.checked });
@@ -66,24 +75,34 @@ export function initPrices(root) {
     const message = `Halo Chii, saya ingin konsultasi layanan berikut:\n${result.lines.map(line => `- ${title(line)}${line.quantity > 1 ? ` × ${line.quantity}` : ''}: ${priceRange(line.min, line.max)}`).join('\n')}\nEstimasi: ${priceRange(result.min, result.max)} (belum ongkir). Mohon konfirmasi kombinasi layanan, satuan tambahan dan harga akhir.`;
     link.href = `${salon.whatsapp}?text=${encodeURIComponent(message)}`;
   }
-  root.querySelector('[data-service-add]').addEventListener('click', () => {
-    const field = serviceChoices.find(item => item.id === select.value);
-    const quantity = field.quantityMax === 1 ? 1 : Number(amount.value);
-    if (!Number.isInteger(quantity) || quantity < 1 || quantity > field.quantityMax) {
-      amount.setCustomValidity(`Isi jumlah antara 1 dan ${field.quantityMax}.`); amount.reportValidity(); return;
-    }
-    amount.setCustomValidity('');
-    const existing = selections.find(item => item.id === field.id);
-    if (existing && field.quantityMax === 1) { announce(`${title(field)} sudah ada dalam rincian.`); return; }
-    if (existing && existing.quantity + quantity > field.quantityMax) { announce(`Jumlah ${title(field)} maksimum ${field.quantityMax}. Ubah jumlah pada rincian.`); return; }
-    const replaced = selections.some(item => item.id === field.alternative);
-    selections = selections.filter(item => item.id !== field.alternative);
-    if (existing) existing.quantity += quantity;
-    else selections.push({ id: field.id, quantity });
-    render(); announce(`${title(field)} ditambahkan.${replaced ? ' Pilihan 1 kuku / 10 kuku sebelumnya diganti agar tidak dihitung dua kali.' : ''}`);
-  });
-  amount.addEventListener('input', () => amount.setCustomValidity(''));
-  select.addEventListener('change', selectionInput);
+  for (const group of groups) {
+    const select = group.querySelector('[data-service-choice]');
+    const amount = group.querySelector('[data-add-quantity]');
+    const groupFeedback = group.querySelector('[data-group-feedback]');
+    const announceGroup = value => { groupFeedback.textContent = value; };
+    group.querySelector('[data-service-add]').addEventListener('click', () => {
+      const field = serviceChoices.find(item => item.id === select.value);
+      if (!field) return;
+      const quantity = field.quantityMax === 1 ? 1 : Number(amount.value);
+      if (!Number.isInteger(quantity) || quantity < 1 || quantity > field.quantityMax) {
+        amount.setCustomValidity(`Isi jumlah antara 1 dan ${field.quantityMax}.`); amount.reportValidity(); return;
+      }
+      amount.setCustomValidity(''); lastControl = select;
+      const existing = selections.find(item => item.id === field.id);
+      if (existing && field.quantityMax === 1) { announceGroup(`${title(field)} sudah ada dalam rincian.`); return; }
+      if (existing && existing.quantity + quantity > field.quantityMax) { announceGroup(`Jumlah ${title(field)} maksimum ${field.quantityMax}. Ubah jumlah pada rincian.`); return; }
+      const replaced = selections.some(item => item.id === field.alternative);
+      selections = selections.filter(item => item.id !== field.alternative);
+      if (existing) existing.quantity += quantity;
+      else selections.push({ id: field.id, quantity });
+      render();
+      const result = calculateServices(prices, selections, { kit: kit.checked, glue: glue.checked });
+      announceGroup(`${title(field)} ditambahkan. Total ${priceRange(result.min, result.max)}.${replaced ? ' Pilihan 1 / 10 kuku sebelumnya diganti.' : ''}`);
+    });
+    amount.addEventListener('input', () => amount.setCustomValidity(''));
+    select.addEventListener('change', () => { selectionInput(group); groupFeedback.textContent = ''; });
+    selectionInput(group);
+  }
   kit.addEventListener('change', () => render()); glue.addEventListener('change', () => render());
   list.addEventListener('click', event => {
     const button = event.target.closest('[data-remove-service]'); if (!button) return;
@@ -91,7 +110,7 @@ export function initPrices(root) {
     if (id === 'kit') kit.checked = false;
     else if (id === 'glue') glue.checked = false;
     else selections = selections.filter(item => item.id !== id);
-    render(); announce('Pilihan dihapus.'); select.focus();
+    render(); announce('Pilihan dihapus.'); lastControl.focus();
   });
   list.addEventListener('input', event => {
     const input = event.target.closest('[data-line-quantity]'); if (!input) return;
@@ -105,14 +124,14 @@ export function initPrices(root) {
     selections.find(item => item.id === field.id).quantity = quantity;
     render({ rows: false }); if (!invalidQuantities.size) announce('');
   });
-  reset.addEventListener('click', () => { selections = []; kit.checked = false; glue.checked = false; render(); announce('Pilihan dikosongkan.'); select.focus(); });
+  reset.addEventListener('click', () => { selections = []; kit.checked = false; glue.checked = false; render(); groups.forEach(group => { group.querySelector('[data-group-feedback]').textContent = ''; }); announce('Pilihan dikosongkan.'); lastControl.focus(); });
   root.querySelector('[data-calculator-controls]').hidden = false;
-  selectionInput(); render();
+  render();
   let loading = false;
   async function refresh() {
     if (loading) return;
     loading = true; retry.hidden = true;
-    status.textContent = 'Memeriksa harga terbaru…';
+    status.textContent = 'Memeriksa harga…';
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
     try {
@@ -120,7 +139,7 @@ export function initPrices(root) {
       const snapshot = await response.json();
       if (!response.ok || !validPriceSnapshot(snapshot)) throw new Error('unavailable');
       prices = snapshot.prices; render();
-      status.textContent = 'Harga terbaru dimuat. Estimasi belum termasuk ongkir; konfirmasi akhir lewat WhatsApp.';
+      status.textContent = 'Harga terbaru dimuat.';
     } catch {
       status.textContent = 'Harga terbaru belum dapat diperiksa. Estimasi memakai daftar terakhir di halaman; konfirmasikan melalui WhatsApp atau coba lagi.';
       retry.hidden = false;

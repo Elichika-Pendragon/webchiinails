@@ -30,9 +30,9 @@ export const posts = [
 ];
 
 export const services = [
-  { kicker: '01 · NAIL ART', title: 'Custom nail art', description: 'Bawa desain apa pun yang kamu suka. Dari French yang clean sampai karakter dan detail yang playful.' },
-  { kicker: '02 · EXTENSIONS', title: 'Nail extensions', description: 'Tambah panjang kuku dengan bentuk dan desain personal. Konsultasikan referensimu sebelum booking di studio Palembang.' },
-  { kicker: '03 · PRESS-ON', title: 'Press-on nails', description: 'Kuku palsu custom sesuai request, praktis untuk momen spesialmu. Bisa dikirim ke seluruh Indonesia; konfirmasikan ukuran, ongkir, dan estimasi lewat WhatsApp.' },
+  { kicker: '01 · NAIL ART', title: 'Custom nail art', description: 'Dari French yang clean sampai karakter dan detail personal.' },
+  { kicker: '02 · EXTENSIONS', title: 'Nail extensions', description: 'Tambah panjang kuku dengan bentuk pilihanmu.' },
+  { kicker: '03 · PRESS-ON', title: 'Press-on nails', description: 'Desain sesuai request, dikirim ke seluruh Indonesia. Ukuran dan ongkir dikonfirmasi saat konsultasi.' },
 ];
 
 // Owner-supplied price list. Numbers are rupiah; price ranges are inclusive.
