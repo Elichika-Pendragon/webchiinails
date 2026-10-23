@@ -118,3 +118,28 @@ html{scroll-padding-top:calc(var(--site-header-height) + 16px)}
 .calculator-contact{display:inline-flex;align-items:center;min-height:44px;font-size:13px;margin-top:8px;text-underline-offset:4px}
 .press-on-calculator [hidden],.price-guide [hidden]{display:none!important}
 @media(max-width:420px){.price-example dl>div{gap:10px}.price-example dd{white-space:normal;text-align:right}.press-on-total{max-width:100%}.press-on-total strong{overflow-wrap:anywhere}}
+
+.calculator-intro{font-size:13px;line-height:1.65;color:var(--muted);margin-bottom:16px}
+.calculator-add-row{display:flex;align-items:flex-end;gap:12px;margin-top:12px}
+.press-on-calculator .calculator-quantity{flex:0 0 88px;margin:0!important}
+.calculator-add{min-height:48px;flex:1;padding:10px 16px;font-size:14px}
+.press-on-calculator input[type=number]{width:80px;min-height:48px;padding:8px 10px;border:1px solid #b78e9f;border-radius:var(--radius-control);background:var(--white);color:var(--ink);font:inherit;font-size:16px;caret-color:var(--rose)}
+.calculator-feedback{font-size:12px;line-height:1.6;color:var(--rose);margin-top:10px}
+.calculator-lines{padding:0;margin:20px 0 0;list-style:none}
+.calculator-line{padding-block:16px;border-top:1px solid var(--border)}
+.calculator-line-info{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;font-size:14px;line-height:1.5}
+.calculator-line-price{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;font-weight:600}
+.calculator-line-controls{display:flex;align-items:center;justify-content:flex-end;gap:20px;margin-top:4px}
+.press-on-calculator .calculator-line-controls label{display:flex;align-items:center;gap:10px;font-size:12px;margin:0}
+.calculator-remove,.calculator-reset{min-height:44px;padding:6px 0;background:none;border:0;cursor:pointer;font-size:13px;text-decoration:underline;text-underline-offset:4px}
+.calculator-reset{display:block}.calculator-empty{font-size:13px;color:var(--muted);line-height:1.65;margin-block:20px}
+.calculator-total{display:flex;justify-content:space-between;gap:16px;border-top:1px solid var(--border);padding-top:18px;margin-top:8px;font-size:15px;font-weight:600;color:var(--rose)}
+.calculator-total output{font-variant-numeric:tabular-nums;text-align:right}
+@media(max-width:420px){.calculator-line-price{white-space:normal;overflow-wrap:anywhere}.calculator-line-info{gap:10px}.calculator-add{padding-inline:10px;font-size:13px}}
+
+.calculator-line{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding-block:12px}
+.calculator-line-controls{margin-top:0}.calculator-line[data-has-quantity=true]{grid-template-columns:1fr;gap:8px}
+@media(max-width:1100px){.press-on-calculator{order:0}.press-on-kit{order:1}}
+
+.calculator-line-name{min-width:0;overflow-wrap:anywhere}
+.calculator-line-price{flex-shrink:0;white-space:nowrap}

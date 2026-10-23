@@ -38,3 +38,26 @@ export function calculatePressOn(prices, designId = DEFAULT_DESIGN, glue = false
   return { base: prices.base, design: design.price, designMax: design.max, glue: extra,
     min: prices.base + design.price + extra, max: prices.base + (design.max ?? design.price) + extra };
 }
+
+// Menu quantities use only the listed units. Fixed 10-nail services are one
+// line per estimate. Stickers/accessories may be repeated as requested extras.
+export const serviceChoices = priceFields.map(field => ({ ...field,
+  detail: field.detail || (field.design ? '10 jari' : ''),
+  quantityMax: field.detail === '1 kuku' ? 10 : ['extras-3', 'extras-4'].includes(field.id) ? 50 : 1,
+  alternative: ({ 'extras-0': 'extras-1', 'extras-1': 'extras-0', 'removal-0': 'removal-1', 'removal-1': 'removal-0', 'removal-2': 'removal-3', 'removal-3': 'removal-2' })[field.id] || null,
+}));
+export function calculateServices(prices, selections = [], { kit = false, glue = false } = {}) {
+  if (!validPrices(prices) || !Array.isArray(selections) || selections.length > serviceChoices.length || typeof kit !== 'boolean' || typeof glue !== 'boolean') throw new TypeError('Invalid service estimate');
+  const seen = new Set();
+  const lines = selections.map(selection => {
+    const field = serviceChoices.find(item => item.id === selection?.id);
+    if (!field || seen.has(field.id) || seen.has(field.alternative) || !Number.isInteger(selection.quantity) || selection.quantity < 1 || selection.quantity > field.quantityMax) throw new TypeError('Invalid service quantity');
+    seen.add(field.id);
+    const value = prices.items[field.id];
+    return { id: field.id, name: field.name, detail: field.detail, quantity: selection.quantity, quantityMax: field.quantityMax,
+      min: value.price * selection.quantity, max: (value.max ?? value.price) * selection.quantity };
+  });
+  if (kit) lines.push({ id: 'kit', name: 'Base kit press-on', detail: '10 kuku', quantity: 1, min: prices.base, max: prices.base });
+  if (glue) lines.push({ id: 'glue', name: 'Super glue nails MXBON', detail: '', quantity: 1, min: prices.glue, max: prices.glue });
+  return { lines, min: lines.reduce((total, line) => total + line.min, 0), max: lines.reduce((total, line) => total + line.max, 0) };
+}

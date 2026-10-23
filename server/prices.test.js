@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { DatabaseSync } from 'node:sqlite';
 import { handleOwnerPrices, handlePublicPrices } from './prices.js';
-import { defaultPrices, priceFields, validPrices, calculatePressOn, priceRange } from '../src/pricing.js';
+import { defaultPrices, priceFields, validPrices, calculatePressOn, calculateServices, serviceChoices, priceRange } from '../src/pricing.js';
 import { getAuthChallenge, signInOwner } from './booking-auth.js';
 
 const schema = await readFile(new URL('../migrations/0009-site-prices.sql', import.meta.url), 'utf8');
@@ -98,4 +98,35 @@ test('missing or corrupt database fails closed without leaking error details', a
   }
   const f = fixture(); f.sqlite.exec("INSERT INTO site_prices VALUES (1, '{}', 1, '2026-10-23T00:00:00Z')");
   assert.equal((await call(f)).status, 503);
+});
+
+test('combined service estimate sums studio design, extensions, glitter and removal without a kit fee', () => {
+  const result = calculateServices(defaultPrices, [
+    { id: 'nail-art-0', quantity: 1 }, { id: 'extras-1', quantity: 1 },
+    { id: 'extras-2', quantity: 1 }, { id: 'removal-3', quantity: 1 },
+  ]);
+  assert.equal(result.min, 83000); assert.equal(result.max, 83000); assert.equal(result.lines.length, 4);
+  assert.equal(calculateServices(defaultPrices, []).min, 0);
+});
+test('mixed per-nail quantities and ranged extras keep correct low/high totals and editable prices', () => {
+  const selections = [{ id: 'cat-eye-3', quantity: 1 }, { id: 'extras-0', quantity: 3 }, { id: 'extras-3', quantity: 4 }, { id: 'extras-4', quantity: 2 }, { id: 'removal-2', quantity: 3 }];
+  const result = calculateServices(defaultPrices, selections, { kit: true, glue: true });
+  assert.deepEqual([result.min, result.max], [102000, 121000]);
+  const changed = draft(); changed.items['extras-0'].price = 5000;
+  assert.equal(calculateServices(changed, selections, { kit: true, glue: true }).min, 105000);
+});
+test('every listed service can be calculated and invalid quantities or double-counted alternatives are rejected', () => {
+  for (const field of serviceChoices) {
+    const result = calculateServices(defaultPrices, [{ id: field.id, quantity: field.quantityMax }]);
+    assert.equal(result.min, defaultPrices.items[field.id].price * field.quantityMax);
+    assert.equal(result.max, (defaultPrices.items[field.id].max ?? defaultPrices.items[field.id].price) * field.quantityMax);
+  }
+  for (const selections of [
+    [{ id: 'extras-0', quantity: 11 }], [{ id: 'nail-art-0', quantity: 2 }],
+    [{ id: 'extras-0', quantity: 0 }], [{ id: 'extras-0', quantity: 1.5 }],
+    [{ id: 'extras-0', quantity: '1' }], [{ id: 'unknown', quantity: 1 }],
+    [{ id: 'extras-0', quantity: 1 }, { id: 'extras-0', quantity: 1 }],
+    [{ id: 'extras-0', quantity: 1 }, { id: 'extras-1', quantity: 1 }],
+    [{ id: 'removal-3', quantity: 1 }, { id: 'removal-2', quantity: 1 }],
+  ]) assert.throws(() => calculateServices(defaultPrices, selections), TypeError);
 });

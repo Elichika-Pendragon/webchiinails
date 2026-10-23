@@ -1,6 +1,6 @@
 import React from 'react';
 import { priceGroups, pressOnPricing, salon } from './content.js';
-import { priceFields, DEFAULT_DESIGN } from './pricing.js';
+import { priceFields } from './pricing.js';
 
 const number = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
 const rupiah = value => `Rp${number.format(value)}`;
@@ -17,7 +17,7 @@ export default function PriceList() {
     <p className="price-sync-status" data-prices-status="" role="status">Estimasi dari daftar harga halaman; konfirmasikan harga akhir melalui WhatsApp.</p><button className="text-link price-retry" type="button" data-prices-retry="" hidden>Coba periksa harga lagi</button>
     <nav className="price-nav" aria-label="Kategori daftar harga">
       {priceGroups.map(group => <a href={`#price-${group.id}`} key={group.id}>{group.title}</a>)}
-      <a href="#price-press-on">Press-on sets</a>
+      <a href="#price-press-on">Kalkulator &amp; press-on</a>
     </nav>
     <div className="price-grid">
       {priceGroups.map(group => <section className="price-card" key={group.id} id={`price-${group.id}`} aria-labelledby={`price-title-${group.id}`}>
@@ -31,31 +31,41 @@ export default function PriceList() {
     </div>
     <section id="price-press-on" className="press-on-price" aria-labelledby="press-on-heading">
       <header className="press-on-heading">
-        <div><p className="eyebrow">MADE FOR YOU, SENT TO YOU</p><h3 id="press-on-heading">Your custom press-on set.</h3></div>
-        <div className="press-on-total"><strong data-estimate-total="">{rupiah(prices.base + prices.exampleDesign)}</strong><span>Estimasi 1 set · 10 kuku · belum ongkir</span></div>
+        <div><p className="eyebrow">MADE FOR YOU, SENT TO YOU</p><h3 id="press-on-heading">Hitung layanan pilihanmu.</h3></div>
+        <div className="press-on-total"><strong data-estimate-total="">Rp0</strong><span>Estimasi sesuai pilihan · belum ongkir</span></div>
       </header>
       <div className="press-on-layout">
         <div className="press-on-kit">
-          <h4>Base kit <span data-kit-price="">{rupiah(prices.base)}</span></h4>
-          <p className="muted">Isi paket dasar sebelum tambahan desain:</p>
+          <h4>Untuk press-on: base kit <span data-kit-price="">{rupiah(prices.base)}</span></h4>
+          <p className="muted">Opsional untuk pesanan press-on. Isi paket dasar sebelum tambahan desain:</p>
           <ul>{prices.kit.map(item => <li key={item}>{item}</li>)}</ul>
           <p className="glue-extra">Tambahan pilihan: <strong>super glue nails MXBON · <span data-glue-price="">{rupiah(prices.glue)}</span></strong></p>
         </div>
         <aside className="price-example press-on-calculator" aria-labelledby="price-example-heading">
-          <h4 id="price-example-heading">Hitung press-on pilihanmu.</h4>
+          <h4 id="price-example-heading">Gabungkan layananmu.</h4>
+          <p className="calculator-intro">Pilih nail art, Cat Eye, extension, glitter, stiker, aksesori atau removal. Tambahkan satu per satu untuk melihat rinciannya.</p>
           <div data-calculator-controls="" hidden>
-            <label htmlFor="press-on-design">Pilih desain</label>
-            <select id="press-on-design" data-design-choice="" defaultValue={DEFAULT_DESIGN}>
-              {priceGroups.filter(group => ['nail-art', 'cat-eye'].includes(group.id)).map(group => <optgroup key={group.id} label={group.title}>
-                {priceFields.filter(item => item.group === group.id).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+            <label htmlFor="estimate-service">Layanan / tambahan</label>
+            <select id="estimate-service" data-service-choice="" defaultValue="nail-art-0">
+              {priceGroups.map(group => <optgroup key={group.id} label={group.title}>
+                {priceFields.filter(item => item.group === group.id).map(item => <option key={item.id} value={item.id}>{item.name}{item.detail ? ` · ${item.detail}` : item.design ? ' · 10 jari' : ''}</option>)}
               </optgroup>)}
             </select>
+            <div className="calculator-add-row">
+              <label className="calculator-quantity" data-add-quantity-label="" hidden htmlFor="estimate-quantity">Jumlah<input id="estimate-quantity" data-add-quantity="" type="number" min="1" max="10" step="1" inputMode="numeric" defaultValue="1" /></label>
+              <button className="button calculator-add" type="button" data-service-add="">Tambahkan layanan</button>
+            </div>
+            <p className="calculator-feedback" data-calculator-feedback="" role="status" aria-live="polite"></p>
+            <label className="calculator-check"><input type="checkbox" data-kit-choice="" /><span>Tambah base kit press-on · 10 kuku <small data-kit-price="">{rupiah(prices.base)}</small></span></label>
             <label className="calculator-check"><input type="checkbox" data-glue-choice="" /><span>Tambah super glue nails MXBON <small data-glue-price="">{rupiah(prices.glue)}</small></span></label>
           </div>
-          <dl><div><dt>Base kit · 10 kuku</dt><dd data-kit-price="">{rupiah(prices.base)}</dd></div><div><dt data-design-label="">Cat eye / silky cat eye</dt><dd data-design-price="">{rupiah(prices.exampleDesign)}</dd></div><div data-glue-row="" hidden><dt>Super glue nails MXBON</dt><dd data-selected-glue=""></dd></div><div className="example-total"><dt>Estimasi total</dt><dd><output data-estimate-total="" aria-live="polite">{rupiah(prices.base + prices.exampleDesign)}</output></dd></div></dl>
-          <p>Harga desain mengikuti menu Nail Art / Cat Eye + base kit. Rentang harga mengikuti detail desain. Belum termasuk ongkir dan tambahan di luar pilihan ini.</p>
-          <a className="text-link calculator-contact" data-estimate-link="" href={salon.custom} target="_blank" rel="noopener noreferrer">Konfirmasi estimasi via WhatsApp ↗</a>
-          <noscript><p>Aktifkan JavaScript untuk memilih desain dan menghitung estimasi.</p></noscript>
+          <ul className="calculator-lines" data-estimate-lines="" aria-label="Rincian estimasi"></ul>
+          <p className="calculator-empty" data-estimate-empty="">Belum ada layanan. Pilih layanan di atas, lalu tekan Tambahkan layanan.</p>
+          <div className="calculator-total"><span>Estimasi total</span><output data-estimate-total="" aria-live="polite">Rp0</output></div>
+          <p>Estimasi menjumlahkan setiap pilihan sesuai satuan menu. Kombinasi desain memakai harga penuh masing-masing, tanpa diskon otomatis. Konfirmasikan satuan stiker / aksesori dan harga akhir melalui WhatsApp.</p>
+          <a className="text-link calculator-contact" data-estimate-link="" href={salon.custom} target="_blank" rel="noopener noreferrer" hidden>Konfirmasi estimasi via WhatsApp ↗</a>
+          <button className="text-link calculator-reset" type="button" data-estimate-reset="" hidden>Kosongkan pilihan</button>
+          <noscript><p>Aktifkan JavaScript untuk menggabungkan layanan dan menghitung estimasi.</p></noscript>
         </aside>
       </div>
     </section>
