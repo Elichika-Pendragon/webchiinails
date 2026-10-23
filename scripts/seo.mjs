@@ -17,7 +17,7 @@ export const seoPages = [
   {
     file: 'custom-sets.html', path: '/custom-sets',
     title: 'Harga Nail Art & Press-on Palembang | Chii Nails',
-    description: 'Lihat karya dan harga Chii Nails: nail art, Cat Eye, extensions, removal dan press-on custom. Harga total press-on Rp25.000–Rp155.000 sesuai desain.',
+    description: 'Hitung estimasi nail art dan press-on Chii Nails Palembang. Harga press-on dihitung dari biaya desain + base kit, dengan tambahan opsional.',
   },
   {
     file: 'visit.html', path: '/visit',

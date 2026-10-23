@@ -18,9 +18,9 @@ Latest recorded check on 23 October: the public sitemap returned valid XML with 
 
 For any future owner-requested check, confirm the actual signed-in owner account in the UI, inspect the existing property, and record Google's response. A local HTTP 200 or Googlebot User-Agent probe does not prove a real Google crawler fetched it. Do not delete a verified property, replace credentials or repeatedly resubmit merely to clear a warning.
 
-## Known source follow-up
+## Price description consistency
 
-The `/custom-sets` description in `scripts/seo.mjs` still contains the earlier Rp25,000–155,000 press-on range. The calculator now uses the approved additive menu/kit formula, and owner price edits do not regenerate static metadata. Treat that description as a remaining copy mismatch to review in a separate site change; this documentation update does not silently alter runtime/SEO source.
+Updated 23 October 2026: the `/custom-sets` description now describes the approved additive press-on formula (design fee + base kit, with optional extras), rather than the former fixed finished-set price range. The same source description feeds the page metadata, Open Graph/Twitter descriptions and WebPage structured data. No amount is embedded in that description, so owner price edits do not leave a numeric range behind. The visible calculator still uses the shared price catalog; owner edits do not regenerate static metadata.
 
 ## Why the result may still say Cloudflare
 
