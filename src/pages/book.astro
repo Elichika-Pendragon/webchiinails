@@ -39,7 +39,7 @@ const fields = [
             <div class="booking-draft-note">
               <p>Isian dan bukti pembayaran dapat dipulihkan di tab browser ini hingga 24 jam jika penyimpanan tersedia, termasuk setelah koneksi terputus atau halaman dimuat ulang. Hapus isian setelah memakai perangkat bersama. Browser dapat menghapus simpanan ini lebih awal.</p>
               <p id="booking-draft-status" role="status" aria-live="polite" aria-atomic="true">Belum ada isian tersimpan.</p>
-              <button id="booking-draft-clear" class="booking-status-retry text-link" type="button" hidden>Hapus isian tersimpan</button>
+              <div class="booking-draft-action"><button id="booking-draft-clear" class="booking-status-retry text-link" type="button" hidden>Hapus isian tersimpan</button></div>
             </div>
             <div id="booking-errors" class="booking-error-summary" role="alert" tabindex="-1" hidden><strong>Periksa detail berikut.</strong><ul></ul></div>
             <fieldset disabled>
@@ -86,6 +86,7 @@ const fields = [
               </div>
               <div class="booking-field">
                 <label id="booking-date-label" for="booking-date">Tanggal</label>
+                <div class="booking-date-control">
                 <input id="booking-date" name="date" type="date" required aria-describedby="error-date" />
                 <div id="booking-calendar" class="booking-calendar" role="group" aria-labelledby="booking-date-label" aria-describedby="booking-calendar-help error-date" hidden>
                   <div class="booking-calendar-header">
@@ -100,6 +101,7 @@ const fields = [
                   <p class="booking-calendar-selection" data-calendar-selection role="status" aria-live="polite" aria-atomic="true">Belum ada tanggal dipilih.</p>
                   <p id="booking-calendar-keys" class="sr-only">Gunakan tombol panah untuk berpindah hari, Home atau End untuk awal atau akhir minggu, dan Page Up atau Page Down untuk berpindah bulan. Tekan Enter atau Spasi untuk memilih.</p>
                 </div>
+                </div>
                 <p id="booking-calendar-status" class="booking-slot-status" role="status" aria-live="polite" aria-atomic="true">Memeriksa jadwal bulan ini…</p>
                 <button id="booking-calendar-retry" class="booking-status-retry text-link" type="button" hidden>Periksa tanggal lagi</button>
                 <small id="booking-calendar-help">Pilih tanggal permintaanmu. Ketersediaan tetap dikonfirmasi oleh Chii.</small>
@@ -110,7 +112,10 @@ const fields = [
             <fieldset disabled>
               <legend>Bukti pembayaran</legend>
               <div class="booking-field"><label for="booking-paymentProof">Unggah bukti pembayaran</label><input id="booking-paymentProof" name="paymentProof" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" required aria-describedby="hint-paymentProof booking-proof-status error-paymentProof" /><small id="hint-paymentProof">JPEG, PNG, atau WebP · maksimal 10 MB. Gambar diperkecil sebelum dikirim.</small><p id="error-paymentProof" class="booking-field-error" hidden></p></div>
+              <div class="booking-proof-stage">
               <div id="booking-proof-preview" class="booking-proof-preview" hidden><img id="booking-proof-image" width="320" height="180" alt="Pratinjau bukti pembayaran" /><button id="booking-proof-remove" class="booking-status-retry text-link" type="button">Hapus gambar</button></div>
+                <p class="booking-proof-placeholder">Pratinjau bukti pembayaran akan tampil di sini setelah gambar dipilih atau dipulihkan.</p>
+              </div>
               <p id="booking-proof-status" class="booking-slot-status" role="status" aria-live="polite" aria-atomic="true">Unggah bukti pembayaran untuk melanjutkan.</p>
               <p class="booking-privacy">Bukti hanya dapat dilihat Chii dan dihapus otomatis 30 hari setelah jadwal booking.</p>
             </fieldset>

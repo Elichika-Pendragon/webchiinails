@@ -14,3 +14,20 @@
 @media(max-width:374px){.booking-calendar{width:calc(100% + 32px);max-width:none;margin-inline:-16px;padding:0 0 8px}.booking-calendar-header{padding:8px 8px 0}.booking-calendar-selection{margin-inline:8px}}
 .booking-calendar td button[data-availability=unavailable]{background:#f0f0f0;color:#777;opacity:1;cursor:default}.booking-calendar td button[data-availability=loading],.booking-calendar td button[data-availability=error]{background:var(--blush);color:var(--muted);cursor:default}.booking-calendar td button[aria-disabled=true]:hover,.booking-calendar td button[aria-disabled=true]:active{background:var(--blush);color:var(--muted)}.booking-calendar td button[data-availability=unavailable]:hover,.booking-calendar td button[data-availability=unavailable]:active{background:#f0f0f0;color:#777}.booking-calendar td button[data-availability=unavailable]:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
 .booking-challenge{margin-block:16px;min-width:0}
+
+/* Reserve the final controls before scripts/storage return; recovery only fills them. */
+.booking-date-control{min-block-size:427px}
+.booking-draft-note [role=status]{min-block-size:4.95em}
+.booking-draft-action{min-block-size:52px}
+.booking-proof-stage{display:grid;margin-top:14px}
+.booking-proof-stage>.booking-proof-preview,.booking-proof-placeholder{grid-area:1/1;margin:0;padding:12px;border:1px solid var(--border);border-radius:var(--radius-card);min-width:0}
+.booking-proof-placeholder{display:grid;place-items:center;min-block-size:296px;background:var(--blush);color:var(--muted);font-size:12px;line-height:1.65;text-align:center}
+.booking-proof-stage>.booking-proof-preview:not([hidden])+.booking-proof-placeholder{visibility:hidden}
+.booking-proof-stage .booking-proof-preview img{display:block;width:100%;height:220px;max-height:none;object-fit:contain}
+#booking-proof-status{min-block-size:3.3em}
+@media(max-width:374px){.booking-date-control{min-block-size:419px}}
+
+#booking-mode-description,#booking-calendar-status,#booking-slot-status,#booking-submit-status{min-block-size:3.3em}
+#hint-time{min-block-size:3.2em}
+@media(max-width:720px){#booking-mode-description{min-block-size:6.6em}#hint-time{min-block-size:4.8em}}
+@media(max-width:360px){#booking-mode-description{min-block-size:8.25em}#hint-time{min-block-size:6.4em}}
