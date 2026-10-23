@@ -226,7 +226,7 @@ export async function createBookingRequest(env, input, { now, calendar, admissio
       return created(config, concurrent, current);
     }
     const row = await byId(config, id);
-    if (!row) throw failure('REQUEST_IN_PROGRESS', 409);
+    if (!row) { await ticket.assertNewAllowed?.(); throw failure('REQUEST_IN_PROGRESS', 409); }
     return created(config, row, current);
   } finally {
     // Normalization/provider/storage failure releases reserved capacity. If D1

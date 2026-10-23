@@ -8,7 +8,7 @@ if (root) {
   const status = root.querySelector('[data-order-status]'), detail = root.querySelector('[data-order-detail]');
   let busy = false, loadedCode = '', lookupTimer = null;
   // The calculator reference is optional and deliberately absent from booking
-  // validation, payment fields and the private booking-access credential.
+  // validation and payment fields. Normal booking needs no calculator code.
   try { const value = sessionStorage.getItem('chii:order-code'); if (validOrderCode(value)) input.value = normalizeOrderCode(value); } catch {}
   input.addEventListener('input', () => { clearTimeout(lookupTimer); detail.hidden = true; detail.textContent = ''; loadedCode = ''; status.textContent = ''; if (validOrderCode(input.value)) lookupTimer = setTimeout(() => button.click(), 500); });
   button.addEventListener('click', async () => {

@@ -12,7 +12,7 @@ STORY: Jessica accepts after checking funds, then sends the customer's own signe
 
 FIRST VIEWPORT: Logo and title, receipt number and DP/Lunas status lead into customer/date/time. A compact service row and aligned total/received/balance follow. One print action sits below the document.
 
-FORM: A single-column receipt sheet is the specified structure. Preserve the payment form entirely. Public five-character order references, private reusable booking access and owner approval remain distinct.
+FORM: A single-column receipt sheet is the specified structure. Preserve the payment form entirely. Public five-character order references remain optional; customers submit without an invitation, and owner approval remains separate.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 

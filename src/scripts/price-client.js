@@ -116,7 +116,7 @@ export function initPrices(root) {
     }
     if (focusedRemove) list.querySelector(`[data-remove-service="${focusedRemove}"]`)?.focus();
     const message = `Halo Chii, saya ingin konsultasi layanan berikut:\n${result.lines.map(line => `- ${title(line)}${line.quantity > 1 ? ` × ${line.quantity}` : ''}: ${priceRange(line.min, line.max)}`).join('\n')}\nEstimasi: ${priceRange(result.min, result.max)} (belum ongkir). Mohon konfirmasi kombinasi layanan, satuan tambahan dan harga akhir. Setelah konsultasi, mohon kode untuk melanjutkan di https://chiinails.pages.dev/book.`;
-    const codeMessage = customerCode ? `\n\nKode dari kalkulator: ${customerCode} (rincian pilihan, bukan kode akses booking). Mohon periksa sebelum menyepakati harga dan durasi.` : '';
+    const codeMessage = customerCode ? `\n\nKode dari kalkulator: ${customerCode} (rincian pilihan layanan). Mohon periksa sebelum menyepakati harga dan durasi.` : '';
     link.href = `${salon.whatsapp}?text=${encodeURIComponent(message + codeMessage)}`;
   }
 

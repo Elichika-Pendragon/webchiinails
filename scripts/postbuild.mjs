@@ -32,7 +32,7 @@ assert.deepEqual(await readFile(new URL(`../dist/${verification}`, import.meta.u
 const assets = new URL('../dist/_astro/', import.meta.url);
 const scripts = (await readdir(assets)).filter(name => name.endsWith('.js'));
 const contents = new Map(await Promise.all(scripts.map(async name => [name, await readFile(new URL(name, assets), 'utf8')])));
-const pages = await Promise.all([...seoPages, {file: 'book.html'}, {file: 'book/approve.html'}, {file: 'prices.html'}, {file:'book/manage.html'}, {file:'receipt.html'}].map(page => readFile(new URL(`../dist/${page.file}`, import.meta.url), 'utf8')));
+const pages = await Promise.all([...seoPages, {file: 'book.html'}, {file: 'book/approve.html'}, {file: 'prices.html'}, {file:'receipt.html'}].map(page => readFile(new URL(`../dist/${page.file}`, import.meta.url), 'utf8')));
 for (const [name, source] of contents) {
   if (!/^client\..+\.js$/.test(name) || !/react\.transitional\.element/.test(source)) continue;
   assert.ok(!pages.some(html => html.includes(name)) && ![...contents].some(([other, code]) => other !== name && code.includes(name)), 'React client runtime must remain unreferenced');

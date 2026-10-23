@@ -3,10 +3,8 @@ import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 import {getAuthChallenge,signInOwner} from './booking-auth.js';
-import {issueBookingCode,verifyBookingCode,withBookingCodeAdmission,handleOwnerBookingCodes,handleBookingCodeCheck} from './booking-codes.js';
 import {createBookingRequest} from './booking-requests.js';
 import {createBookingHttpHandlers} from './booking-http.js';
-import {generateBookingCode,validBookingCode} from '../src/booking-code.js';
 import {syntheticAdmission,syntheticNormalization} from './fixtures/synthetic-admission.js';
 import {proof} from './fixtures/payment-proof.js';
 const authEnv = { SITE_URL: 'https://synthetic.example', GOOGLE_OAUTH_CLIENT_ID: 'synthetic-client.apps.googleusercontent.com', BOOKING_OWNER_EMAIL: 'owner.synthetic@gmail.com', BOOKING_AUTH_SECRET: 'synthetic-test-signing-secret-with-more-than-32-bytes' };
@@ -101,13 +99,6 @@ test('expired codes cannot be resolved or reassigned, and creation has an atomic
  f.random=randomOrderCode;
  for(let i=3;i<=11;i++)assert.equal((await f.public(create(i))).status,201);
  assert.equal((await f.public(create(12))).status,429);assert.equal(f.rows(),10);
-});
-
-test('public code never grants booking access and owner cannot activate a supplied calculator reference',async()=>{
- const f=await setup(),saved=(await (await f.public(create())).json()).order;
- await assert.rejects(verifyBookingCode(f.env,saved.code,'081234567890',{now}),e=>e.code==='BOOKING_CODE_REQUIRED');
- const result=await handleOwnerBookingCodes(request('/api/booking/codes',{...signedOwner,method:'POST',body:{action:'issue',name:'Synthetic Customer',whatsapp:'081234567890',code:saved.code}}),f.env,{auth,now:()=>now});assert.equal(result.status,400);
- assert.equal(f.db.sqlite.prepare('SELECT count(*) n FROM booking_access_codes').get().n,0);
 });
 
 test('estimate import seeds editable amounts, preserves entered DP, and respects full payment and ranges',()=>{

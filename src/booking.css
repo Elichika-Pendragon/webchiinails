@@ -33,4 +33,3 @@
 @media(max-width:360px){#booking-mode-description{min-block-size:8.25em}#hint-time{min-block-size:6.4em}}
 
 .booking-calculator-note{white-space:pre-line;padding:20px;background:var(--blush);border-radius:var(--radius-card);font-size:14px;line-height:1.7;margin-bottom:24px}
-#booking-code{font-family:inherit;letter-spacing:.08em}

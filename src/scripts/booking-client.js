@@ -9,7 +9,6 @@ if (form) {
   const fields = ['name', 'whatsapp', 'agreedPrice', 'paymentMode', 'deposit', 'serviceDuration', 'date', 'time'];
   const editable = fields;
   const input = name => form.elements.namedItem(name);
-  const codeInput = document.querySelector('#booking-code');
   const review = document.querySelector('#booking-review-panel');
   const errors = document.querySelector('#booking-errors');
   const bookButton = document.querySelector('#booking-review');
@@ -159,7 +158,7 @@ if (form) {
   };
   const updateButton = () => {
     const result = validation();
-    bookButton.disabled = submitting || offline() || service !== 'enabled' || codeInput.value.replace(/[\s-]/g, '').length !== 16 || !result.valid;
+    bookButton.disabled = submitting || offline() || service !== 'enabled' || !result.valid;
     draftClear.disabled = submitting;
     if (result.valid && requestSignature && requestSignature !== signature(result.value)) {
       requestSignature = '';
@@ -167,7 +166,6 @@ if (form) {
     }
     return result;
   };
-  codeInput.addEventListener('input', updateButton);
   const estimateNote = document.querySelector('#booking-calculator-note');
   try {
     const quote = JSON.parse(sessionStorage.getItem('chii:calculator:v1') || 'null');
@@ -519,7 +517,7 @@ if (form) {
 
   form.addEventListener('submit', async event => {
     event.preventDefault();
-    if (submitting || offline() || service !== 'enabled' || codeInput.value.replace(/[\s-]/g, '').length !== 16) return;
+    if (submitting || offline() || service !== 'enabled') return;
     updateDeposit();
     const result = updateButton();
     showErrors(result.errors);
@@ -542,13 +540,10 @@ if (form) {
         const value = result.value;
         const key = idempotencyKey(value);
         setStatus('Memeriksa keamanan sebelum mengirim… Isian dan bukti tetap tersimpan.');
-        const codeSession = await api('/api/booking/admission');
-        const checkedCode = await api('/api/booking/access', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Booking-Nonce': codeSession.nonce }, body: JSON.stringify({ code: codeInput.value, whatsapp: value.whatsapp }) });
-        if (checkedCode?.valid !== true) throw new Error('booking-code');
         const admission = await challenge.verify();
         if (!active || offline()) throw new DOMException('Aborted', 'AbortError');
         const body = new FormData();
-        body.set('booking', JSON.stringify({ name: value.name, whatsapp: value.whatsapp, agreedPrice: String(value.agreedPrice), paymentMode: value.paymentMode, deposit: String(value.deposit), designType: value.designType, durationMinutes: String(value.durationMinutes), date: value.date, time: value.time, idempotencyKey: key, turnstileToken: admission.token, bookingCode: codeInput.value }));
+        body.set('booking', JSON.stringify({ name: value.name, whatsapp: value.whatsapp, agreedPrice: String(value.agreedPrice), paymentMode: value.paymentMode, deposit: String(value.deposit), designType: value.designType, durationMinutes: String(value.durationMinutes), date: value.date, time: value.time, idempotencyKey: key, turnstileToken: admission.token }));
         body.set('proof', proof.blob, 'receipt.jpg');
         setStatus('Mengunggah bukti dan menyimpan permintaan booking… Tunggu hingga selesai.');
         const response = await api('/api/booking/requests', {
@@ -572,8 +567,8 @@ if (form) {
         input('time').value = '';
         await fillTimes();
         setStatus('Jadwal baru saja terisi. Pilih tanggal atau jam lain, lalu tekan Book lagi. Detail dan bukti pembayaranmu tetap di formulir.', true);
-      } else if (['BOOKING_CODE_REQUIRED', 'BOOKING_CODE_BUSY'].includes(error.code)) {
-        setStatus(error.code === 'BOOKING_CODE_REQUIRED' ? 'Kode atau nomor WhatsApp belum sesuai. Minta kode dari Chii setelah konsultasi; isian tetap tersimpan.' : 'Masih ada booking atau permintaan aktif, atau batas pengiriman tercapai. Tunggu minimal 15 menit (maksimal 3 permintaan baru dalam 24 jam), atau hubungi Chii untuk perubahan.', true);
+      } else if (error.code === 'BOOKING_RATE_LIMIT') {
+        setStatus('Masih ada booking atau permintaan aktif, atau batas pengiriman tercapai. Tunggu minimal 15 menit (maksimal 3 permintaan baru dalam 24 jam), atau hubungi Chii untuk perubahan. Isian dan bukti tetap tersimpan.', true);
       } else if (error instanceof BookingChallengeError || ['ADMISSION_CHALLENGE', 'ADMISSION_REQUIRED'].includes(error.code)) setStatus('Pemeriksaan keamanan belum selesai. Periksa koneksi, lalu tekan Book lagi. Isian dan bukti pembayaran tetap tersimpan.', true);
       else if (error.code === 'ADMISSION_CAPACITY') setStatus('Permintaan online sedang dibatasi. Isian tetap tersimpan; hubungi Chii melalui WhatsApp untuk melanjutkan.', true);
       else if (error.code === 'ADMISSION_IN_PROGRESS') setStatus('Pengiriman yang sama sedang diproses. Tunggu sebentar, lalu tekan Book lagi. Isian dan bukti tetap tersimpan.', true);
@@ -709,7 +704,6 @@ if (form) {
     clearProof(false, false);
     draft.clear();
     requestKey = ''; requestSignature = ''; lastSelectedTime = '';
-    codeInput.value = '';
     ['name', 'whatsapp', 'agreedPrice', 'date', 'time'].forEach(name => { input(name).value = ''; });
     input('serviceDuration').value = 'simple:120';
     requestedPaymentMode = 'deposit'; input('paymentMode').value = 'deposit';

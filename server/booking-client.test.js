@@ -46,7 +46,6 @@ function harness(options = {}) {
   const inputs = Object.fromEntries(['name', 'whatsapp', 'agreedPrice', 'paymentMode', 'deposit', 'serviceDuration', 'date', 'time', 'paymentProof'].map(name => {
     const node = element(); node.name = name; return [name, node];
   }));
-  nodes['#booking-code'].value = options.bookingCode === undefined ? 'ABCD-EFGH-JKLM-NPQR' : options.bookingCode; // Simulates customer entering the issued code; not draft restoration.
   nodes['#booking-paymentProof'] = inputs.paymentProof;
   inputs.paymentProof.files = [];
   inputs.paymentMode.value = 'deposit';
@@ -99,7 +98,6 @@ function harness(options = {}) {
   const fetch = async (path, request) => {
     calls.push({ path, request });
     if (path === '/api/booking/admission') return {ok:true,status:200,json:async()=>({nonce:'a'.repeat(64)})};
-    if (path === '/api/booking/access') return {ok:!config.invalidCode,status:config.invalidCode?403:200,json:async()=>config.invalidCode?{code:'BOOKING_CODE_REQUIRED'}:{valid:true}};
     if (path.endsWith('/status')) {
       if (config.statusFailure) throw new Error('synthetic offline');
       return { ok: true, status: 200, json: async () => ({ enabled: config.enabled }) };
@@ -491,7 +489,7 @@ test('online Book posts canonical strings, then prepares the unique approval lin
   const page = harness(); await settle(); await page.fill(); await page.submit();
   assert.equal(page.redirects.length, 1);
   const payload = page.posts()[0];
-  assert.deepEqual(Object.keys(payload).sort(), ['agreedPrice', 'bookingCode', 'date', 'deposit', 'designType', 'durationMinutes', 'idempotencyKey', 'name', 'paymentMode', 'proof', 'time', 'turnstileToken', 'whatsapp']);
+  assert.deepEqual(Object.keys(payload).sort(), ['agreedPrice', 'date', 'deposit', 'designType', 'durationMinutes', 'idempotencyKey', 'name', 'paymentMode', 'proof', 'time', 'turnstileToken', 'whatsapp']);
   assert.equal(payload.whatsapp, '6281234567890');
   assert.equal(payload.agreedPrice, '100000');
   assert.equal(payload.paymentMode, 'deposit');
@@ -511,17 +509,17 @@ test('online Book posts canonical strings, then prepares the unique approval lin
   assert.equal(page.nodes['#booking-whatsapp-link'].href, page.redirects[0]);
 });
 
-test('disabled booking cannot bypass the code gate through the WhatsApp preview', async () => {
+test('disabled booking cannot submit through the WhatsApp preview', async () => {
   const page = harness({ enabled: false }); await settle(); await page.fill(); await page.submit();
   assert.equal(page.posts().length, 0); assert.equal(page.redirects.length, 0);
   assert.equal(page.nodes['#booking-review'].disabled, true);
 });
-test('missing code disables Book and an inactive code fails before challenge, upload or WhatsApp', async () => {
-  const missing = harness({bookingCode:''}); await settle(); await missing.fill(); await missing.submit();
-  assert.equal(missing.nodes['#booking-review'].disabled,true); assert.equal(missing.posts().length,0);
-  const invalid=harness({invalidCode:true});await settle();await invalid.fill();await invalid.submit();
-  assert.equal(invalid.posts().length,0);assert.equal(invalid.challengeCalls.length,0);assert.equal(invalid.redirects.length,0);
-  assert.equal(invalid.inputs.name.value,'Synthetic Customer');assert.match(invalid.nodes['#booking-submit-status'].textContent,/Kode/);
+test('a complete booking submits without an invitation or calculator reference', async () => {
+  const page=harness(); await settle(); await page.fill(); await page.submit();
+  assert.equal(page.posts().length,1); assert.equal(page.redirects.length,1);
+  assert.equal(page.posts()[0].bookingCode,undefined);
+  assert(!page.calls.some(call=>call.path==='/api/booking/access'));
+  assert(page.challengeCalls.length>0);
 });
 
 test('unknown service status fails closed and supports an explicit status retry', async () => {

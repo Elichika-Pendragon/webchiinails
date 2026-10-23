@@ -22,6 +22,8 @@ Reviewed **23 October 2026** against the current source. Start with the current 
 
 ## Release records and evidence
 
+Latest workflow: [Booking without private access codes — 24 October 2026](BOOKING-SIMPLIFICATION-2026-10-24.md).
+
 Latest: [Order-code and printable-receipt production release — 24 October 2026](evidence/order-codes-2026-10-24/README.md).
 
 [23 October checkpoint](RELEASE-CHECKPOINT-2026-10-23.md) links the final audit, booking restore fix, pricing, monthly imports and live release evidence. [Evidence index](evidence/README.md) is the entry point for captured results. Evidence retains its original dates, revisions and test scope.

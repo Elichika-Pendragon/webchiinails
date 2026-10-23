@@ -1,2 +1,2 @@
-import { handleBookingCodeCheck } from '../../../server/booking-codes.js';
-export const onRequest = ({ request, env }) => handleBookingCodeCheck(request, env);
+import { retiredBookingAccess } from '../../../server/retired-booking-access.js';
+export const onRequest = () => retiredBookingAccess();

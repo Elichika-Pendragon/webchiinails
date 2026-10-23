@@ -1,0 +1,20 @@
+{
+  "tests": 545,
+  "failed": 0,
+  "productionBuild": true,
+  "paymentMarkupUnchanged": true,
+  "viewportWidths": [
+    1280,
+    390,
+    320
+  ],
+  "horizontalOverflow": false,
+  "privateCodeFields": 0,
+  "calculatorRequired": false,
+  "lookupTotal": 62000,
+  "lookupDeposit": 20000,
+  "manualTotal": 70000,
+  "manualDeposit": 30000,
+  "workerVersion": "645be503-aad8-4c81-93ff-c61edea6c0db",
+  "realCustomerBookingsCreated": 0
+}

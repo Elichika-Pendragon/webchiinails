@@ -1,2 +1,2 @@
-import { handleOwnerBookingCodes } from '../../../server/booking-codes.js';
-export const onRequest = ({ request, env }) => handleOwnerBookingCodes(request, env);
+import { retiredBookingAccess } from '../../../server/retired-booking-access.js';
+export const onRequest = () => retiredBookingAccess();

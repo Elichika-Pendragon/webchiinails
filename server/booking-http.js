@@ -15,7 +15,7 @@ import { getBookingCalendarMonth, getBookingMonthBounds } from './booking-month.
 import { normalizeBookingDesign, getOperatingHours, getBookingDateBounds, calculatePayment } from './booking.js';
 import { PAYMENT_PROOF_MAX_BYTES, paymentProofBytes, PaymentProofValidationError } from './booking-proofs.js';
 import { BookingAdmissionError, issueBookingAdmission, preflightBookingAdmission, submissionAdmission, isBookingAdmissionConfigured } from './booking-admission.js';
-import { BookingCodeError, verifyBookingCode, withBookingCodeAdmission } from './booking-codes.js';
+import { withCustomerRequestLimits } from './booking-customer-limits.js';
 import { createPublicBookingCalendar } from './booking-occupancy-cache.js';
 
 const encoder = new TextEncoder();
@@ -119,9 +119,6 @@ function errorResponse(error) {
     ({ code, message, status, allow } = error);
   } else if (error instanceof BookingAuthError) {
     const safe = new BookingAuthError(error.code);
-    ({ code, message, status } = safe);
-  } else if (error instanceof BookingCodeError) {
-    const safe = new BookingCodeError(error.code);
     ({ code, message, status } = safe);
   } else if (error instanceof BookingAdmissionError) {
     const safe = new BookingAdmissionError(error.code);
@@ -298,7 +295,7 @@ export function createBookingHttpHandlers(overrides = {}) {
   const issueAdmission = overrides.issueBookingAdmission ?? issueBookingAdmission;
   const preflightAdmission = overrides.preflightBookingAdmission ?? preflightBookingAdmission;
   const admitSubmission = overrides.submissionAdmission ?? submissionAdmission;
-  const guardCode = overrides.guardBookingCode ?? (async (env, input, admission) => withBookingCodeAdmission(admission, await verifyBookingCode(env, input.bookingCode, input.whatsapp, { now })));
+  const guardCustomer = overrides.guardBookingCustomer ?? ((env, input, admission) => withCustomerRequestLimits(env, input.whatsapp, admission, { now }));
   const publicCalendar = overrides.createPublicBookingCalendar ?? createPublicBookingCalendar;
   const createCalendar = overrides.createGoogleCalendarProvider ?? createGoogleCalendarProvider;
   const bodyTimeoutMs = overrides.bodyTimeoutMs ?? 5000;
@@ -376,7 +373,7 @@ export function createBookingHttpHandlers(overrides = {}) {
         || !normalizeBookingDesign(input.designType, input.durationMinutes)
         || typeof input.turnstileToken !== 'string' || input.turnstileToken.length > 2048) throw new BookingHttpError('BOOKING_INPUT');
       const { turnstileToken, bookingCode, ...booking } = input;
-      const admission = await guardCode(env, { bookingCode, whatsapp: booking.whatsapp }, admitSubmission(env, context, { ...authOptions, turnstileToken }));
+      const admission = await guardCustomer(env, { whatsapp: booking.whatsapp }, admitSubmission(env, context, { ...authOptions, turnstileToken }));
       return json(await createRequest(env, booking, { now, calendar: calendar(env), admission }), 201);
       } finally { activeCreations--; }
     }),

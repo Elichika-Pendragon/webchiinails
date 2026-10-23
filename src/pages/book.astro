@@ -44,7 +44,6 @@ const fields = [
               <div class="booking-draft-action"><button id="booking-draft-clear" class="booking-status-retry text-link" type="button" hidden>Hapus isian tersimpan</button></div>
             </div>
             <div id="booking-errors" class="booking-error-summary" role="alert" tabindex="-1" hidden><strong>Periksa detail berikut.</strong><ul></ul></div>
-            <fieldset disabled><legend>Kode dari Chii</legend><div class="booking-field"><label for="booking-code">Kode booking</label><input id="booking-code" name="bookingCode" type="password" maxlength="40" autocomplete="off" spellcheck="false" autocapitalize="characters" required aria-describedby="booking-code-hint" /><small id="booking-code-hint">Minta kode dari Chii setelah konsultasi. Kode hanya berlaku untuk nomor WhatsApp yang Chii daftarkan dan dapat digunakan kembali. Isian dipulihkan setelah muat ulang, tetapi kode perlu dimasukkan lagi. Mengirim permintaan belum mengunci jadwal.</small></div></fieldset>
             <fieldset disabled>
               <legend>Data diri</legend>
               {fields.map(field => <div class="booking-field">
@@ -56,7 +55,7 @@ const fields = [
               <div class="booking-field order-lookup" data-order-lookup>
                 <label for="booking-order-code">Kode kalkulator (opsional)</label>
                 <div class="order-lookup-row"><input id="booking-order-code" data-order-input type="text" maxlength="5" autocomplete="off" spellcheck="false" autocapitalize="characters" aria-describedby="booking-order-hint" /><button type="button" class="button button-secondary">Lihat rincian</button></div>
-                <small id="booking-order-hint">Tempel kode pilihan 5 karakter untuk memuat rincian. Boleh kosong; ini bukan kode akses booking dari Chii.</small>
+                <small id="booking-order-hint">Tempel kode 5 karakter dari kalkulator untuk memuat rincian dan estimasi harga. Boleh dikosongkan.</small>
                 <p data-order-status role="status" aria-live="polite"></p><p class="order-detail" data-order-detail hidden></p>
               </div>
             </fieldset>
