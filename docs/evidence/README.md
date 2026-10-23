@@ -7,3 +7,7 @@
 - `live-verification.json`: live routes, public SEO files, expected sanitized unconfigured API response, 404 and exact first-party bundle checksum.
 
 See [PERFORMANCE.md](../../PERFORMANCE.md) for report links, tested versions, lab settings and limitations. No Meta token or private account data is included.
+
+## Later verification
+
+- [23 October final audit and booking restore proof](final-check-2026-10-23/README.md). Includes provenance, before/after measurements and a SHA-256 manifest.

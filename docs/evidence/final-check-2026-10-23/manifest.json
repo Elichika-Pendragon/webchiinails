@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-23",
+  "timeZone": "Asia/Jakarta",
+  "auditSource": "2e9d852",
+  "restoreFixSource": "1543b21",
+  "files": [
+    {
+      "name": "chii-final-booking-recovery-mobile.png",
+      "bytes": 31194,
+      "sha256": "0acadfeca2cc29e40b55ada8f06b7bc8b85c8a4b589bc6ae8d33194ce1c868cf"
+    },
+    {
+      "name": "chii-final-http-results.json",
+      "bytes": 70870,
+      "sha256": "2da882f6023fd0a99cd3e9342eb4af3c0df4423a3d968ea0e4e5aee3c897a361"
+    },
+    {
+      "name": "chii-final-local-stress.json",
+      "bytes": 236,
+      "sha256": "0fd681c5f01f72b5f438e11110fd8edde90b1cf81448c6db12fd2640d4967d31"
+    },
+    {
+      "name": "chii-final-mobile-home.png",
+      "bytes": 38000,
+      "sha256": "8c56378b86470996ed6c07459474e541268199dd409847cbb84baaf909cac9cc"
+    },
+    {
+      "name": "Chii-final-performance-and-feature-check.md",
+      "bytes": 9703,
+      "sha256": "098e433cffae05784b8da0ac051dab6dcc8aa66078578ec7ca881d5de682d3c9"
+    },
+    {
+      "name": "chii-final-ui-results.json",
+      "bytes": 12235,
+      "sha256": "e2cecc129083d51b58de825f838e647b3613eecacd3618d6ad5f8733a4229809"
+    },
+    {
+      "name": "chii-local-slow-probes.json",
+      "bytes": 2033,
+      "sha256": "670b580c3f8f9a95fe491d3356063489279333ae5fa088bf0eccb9247c11fadb"
+    },
+    {
+      "name": "chii-restore-final-browser.json",
+      "bytes": 891,
+      "sha256": "9a39bcda416dca9a379021577d5302fd009a8e37d5058c23078304a9e07718f4"
+    },
+    {
+      "name": "chii-restore-first-comparison.json",
+      "bytes": 9519,
+      "sha256": "adc73cbb1c2d44d59087815dc83ee3f08173da7bda9c002dd20556260821f584"
+    },
+    {
+      "name": "chii-restore-fixed-mobile.png",
+      "bytes": 23258,
+      "sha256": "30be504cbdbb1ec9167c3781dd353b0a3e07ffae4b99ce32cfbc22ba8167d9af"
+    },
+    {
+      "name": "chii-restore-layout-results.json",
+      "bytes": 12916,
+      "sha256": "2dd128dab65058ae3623afc9238e5340dea6ed988ae0155da4e85800fc3665d8"
+    },
+    {
+      "name": "chii-restore-production-check.json",
+      "bytes": 139,
+      "sha256": "3450ee38386494c434c1c6bef5bc255658b1cb4305d7097cd5bc413247b35870"
+    },
+    {
+      "name": "chii-restore-production-mobile.png",
+      "bytes": 23682,
+      "sha256": "2623fe7b4e2d0146040689ff94e6b44ef6e6f7034335b0ab6f2d1fc73c56b64b"
+    },
+    {
+      "name": "README.md",
+      "bytes": 2308,
+      "sha256": "6583e285e251e3f0593106400b918096f1668c3ba785d9467cb85ed522963949"
+    }
+  ]
+}

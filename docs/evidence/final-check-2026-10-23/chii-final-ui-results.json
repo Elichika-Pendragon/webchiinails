@@ -1,0 +1,240 @@
+{
+  "mobile": [
+    {
+      "brokenVisibleImages": [],
+      "h1": 1,
+      "headerTop": 0,
+      "iframes": [],
+      "path": "/",
+      "scrollWidth": 375,
+      "width": 375
+    },
+    {
+      "brokenVisibleImages": [],
+      "h1": 1,
+      "headerTop": 0,
+      "iframes": [],
+      "path": "/services",
+      "scrollWidth": 375,
+      "width": 375
+    },
+    {
+      "brokenVisibleImages": [],
+      "h1": 1,
+      "headerTop": 0,
+      "iframes": [],
+      "path": "/custom-sets",
+      "scrollWidth": 375,
+      "width": 375
+    },
+    {
+      "brokenVisibleImages": [],
+      "h1": 1,
+      "headerTop": 0,
+      "iframes": [],
+      "path": "/about",
+      "scrollWidth": 375,
+      "width": 375
+    },
+    {
+      "brokenVisibleImages": [],
+      "h1": 1,
+      "headerTop": 0,
+      "iframes": [],
+      "path": "/visit",
+      "scrollWidth": 375,
+      "width": 375
+    },
+    {
+      "bookDisabled": true,
+      "brokenVisibleImages": [],
+      "h1": 1,
+      "headerTop": 0,
+      "iframes": [],
+      "path": "/book",
+      "scrollWidth": 375,
+      "width": 375
+    },
+    {
+      "brokenVisibleImages": [],
+      "h1": 1,
+      "headerTop": 0,
+      "iframes": [],
+      "path": "/book/approve",
+      "scrollWidth": 375,
+      "width": 375
+    },
+    {
+      "brokenVisibleImages": [],
+      "h1": 1,
+      "headerTop": 0,
+      "iframes": [],
+      "path": "/prices",
+      "scrollWidth": 375,
+      "width": 375
+    }
+  ],
+  "desktop": [],
+  "features": [
+    {
+      "name": "mobile menu opens",
+      "expanded": "true"
+    },
+    {
+      "name": "Escape closes menu",
+      "expanded": "false"
+    },
+    {
+      "chatVisible": true,
+      "links": [
+        {
+          "href": "https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.",
+          "text": "WhatsAppKonsultasi desain & booking↗"
+        },
+        {
+          "href": "https://www.instagram.com/chii.nails_/",
+          "text": "InstagramLihat karya & kirim DM↗"
+        },
+        {
+          "href": "https://id.shp.ee/1isrkeoe",
+          "text": "ShopeeCheckout Our Shopee↗"
+        }
+      ],
+      "name": "contact panel at 320",
+      "scrollWidth": 305,
+      "width": 305
+    },
+    {
+      "name": "combined calculator",
+      "detail": "Nail polos · 10 jari\nRp25.000\nHapus\nExtension · 10 kuku\nRp30.000\nHapus\nGlitter · 10 jari\nRp5.000\nHapus\nRemove nail gel · 10 kuku\nRp23.000\nHapus",
+      "snapshot": "xtension, glitter, stiker, aksesori atau removal. Tambahkan satu per satu untuk melihat rinciannya.\n        - generic: Layanan / tambahan\n        - combobox \"Layanan / tambahan\":\n          - option \"Nail polos · 10 jari\"\n          - option \"Nail mood temperatur · 10 jari\"\n          - option \"French nails · 10 jari\"\n          - option \"Marble · 10 jari\"\n          - option \"Ombré nails · 10 jari\"\n          - option \"Request design · Mengikuti tingkat kesulitan\"\n          - option \"Cat eye / silky cat eye · 10 jari\"\n          - option \"Cat eye universal · 10 jari\"\n          - option \"Crystal cat eye · 10 jari\"\n          - option \"Cat eye rainbow / mix colors · 10 jari\"\n          - option \"Cat eye love / bunny · 10 jari\"\n          - option \"Extension · 1 kuku\"\n          - option \"Extension · 10 kuku\"\n          - option \"Glitter · 10 jari\"\n          - option \"Stiker\"\n          - option \"Aksesori 3D\"\n          - option \"Remove fake nails · 1 kuku\"\n          - option \"Remove fake nails · 10 kuku\"\n          - option \"Remove nail gel · 1 kuku\"\n          - option \"Remove nail gel · 10 kuku\" [selected]\n          - option \"Remove nail biasa · 10 kuku\"\n        - button \"Tambahkan layanan\" [active]\n        - status: Remove nail gel · 10 kuku ditambahkan.\n        - checkbox \"Tambah base kit press-on · 10 kuku Rp22.000\"\n        - text: Tambah base kit press-on · 10 kuku\n        - generic: Rp22.000\n        - checkbox \"Tambah super glue nails MXBON Rp13.000\"\n        - text: Tambah super glue nails MXBON\n        - generic: Rp13.000\n        - list \"Rincian estimasi\":\n          - generic: Nail polos · 10 jari\n          - strong: Rp25.000\n          - button \"Hapus Nail polos · 10 jari\": Hapus\n          - generic: Extension · 10 kuku\n          - strong: Rp30.000\n          - button \"Hapus Extension · 10 kuku\": Hapus\n          - generic: Glitter · 10 jari\n          - strong: Rp5.000\n          - button \"Hapus Glitter · 10 jari\": Hapus\n          - generic: Remove nail gel · 10 kuku\n          - strong: Rp23.000\n          - button \"Hapus Remove nail gel · 10 kuku\": Hapus\n        - generic: Estimasi total\n        - status: Rp83.000\n        - paragraph: Estimasi menjumlahkan setiap pilihan sesuai satuan menu. Kombinasi desain memakai harga penuh masing-masing, tanpa diskon otomatis. Konfirmasikan satuan stiker / aksesori dan harga akhir melalui WhatsApp.\n        - link \"Konfirmasi estimasi via WhatsApp ↗\":\n          - /url: https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20layanan%20berikut%3A%0A-%20Nail%20polos%20%C2%B7%2010%20jari%3A%20Rp25.000%0A-%20Extension%20%C2%B7%2010%20kuku%3A%20Rp30.000%0A-%20Glitter%20%C2%B7%2010%20jari%3A%20Rp5.000%0A-%20Remove%20nail%20gel%20%C2%B7%2010%20kuku%3A%20Rp23.000%0AEstimasi%3A%20Rp83.000%20(belum%20ongkir).%20Mohon%20konfirmasi%20kombinasi%20layanan%2C%20satuan%20tambahan%20dan%20harga%20akhir.\n        - button \"Kosongkan pilihan\"\n    - paragraph:\n      - text: Semua harga dalam rupiah. Harga akhir mengikuti desain, tingkat kesulitan, dan tambahan yang dipilih.\n      - link \"Booking wajib DP · tidak menerima walk-in.\":\n        - /url: /about#booking-rules\n    - link \"Konsultasi desain & harga ↗\":\n      - /url: https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.\n  - paragraph: LET’S MAKE IT YOURS\n  - heading \"Got a design in mind?\" [level=2]\n  - paragraph: Kirim inspirasimu, pilih jadwal, dan wujudkan set yang kamu inginkan bersama Chii.\n  - link \"Kirim desain inspirasimu\":\n    - /url: https://wa.me/6285111028211?text=Halo%20Chii%2C%20saya%20ingin%20konsultasi%20custom%20nail%20art.\n  - link \"Baca aturan booking terlebih dahulu →\":\n    - /url: /about#booking-rules\n- contentinfo:\n  - link \"Chii Nails_ · Nail Art Studio\":\n    - /url: /\n  - link \"About & booking rules\":\n    - /url: /about\n  - link \"Instagram ↗\":\n    - /url: https://www.instagram.com/chii.nails_/\n  - link \"WhatsApp ↗\":\n    - /url: https://wa.me/6285111028211\n  - paragraph: © 2026 Chii Nails · Palembang. Made for your little moments.\n- button \"Chat with us\":\n  - text: Chat with us"
+    },
+    {
+      "name": "Cat Eye plus kit",
+      "total": "MADE FOR YOU, SENT TO YOU\n\nHitung layanan pilihanmu.\nRp62.000\nEstimasi sesuai pilihan · belum ongkir\nUntuk press-on: base kit Rp22.000\n\nOpsional untuk pesanan press-on. Isi paket dasar sebelum tambahan desain:\n\nFake nails 10 pcs\nKikir kuku 1 pcs\nLem stiker 3 pcs\nWipe kering pink\nAlcohol wipe\nWooden cuticle pusher\n\nTambahan pilihan: super glue nails MXBON · Rp13.000\n\nGabungkan layananmu.\n\nPilih nail art, Cat Eye, extension, glitter, stiker, aksesori atau removal. Tambahkan satu per satu untuk melihat rinciannya.\n\nLayanan / tambahan\nNail polos · 10 jari\nNail mood temperatur · 10 jari\nFrench nails · 10 jari\nMarble · 10 jari\nOmbré nails · 10 jari\nRequest design · Mengikuti tingkat kesulitan\nCat eye / silky cat eye · 10 jari\nCat eye universal · 10 jari\nCrystal cat eye · 10 jari\nCat eye rainbow / mix colors · 10 jari\nCat eye love / bunny · 10 jari\nExtension · 1 kuku\nExtension · 10 kuku\nGlitter · 10 jari\nStiker\nAksesori 3D\nRemove fake nails · 1 kuku\nRemove fake nails · 10 kuku\nRemove nail gel · 1 kuku\nRemove nail gel · 10 kuku\nRemove nail biasa · 10 kuku\nTambahkan layanan\n\nCat eye / silky cat eye · 10 jari ditambahkan.\n\nTambah base kit press-on · 10 kuku\nRp22.000\nTambah super glue nails MXBON\nRp13.000\nCat eye / silky cat eye · 10 jari\nRp40.000\nHapus\nBase kit press-on · 10 kuku\nRp22.000\nHapus\nEstimasi total\nRp62.000\n\nEstimasi menjumlahkan setiap pilihan sesuai satuan menu. Kombinasi desain memakai harga penuh masing-masing, tanpa diskon otomatis. Konfirmasikan satuan stiker / aksesori dan harga akhir melalui WhatsApp.\n\nKonfirmasi estimasi via WhatsApp ↗\nKosongkan pilihan"
+    },
+    {
+      "articles": 12,
+      "name": "Instagram next",
+      "renderedFrames": [
+        "Instagram: Maroon, with a twist.",
+        "Instagram: A custom character set.",
+        "Instagram: Karya Chii Nails",
+        "Instagram: Karya Chii Nails",
+        "Instagram: Karya Chii Nails"
+      ],
+      "sliderLeft": 378.6666564941406
+    },
+    {
+      "name": "booking rules disclosure",
+      "open": [
+        "01Isi data booking terlebih dahulu+",
+        "02Booking wajib DP atau full payment+"
+      ]
+    },
+    {
+      "frames": [
+        {
+          "src": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.4563633447087!2d104.7923294!3d-2.9707861!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b771aec94583f%3A0xb54138e0c6781c6f!2sChii.Nails%20Art%20%26%20Dewi%20Salon!5e0!3m2!1sen!2sid!4v1792434072193!5m2!1sen!2sid",
+          "title": "Google Maps — Dewi Salon & Chii.Nails, Palembang"
+        }
+      ],
+      "headerTop": 0,
+      "name": "automatic map"
+    },
+    {
+      "bookDisabled": true,
+      "calendar": "Oktober 2026",
+      "calendarStatus": "Jadwal bulan ini belum dapat diperiksa. Coba lagi sebelum memilih tanggal.",
+      "name": "live booking availability",
+      "proofRequired": true,
+      "serviceOptions": [
+        "Plain · 1 jam",
+        "Gel · 1 jam",
+        "Removal · 1 jam",
+        "Simple Design · 1 jam",
+        "Simple Design · 2 jam",
+        "Full Art · 3 jam",
+        "Full Art · 4 jam",
+        "Full Art · 5 jam"
+      ]
+    },
+    {
+      "name": "below minimum DP rejected",
+      "bookEnabled": false
+    },
+    {
+      "name": "missing proof rejected",
+      "bookEnabled": false
+    },
+    {
+      "bookEnabled": true,
+      "name": "large image decoded locally",
+      "previewWidth": 1600,
+      "proof": "Bukti pembayaran siap dikirim bersama permintaan."
+    },
+    {
+      "bookDisabled": true,
+      "fields": {
+        "date": "2026-10-26",
+        "deposit": "20000",
+        "name": "Synthetic Test",
+        "total": "100000",
+        "whatsapp": "<redacted>"
+      },
+      "name": "dropped API and reload retains draft",
+      "preview": true,
+      "proof": "Bukti pembayaran dipulihkan dan siap dikirim.",
+      "status": "Layanan booking belum dapat diperiksa. Detailmu tetap di formulir. Periksa koneksi, lalu coba lagi."
+    },
+    {
+      "bookEnabled": true,
+      "name": "reconnected booking",
+      "proof": "Bukti pembayaran dipulihkan dan siap dikirim.",
+      "time": "10:00"
+    },
+    {
+      "name": "isolated DP below minimum rejected with proof ready",
+      "bookEnabled": false
+    },
+    {
+      "name": "invalid phone rejected with proof ready",
+      "bookEnabled": false
+    },
+    {
+      "bookEnabled": true,
+      "name": "narrow booking with restored receipt",
+      "scrollWidth": 305,
+      "width": 305
+    },
+    {
+      "name": "receipt removal blocks Book",
+      "bookEnabled": false
+    },
+    {
+      "name": "slow-network mobile homepage and automatic rotation",
+      "before": {
+        "frames": 0,
+        "scrollWidth": 375,
+        "sources": [
+          "http://127.0.0.1:4351/images/monthly/ig-3988968622835720640-173382cba4-360.webp"
+        ],
+        "width": 375
+      },
+      "after": {
+        "frames": 0,
+        "sources": [
+          "http://127.0.0.1:4351/images/monthly/ig-3988968622835720640-173382cba4-360.webp",
+          "http://127.0.0.1:4351/images/monthly/ig-3988974571675957445-4e7f6b308f-360.webp"
+        ]
+      }
+    },
+    {
+      "name": "repeat mobile draft receipt restoration",
+      "previewVisible": true,
+      "proof": "Bukti pembayaran dipulihkan dan siap dikirim.",
+      "scrollY": 3348,
+      "width": 375
+    }
+  ]
+}

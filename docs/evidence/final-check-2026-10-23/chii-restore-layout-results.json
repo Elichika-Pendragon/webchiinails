@@ -1,0 +1,501 @@
+[
+  {
+    "mode": "after",
+    "width": 390,
+    "path": "/book",
+    "records": [
+      {
+        "stage": "parsed",
+        "details": {
+          "#booking-mode-description": {
+            "top": 410.54168701171875,
+            "height": 69.28125
+          },
+          "#booking-draft-status": {
+            "top": 775.8125,
+            "height": 52.79166793823242
+          },
+          "#hint-deposit": {
+            "top": 1546.6771240234375,
+            "height": 76.79167175292969
+          },
+          "#hint-serviceDuration": {
+            "top": 2138.15625,
+            "height": 38.395835876464844
+          },
+          "#booking-calendar-status": {
+            "top": 2663.05224609375,
+            "height": 19.791667938232422
+          },
+          "#hint-time": {
+            "top": 2832.73974609375,
+            "height": 19.197917938232422
+          },
+          "#booking-slot-status": {
+            "top": 2861.9375,
+            "height": 0
+          },
+          "#booking-proof-status": {
+            "top": 3379.83349609375,
+            "height": 39.59375
+          }
+        },
+        "book": {
+          "top": 3504.21875,
+          "height": 50
+        },
+        "date": {
+          "top": 2226.05224609375,
+          "height": 427
+        },
+        "proof": {
+          "top": 3073.83349609375,
+          "height": 296
+        },
+        "scrollY": 0
+      },
+      {
+        "stage": "restored",
+        "details": {
+          "#booking-mode-description": {
+            "top": 410.54168701171875,
+            "height": 92.375
+          },
+          "#booking-draft-status": {
+            "top": 798.90625,
+            "height": 52.79166793823242
+          },
+          "#hint-deposit": {
+            "top": 1569.7708740234375,
+            "height": 76.79167175292969
+          },
+          "#hint-serviceDuration": {
+            "top": 2161.25,
+            "height": 38.395835876464844
+          },
+          "#booking-calendar-status": {
+            "top": 2686.14599609375,
+            "height": 39.583335876464844
+          },
+          "#hint-time": {
+            "top": 2875.625,
+            "height": 57.59375
+          },
+          "#booking-slot-status": {
+            "top": 2943.21875,
+            "height": 19.791667938232422
+          },
+          "#booking-proof-status": {
+            "top": 3480.90625,
+            "height": 39.59375
+          }
+        },
+        "book": {
+          "top": 3605.291748046875,
+          "height": 50
+        },
+        "date": {
+          "top": 2249.14599609375,
+          "height": 427
+        },
+        "proof": {
+          "top": 3174.90625,
+          "height": 296
+        },
+        "scrollY": 0
+      }
+    ],
+    "shifts": [
+      {
+        "value": 0.0005075215209373029,
+        "time": 4531.60000000149,
+        "sources": [
+          {
+            "element": "booking-draft-action",
+            "previous": {
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "left": 0
+            },
+            "current": {
+              "x": 20,
+              "y": 828.6041870117188,
+              "width": 334.66668701171875,
+              "height": 15.395833969116211,
+              "top": 828.6041870117188,
+              "right": 354.66668701171875,
+              "bottom": 844.000020980835,
+              "left": 20
+            }
+          }
+        ]
+      },
+      {
+        "value": 0.009285198971639678,
+        "time": 5089.60000000149,
+        "sources": [
+          {
+            "element": "booking-layout",
+            "previous": {
+              "x": 20,
+              "y": 523.8229370117188,
+              "width": 335.3333435058594,
+              "height": 320.1770935058594,
+              "top": 523.8229370117188,
+              "right": 355.3333435058594,
+              "bottom": 844.0000305175781,
+              "left": 20
+            },
+            "current": {
+              "x": 20,
+              "y": 546.9166870117188,
+              "width": 334.66668701171875,
+              "height": 297.0833435058594,
+              "top": 546.9166870117188,
+              "right": 354.66668701171875,
+              "bottom": 844.0000305175781,
+              "left": 20
+            }
+          }
+        ]
+      }
+    ],
+    "proofReady": "Bukti pembayaran dipulihkan dan siap dikirim.",
+    "bookDisabled": false
+  },
+  {
+    "mode": "after",
+    "width": 1280,
+    "path": "/book",
+    "records": [
+      {
+        "stage": "parsed",
+        "details": {
+          "#booking-mode-description": {
+            "top": 396.5208435058594,
+            "height": 46.19791793823242
+          },
+          "#booking-draft-status": {
+            "top": 669.6875,
+            "height": 79.19792175292969
+          },
+          "#hint-deposit": {
+            "top": 1414.46875,
+            "height": 38.395835876464844
+          },
+          "#hint-serviceDuration": {
+            "top": 1947.4583740234375,
+            "height": 19.197917938232422
+          },
+          "#booking-calendar-status": {
+            "top": 2454.65625,
+            "height": 39.59375
+          },
+          "#hint-time": {
+            "top": 2626.447998046875,
+            "height": 38.395835876464844
+          },
+          "#booking-slot-status": {
+            "top": 2674.84375,
+            "height": 39.59375
+          },
+          "#booking-proof-status": {
+            "top": 3216.135498046875,
+            "height": 39.59375
+          }
+        },
+        "book": {
+          "top": 3320.125,
+          "height": 50
+        },
+        "date": {
+          "top": 2017.65625,
+          "height": 427
+        },
+        "proof": {
+          "top": 2910.135498046875,
+          "height": 296
+        },
+        "scrollY": 0
+      },
+      {
+        "stage": "restored",
+        "details": {
+          "#booking-mode-description": {
+            "top": 396.5208435058594,
+            "height": 46.19791793823242
+          },
+          "#booking-draft-status": {
+            "top": 669.6875,
+            "height": 79.19792175292969
+          },
+          "#hint-deposit": {
+            "top": 1414.46875,
+            "height": 38.395835876464844
+          },
+          "#hint-serviceDuration": {
+            "top": 1947.4583740234375,
+            "height": 19.197917938232422
+          },
+          "#booking-calendar-status": {
+            "top": 2454.65625,
+            "height": 39.59375
+          },
+          "#hint-time": {
+            "top": 2626.447998046875,
+            "height": 38.395835876464844
+          },
+          "#booking-slot-status": {
+            "top": 2674.84375,
+            "height": 39.59375
+          },
+          "#booking-proof-status": {
+            "top": 3216.135498046875,
+            "height": 39.59375
+          }
+        },
+        "book": {
+          "top": 3320.125,
+          "height": 50
+        },
+        "date": {
+          "top": 2017.65625,
+          "height": 427
+        },
+        "proof": {
+          "top": 2910.135498046875,
+          "height": 296
+        },
+        "scrollY": 0
+      }
+    ],
+    "shifts": [],
+    "proofReady": "Bukti pembayaran dipulihkan dan siap dikirim.",
+    "bookDisabled": false
+  },
+  {
+    "mode": "after",
+    "width": 390,
+    "path": "/book",
+    "records": [
+      {
+        "stage": "parsed",
+        "details": {
+          "#booking-mode-description": {
+            "top": 410.54168701171875,
+            "height": 92.39583587646484
+          },
+          "#booking-draft-status": {
+            "top": 798.9271240234375,
+            "height": 79.19792175292969
+          },
+          "#hint-deposit": {
+            "top": 1596.197998046875,
+            "height": 76.79167175292969
+          },
+          "#hint-serviceDuration": {
+            "top": 2187.67724609375,
+            "height": 38.395835876464844
+          },
+          "#booking-calendar-status": {
+            "top": 2712.572998046875,
+            "height": 39.59375
+          },
+          "#hint-time": {
+            "top": 2902.0625,
+            "height": 57.59375
+          },
+          "#booking-slot-status": {
+            "top": 2969.65625,
+            "height": 39.59375
+          },
+          "#booking-proof-status": {
+            "top": 3527.14599609375,
+            "height": 39.59375
+          }
+        },
+        "book": {
+          "top": 3651.53125,
+          "height": 50
+        },
+        "date": {
+          "top": 2275.572998046875,
+          "height": 427
+        },
+        "proof": {
+          "top": 3221.14599609375,
+          "height": 296
+        },
+        "scrollY": 0
+      },
+      {
+        "stage": "restored",
+        "details": {
+          "#booking-mode-description": {
+            "top": 410.54168701171875,
+            "height": 92.39583587646484
+          },
+          "#booking-draft-status": {
+            "top": 798.9271240234375,
+            "height": 79.19792175292969
+          },
+          "#hint-deposit": {
+            "top": 1596.197998046875,
+            "height": 76.79167175292969
+          },
+          "#hint-serviceDuration": {
+            "top": 2187.67724609375,
+            "height": 38.395835876464844
+          },
+          "#booking-calendar-status": {
+            "top": 2712.572998046875,
+            "height": 39.59375
+          },
+          "#hint-time": {
+            "top": 2902.0625,
+            "height": 57.59375
+          },
+          "#booking-slot-status": {
+            "top": 2969.65625,
+            "height": 39.59375
+          },
+          "#booking-proof-status": {
+            "top": 3527.14599609375,
+            "height": 39.59375
+          }
+        },
+        "book": {
+          "top": 3651.53125,
+          "height": 50
+        },
+        "date": {
+          "top": 2275.572998046875,
+          "height": 427
+        },
+        "proof": {
+          "top": 3221.14599609375,
+          "height": 296
+        },
+        "scrollY": 0
+      }
+    ],
+    "shifts": [],
+    "proofReady": "Bukti pembayaran dipulihkan dan siap dikirim.",
+    "bookDisabled": false
+  },
+  {
+    "mode": "after",
+    "width": 320,
+    "path": "/book",
+    "records": [
+      {
+        "stage": "parsed",
+        "details": {
+          "#booking-mode-description": {
+            "top": 410.5416717529297,
+            "height": 115.5
+          },
+          "#booking-draft-status": {
+            "top": 848.4271240234375,
+            "height": 79.19792175292969
+          },
+          "#hint-deposit": {
+            "top": 1783.4896240234375,
+            "height": 57.59375
+          },
+          "#hint-serviceDuration": {
+            "top": 2378.86474609375,
+            "height": 38.395835876464844
+          },
+          "#booking-calendar-status": {
+            "top": 2895.760498046875,
+            "height": 39.59375
+          },
+          "#hint-time": {
+            "top": 3085.25,
+            "height": 76.79167175292969
+          },
+          "#booking-slot-status": {
+            "top": 3172.041748046875,
+            "height": 39.59375
+          },
+          "#booking-proof-status": {
+            "top": 3729.53125,
+            "height": 39.59375
+          }
+        },
+        "book": {
+          "top": 3853.916748046875,
+          "height": 50
+        },
+        "date": {
+          "top": 2466.760498046875,
+          "height": 419
+        },
+        "proof": {
+          "top": 3423.53125,
+          "height": 296
+        },
+        "scrollY": 166
+      },
+      {
+        "stage": "restored",
+        "details": {
+          "#booking-mode-description": {
+            "top": 410.5416717529297,
+            "height": 115.5
+          },
+          "#booking-draft-status": {
+            "top": 848.4271240234375,
+            "height": 79.19792175292969
+          },
+          "#hint-deposit": {
+            "top": 1783.4896240234375,
+            "height": 57.59375
+          },
+          "#hint-serviceDuration": {
+            "top": 2378.86474609375,
+            "height": 38.395835876464844
+          },
+          "#booking-calendar-status": {
+            "top": 2895.760498046875,
+            "height": 39.59375
+          },
+          "#hint-time": {
+            "top": 3085.25,
+            "height": 76.79167175292969
+          },
+          "#booking-slot-status": {
+            "top": 3172.041748046875,
+            "height": 39.59375
+          },
+          "#booking-proof-status": {
+            "top": 3729.53125,
+            "height": 39.59375
+          }
+        },
+        "book": {
+          "top": 3853.916748046875,
+          "height": 50
+        },
+        "date": {
+          "top": 2466.760498046875,
+          "height": 419
+        },
+        "proof": {
+          "top": 3423.53125,
+          "height": 296
+        },
+        "scrollY": 166
+      }
+    ],
+    "shifts": [],
+    "proofReady": "Bukti pembayaran dipulihkan dan siap dikirim.",
+    "bookDisabled": false
+  }
+]

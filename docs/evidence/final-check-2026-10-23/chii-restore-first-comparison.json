@@ -1,0 +1,399 @@
+[
+  {
+    "mode": "before",
+    "width": 1280,
+    "path": "/book",
+    "records": [
+      {
+        "stage": "parsed",
+        "book": {
+          "top": 2410.822998046875,
+          "height": 50
+        },
+        "date": {
+          "top": 1889.75,
+          "height": 50
+        },
+        "proof": {
+          "top": 0,
+          "height": 0
+        },
+        "scrollY": 0
+      },
+      {
+        "stage": "restored",
+        "book": {
+          "top": 3183.479248046875,
+          "height": 50
+        },
+        "date": {
+          "top": 0,
+          "height": 0
+        },
+        "proof": {
+          "top": 2793.95849609375,
+          "height": 295.3333435058594
+        },
+        "scrollY": 0
+      }
+    ],
+    "shifts": [
+      {
+        "value": 0.0010314610290058268,
+        "time": 4632.60000000149,
+        "sources": [
+          {
+            "element": "FIELDSET",
+            "previous": {
+              "x": 72,
+              "y": 696.9791870117188,
+              "width": 649.1666870117188,
+              "height": 23.02083396911621,
+              "top": 696.9791870117188,
+              "right": 721.1666870117188,
+              "bottom": 720.000020980835,
+              "left": 72
+            },
+            "current": {
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "left": 0
+            }
+          }
+        ]
+      },
+      {
+        "value": 0.00012982967863416113,
+        "time": 4737.69999999553,
+        "sources": [
+          {
+            "element": "booking-draft-clear",
+            "previous": {
+              "x": 72,
+              "y": 707.375,
+              "width": 144,
+              "height": 12.625,
+              "top": 707.375,
+              "right": 216,
+              "bottom": 720,
+              "left": 72
+            },
+            "current": {
+              "x": 72,
+              "y": 680.9791870117188,
+              "width": 144,
+              "height": 39.020835876464844,
+              "top": 680.9791870117188,
+              "right": 216,
+              "bottom": 720.0000228881836,
+              "left": 72
+            }
+          }
+        ]
+      }
+    ],
+    "proofReady": "Bukti pembayaran dipulihkan dan siap dikirim.",
+    "bookDisabled": false
+  },
+  {
+    "mode": "before",
+    "width": 390,
+    "path": "/book",
+    "records": [
+      {
+        "stage": "parsed",
+        "book": {
+          "top": 2723.02099609375,
+          "height": 50
+        },
+        "date": {
+          "top": 2147.65625,
+          "height": 50
+        },
+        "proof": {
+          "top": 0,
+          "height": 0
+        },
+        "scrollY": 0
+      },
+      {
+        "stage": "restored",
+        "book": {
+          "top": 3538.15625,
+          "height": 50
+        },
+        "date": {
+          "top": 0,
+          "height": 0
+        },
+        "proof": {
+          "top": 3174.23974609375,
+          "height": 249.33334350585938
+        },
+        "scrollY": 0
+      }
+    ],
+    "shifts": [
+      {
+        "value": 0.0023652756514359534,
+        "time": 4363.30000000447,
+        "sources": [
+          {
+            "element": "FIELDSET",
+            "previous": {
+              "x": 20,
+              "y": 826.2083740234375,
+              "width": 334.66668701171875,
+              "height": 17.791667938232422,
+              "top": 826.2083740234375,
+              "right": 354.66668701171875,
+              "bottom": 844.0000419616699,
+              "left": 20
+            },
+            "current": {
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "left": 0
+            }
+          }
+        ]
+      },
+      {
+        "value": 0.00010444059706799167,
+        "time": 4416.60000000149,
+        "sources": [
+          {
+            "element": "booking-draft-clear",
+            "previous": {
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "left": 0
+            },
+            "current": {
+              "x": 20,
+              "y": 836.6041870117188,
+              "width": 144,
+              "height": 7.395833492279053,
+              "top": 836.6041870117188,
+              "right": 164,
+              "bottom": 844.0000205039978,
+              "left": 20
+            }
+          }
+        ]
+      },
+      {
+        "value": 0.009285198971639678,
+        "time": 5059.10000000149,
+        "sources": [
+          {
+            "element": "booking-layout",
+            "previous": {
+              "x": 20,
+              "y": 523.8229370117188,
+              "width": 335.3333435058594,
+              "height": 320.1770935058594,
+              "top": 523.8229370117188,
+              "right": 355.3333435058594,
+              "bottom": 844.0000305175781,
+              "left": 20
+            },
+            "current": {
+              "x": 20,
+              "y": 546.9166870117188,
+              "width": 334.66668701171875,
+              "height": 297.0833435058594,
+              "top": 546.9166870117188,
+              "right": 354.66668701171875,
+              "bottom": 844.0000305175781,
+              "left": 20
+            }
+          },
+          {
+            "element": "booking-draft-clear",
+            "previous": {
+              "x": 20,
+              "y": 836.6041870117188,
+              "width": 144,
+              "height": 7.395833492279053,
+              "top": 836.6041870117188,
+              "right": 164,
+              "bottom": 844.0000205039978,
+              "left": 20
+            },
+            "current": {
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "left": 0
+            }
+          }
+        ]
+      }
+    ],
+    "proofReady": "Bukti pembayaran dipulihkan dan siap dikirim.",
+    "bookDisabled": false
+  },
+  {
+    "mode": "after",
+    "width": 1280,
+    "path": "/book",
+    "records": [
+      {
+        "stage": "parsed",
+        "book": {
+          "top": 3192.02099609375,
+          "height": 50
+        },
+        "date": {
+          "top": 1968.1458740234375,
+          "height": 427
+        },
+        "proof": {
+          "top": 2782.03125,
+          "height": 296
+        },
+        "scrollY": 0
+      },
+      {
+        "stage": "restored",
+        "book": {
+          "top": 3231.010498046875,
+          "height": 50
+        },
+        "date": {
+          "top": 1968.1458740234375,
+          "height": 427
+        },
+        "proof": {
+          "top": 2821.02099609375,
+          "height": 296
+        },
+        "scrollY": 0
+      }
+    ],
+    "shifts": [],
+    "proofReady": "Bukti pembayaran dipulihkan dan siap dikirim.",
+    "bookDisabled": false
+  },
+  {
+    "mode": "after",
+    "width": 390,
+    "path": "/book",
+    "records": [
+      {
+        "stage": "parsed",
+        "book": {
+          "top": 3503.55224609375,
+          "height": 50
+        },
+        "date": {
+          "top": 2225.385498046875,
+          "height": 427
+        },
+        "proof": {
+          "top": 3073.166748046875,
+          "height": 296
+        },
+        "scrollY": 0
+      },
+      {
+        "stage": "restored",
+        "book": {
+          "top": 3605.291748046875,
+          "height": 50
+        },
+        "date": {
+          "top": 2249.14599609375,
+          "height": 427
+        },
+        "proof": {
+          "top": 3174.90625,
+          "height": 296
+        },
+        "scrollY": 0
+      }
+    ],
+    "shifts": [
+      {
+        "value": 0.0005075215209373029,
+        "time": 4434.5,
+        "sources": [
+          {
+            "element": "booking-draft-action",
+            "previous": {
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "left": 0
+            },
+            "current": {
+              "x": 20,
+              "y": 828.6041870117188,
+              "width": 334.66668701171875,
+              "height": 15.395833969116211,
+              "top": 828.6041870117188,
+              "right": 354.66668701171875,
+              "bottom": 844.000020980835,
+              "left": 20
+            }
+          }
+        ]
+      },
+      {
+        "value": 0.009285198971639678,
+        "time": 5082.10000000149,
+        "sources": [
+          {
+            "element": "booking-layout",
+            "previous": {
+              "x": 20,
+              "y": 523.8229370117188,
+              "width": 335.3333435058594,
+              "height": 320.1770935058594,
+              "top": 523.8229370117188,
+              "right": 355.3333435058594,
+              "bottom": 844.0000305175781,
+              "left": 20
+            },
+            "current": {
+              "x": 20,
+              "y": 546.9166870117188,
+              "width": 334.66668701171875,
+              "height": 297.0833435058594,
+              "top": 546.9166870117188,
+              "right": 354.66668701171875,
+              "bottom": 844.0000305175781,
+              "left": 20
+            }
+          }
+        ]
+      }
+    ],
+    "proofReady": "Bukti pembayaran dipulihkan dan siap dikirim.",
+    "bookDisabled": false
+  }
+]

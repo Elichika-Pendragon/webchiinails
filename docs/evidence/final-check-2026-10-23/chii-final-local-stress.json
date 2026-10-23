@@ -1,0 +1,11 @@
+{
+  "requests": 500,
+  "clients": 20,
+  "seconds": 0.6318690999978571,
+  "statuses": {
+    "200": 500
+  },
+  "medianMs": 11.624650003795978,
+  "p95Ms": 33.30899999855319,
+  "scope": "Local static server only, not production capacity"
+}

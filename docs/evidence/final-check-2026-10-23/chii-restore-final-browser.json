@@ -1,0 +1,38 @@
+[
+  {
+    "bookEnabled": true,
+    "contentWidth": 1265,
+    "dateHeight": 427,
+    "deposit": "20000",
+    "name": "Synthetic Restore Check",
+    "previewHeight": 296,
+    "proof": "Bukti pembayaran dipulihkan dan siap dikirim.",
+    "scrollWidth": 1265,
+    "time": "10:00",
+    "width": 1280
+  },
+  {
+    "bookEnabled": true,
+    "contentWidth": 375,
+    "dateHeight": 427,
+    "deposit": "20000",
+    "name": "Synthetic Restore Check",
+    "previewHeight": 296,
+    "proof": "Bukti pembayaran dipulihkan dan siap dikirim.",
+    "scrollWidth": 375,
+    "time": "10:00",
+    "width": 390
+  },
+  {
+    "bookEnabled": true,
+    "contentWidth": 305,
+    "dateHeight": 419,
+    "deposit": "20000",
+    "name": "Synthetic Restore Check",
+    "previewHeight": 296,
+    "proof": "Bukti pembayaran dipulihkan dan siap dikirim.",
+    "scrollWidth": 305,
+    "time": "10:00",
+    "width": 320
+  }
+]

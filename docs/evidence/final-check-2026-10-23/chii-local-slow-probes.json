@@ -1,0 +1,79 @@
+{
+  "probes": [
+    {
+      "fcp": 884,
+      "lcp": 884,
+      "cls": 0.0016396636283437728,
+      "longTasks": 0,
+      "path": "/book",
+      "domReady": 3104.2999999970198,
+      "transfer": 96642,
+      "images": [
+        "http://127.0.0.1:4351/images/logo-brand.webp"
+      ]
+    },
+    {
+      "fcp": 840,
+      "lcp": 3272,
+      "cls": 0.23620354997194618,
+      "longTasks": 51,
+      "path": "/book",
+      "domReady": 3145.5,
+      "transfer": 95869,
+      "images": [
+        "http://127.0.0.1:4351/images/logo-brand.webp",
+        "blob:[synthetic-local-preview]"
+      ]
+    },
+    {
+      "fcp": 796,
+      "lcp": 2364,
+      "cls": 0.004244861269168484,
+      "longTasks": 0,
+      "path": "/",
+      "domReady": 3351.89999999851,
+      "transfer": 93870,
+      "images": [
+        "http://127.0.0.1:4351/images/logo-brand.webp",
+        "http://127.0.0.1:4351/images/monthly/ig-3988968622835720640-173382cba4-360.webp",
+        "http://127.0.0.1:4351/images/monthly/ig-3988968622835720640-173382cba4-360.webp",
+        "http://127.0.0.1:4351/images/logo-brand.webp",
+        "http://127.0.0.1:4351/images/prev.svg",
+        "http://127.0.0.1:4351/images/next.svg",
+        "http://127.0.0.1:4351/images/whatsapp.svg",
+        "http://127.0.0.1:4351/images/instagram.svg",
+        "http://127.0.0.1:4351/images/shopee.svg"
+      ]
+    },
+    {
+      "fcp": 1512,
+      "lcp": 1512,
+      "cls": 0.01866220079207604,
+      "longTasks": 0,
+      "path": "/book",
+      "domReady": 3550.2999999970198,
+      "transfer": 90691,
+      "images": [
+        "http://127.0.0.1:4351/images/logo-brand.webp"
+      ]
+    },
+    {
+      "fcp": 832,
+      "lcp": null,
+      "cls": 0.08116347029130667,
+      "longTasks": 0,
+      "path": "/book",
+      "domReady": 3052.8000000044703,
+      "transfer": 96642,
+      "images": [
+        "http://127.0.0.1:4351/images/logo-brand.webp",
+        "blob:[synthetic-local-preview]"
+      ]
+    }
+  ],
+  "counters": {
+    "fast": 500,
+    "slow": 149,
+    "submissionAttempts": 0
+  }
+}
