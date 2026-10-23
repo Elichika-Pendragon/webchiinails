@@ -1,3 +1,5 @@
+> **Historical UI checkpoint.** The separate-category form described here was replaced by the [tap-to-build price menu](TAP-TO-BUILD-2026-10-23.md). Its original test observations are preserved below.
+
 # Calculator categories and shorter public copy — 23 October 2026
 
 Owner selected the separate-sections concept using Impeccable, then requested less repeated public text. This is a frontend refinement of the existing shared catalog and pricing rules.
