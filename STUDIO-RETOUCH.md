@@ -1,3 +1,5 @@
+> **Historical report.** This records its original revision and test scope; it is not the current setup guide. Start with the [documentation index](docs/README.md) and [23 October release checkpoint](docs/RELEASE-CHECKPOINT-2026-10-23.md). Earlier pending steps and measurements must not be treated as current production status.
+
 # Studio photo cleanup
 
 19 October 2026. The owner requested removal of a computer cursor captured in the studio story screenshot.

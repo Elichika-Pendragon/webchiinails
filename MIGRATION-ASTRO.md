@@ -1,3 +1,5 @@
+> **Historical report.** This records its original revision and test scope; it is not the current setup guide. Start with the [documentation index](docs/README.md) and [23 October release checkpoint](docs/RELEASE-CHECKPOINT-2026-10-23.md). Earlier pending steps and measurements must not be treated as current production status.
+
 # Astro migration and rollback
 
 Status: Astro is deployed through the existing GitHub main branch and Cloudflare Pages Free. The initial migration was e38433d, deployment a83ed2a5. Later map/font refinements and final measurements are recorded in PERFORMANCE.md and the release report. Date: 20 October 2026, Asia/Jakarta.

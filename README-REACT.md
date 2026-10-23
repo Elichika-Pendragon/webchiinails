@@ -1,3 +1,5 @@
+> **Historical report.** This records its original revision and test scope; it is not the current setup guide. Start with the [documentation index](docs/README.md) and [23 October release checkpoint](docs/RELEASE-CHECKPOINT-2026-10-23.md). Earlier pending steps and measurements must not be treated as current production status.
+
 # Chii Nails — React website
 
 Responsive React + Vite website with a home page and About & Booking Rules page. English headlines and Indonesian practical copy are intentional.

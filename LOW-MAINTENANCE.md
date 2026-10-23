@@ -1,25 +1,28 @@
-# Chii Nails: tanpa LightWidget
+# Routine maintenance
 
-Keputusan pemilik 19 Oktober 2026: integrasi Instagram sendiri, tanpa layanan feed berbayar. Renewal terjadwal sudah ada dalam source, tetapi **belum aktif** sebelum setup Meta/Cloudflare selesai.
+Current operating guide, reviewed **23 October 2026**. See [deployment](DEPLOYMENT.md) for configuration and [documentation index](docs/README.md) for technical guides.
 
-| Bagian | Sistem | Tugas pemilik |
+Jessica's normal work is consultation through WhatsApp, checking the actual payment, then accepting/cancelling through the protected approval page. She can change all shared menu/kit/glue prices at https://chiinails.pages.dev/prices using the existing authorized Google account. Booking prices already agreed with a customer are immutable snapshots, independent of later menu edits.
+
+## Automatic work
+
+| Work | Schedule/trigger | What to verify |
 | --- | --- | --- |
-| Website | Astro statis di Cloudflare Pages; React hanya saat build | Tidak perlu menjalankan server sendiri atau mengurus plugin WordPress. |
-| Booking dan DP | WhatsApp | Jessica mengonfirmasi desain, jadwal dan DP; website tidak mengecek slot otomatis. |
-| Galeri | API resmi, cache lima menit, slider embed | Posting Instagram seperti biasa setelah koneksi aktif. |
-| Renewal | Worker harian dan token KV terenkripsi | Berjalan tanpa kunjungan, renewal sekitar 30 hari untuk token 60 hari. |
-| Maps | Otomatis setelah halaman siap dan bagian peta mendekati layar; termasuk Home mobile | Update Google Business Profile jika data usaha berubah. |
-| Konten utama | Teks/foto lokal | Jam, WA, alamat dan aturan perlu diperbarui saat berubah; tidak otomatis ditarik dari bio IG. |
-| Domain | chiinails.pages.dev gratis | Tidak ada pembelian/renewal domain berbayar. |
-| SEO | HTML/metadata/sitemap saat build | Search Console disiapkan sekali; posting IG tidak perlu build ulang. |
+| Production HTML, robots and sitemap | Successful production build | Correct origin; five public sitemap URLs |
+| Calendar availability | Customer's visible booking checks and owner decision | Fresh sanitized slots; no approval without capacity checks |
+| Instagram links | Hourly, minute 17 | `lastSuccessAt` advance and valid saved archive, not just cron delivery |
+| Monthly optimized still photos | First day, 09:43 WIB, subject to GitHub delay | Successful tested batch/commit/deployment; at most 50 pool photos |
+| Expired receipt cleanup | Daily, 07:15 WIB | Worker result and expired-image backlog, bounded batch of 500 |
 
-Setup pertama memerlukan operator teknis: otorisasi profesional Meta, encrypted seed, KV bindings, secrets dan Worker. Ikuti [INSTAGRAM-SETUP.md](./INSTAGRAM-SETUP.md). Tidak ada endpoint renewal publik atau token di JavaScript browser.
+The public Maps/Instagram embeds load near the viewport rather than blocking initial rendering. The calculator updates locally from one shared catalog; public prices cache for 60 seconds. Ordinary visitors never trigger a scraper or monthly import.
 
-Workers/KV memiliki kuota Free. Job membaca satu record dan menulis status harian, ditambah penulisan saat renewal. Cache feed mengurangi panggilan KV/Meta. Free KV saat diperiksa mencakup 100.000 read dan 1.000 write/hari; kuota akun tetap berlaku. Tidak ada jaminan gratis tanpa batas. [KV pricing](https://developers.cloudflare.com/kv/platform/pricing/), [Pages Functions pricing](https://developers.cloudflare.com/pages/functions/pricing/).
+## If something fails
 
-Meta masih dapat mencabut izin. Jika itu terjadi, pemilik perlu mengotorisasi ulang dan operator melakukan seed ulang. **Belum ada dashboard OAuth satu klik atau email/WhatsApp alert otomatis.** Status aman tersimpan pada KV `instagram:status:v1` dan scheduled-event logs; operator harus menyiapkan pemantauan yang benar-benar diperiksa sebelum menyebutnya siap tanpa pengawasan.
+- Booking unavailable: preserve drafts/idempotency; inspect readiness, bindings, provider and admission errors. Never relax the owner allowlist or accept without a valid prepared receipt/fresh slot.
+- Payment screenshot looks suspicious: Jessica checks the actual transaction. Image decoding is not fraud detection.
+- Instagram stale/blank: retain the archive and fallback links; inspect collector and embed behavior separately. Do not repeatedly scrape or assume a blank iframe proves deletion.
+- Monthly workflow failure: retain existing assets/catalogs; fix the actual error before dispatching again. A completed same-month batch is a no-op. Do not bypass tests or delete old images before replacements verify.
+- Price conflict: reload the latest catalog and reconcile edits; do not overwrite an unseen revision. A failed/uncertain save keeps in-page edits for retry/reconciliation.
+- Google still shows an old site name or sitemap warning: follow [SEO](SEO.md). Neither a successful deploy nor a sitemap submission proves Google processed it.
 
-Jika Instagram gagal, foto pilihan lokal/link asli, WhatsApp dan Maps tetap tersedia; fallback tidak diklaim sebagai post terbaru. Simpan akses/pemulihan GitHub, Cloudflare, Meta dan domain dalam pengelolaan salon. Perubahan API besar masih dapat memerlukan developer.
-
-
-Keputusan 20 Oktober 2026: tetap Pages/Workers Free dan chiinails.pages.dev. EmDash dibatalkan; tidak ada CMS, R2 subscription, billing activation, atau upgrade berbayar. Data usaha yang berubah tetap memerlukan edit source/commit; tidak ada CMS yang diam-diam dipasang.
+Review Cloudflare usage across the account before a traffic increase. Private receipts and public gallery photos have different retention policies. Keep secrets out of logs/support screenshots and close inspection tabs after use. Figma updates and Google indexing actions are separate, explicit owner tasks; they are not routine side effects of code/documentation work.

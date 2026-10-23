@@ -1,3 +1,5 @@
+> **23 October 2026 update:** The established visual identity remains binding. For current behavior, use [Product](PRODUCT.md): randomized automatic fading mosaic, separately swipeable/deferred Instagram embeds, the shared monthly 50-photo pool, and the approved fixed Meet Chii image. Earlier six-photo collection descriptions below are historical and do not override those rules.
+
 # Chii Nails interface conventions
 
 This records the existing website and the owner-approved refinement on 20 October 2026. It is a website, with static Astro HTML and a small native browser controller. Keep the white, blush and rose identity, Cormorant Garamond headings, DM Sans body text, factual copy, images, and consultation-first booking destinations.

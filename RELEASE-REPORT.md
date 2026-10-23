@@ -1,3 +1,5 @@
+> **Historical report.** This records its original revision and test scope; it is not the current setup guide. Start with the [documentation index](docs/README.md) and [23 October release checkpoint](docs/RELEASE-CHECKPOINT-2026-10-23.md). Earlier pending steps and measurements must not be treated as current production status.
+
 # Chii Nails Astro release report
 
 **Current release status — 21 October:** booking revision `31e7ade` is live; exact artifacts/SEO, four public availability cases and mobile checks pass. Owner sign-in/session and TEST cancellation are verified. Live synthetic receipt API/idempotency and private owner-image checks pass; the native client file-chooser path and Calendar acceptance/insertion remain unverified; receipt cleanup is deployed with D1/daily cron; the first scheduled run is not yet observed. [Current report](docs/BOOKING-RELEASE-2026-10-21.md). Earlier numbered checkpoints and captured evidence are historical.

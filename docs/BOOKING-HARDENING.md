@@ -1,3 +1,5 @@
+> **Historical design/setup note.** Preserve its original scope and evidence. Current contracts and configuration are in the [documentation index](README.md), [booking guide](BOOKING.md) and [deployment guide](../DEPLOYMENT.md). Earlier pending activation steps, stateless CPU paths and Meta token prerequisites may be superseded.
+
 # Booking hardening contract
 
 Implementation authorized on 21 October 2026. Publication and edge CPU checks

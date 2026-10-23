@@ -1,3 +1,5 @@
+> **Historical design/setup note.** Preserve its original scope and evidence. Current contracts and configuration are in the [documentation index](README.md), [booking guide](BOOKING.md) and [deployment guide](../DEPLOYMENT.md). Earlier pending activation steps, stateless CPU paths and Meta token prerequisites may be superseded.
+
 # Meta developer access: SMS, redirects and disabled app creation
 
 Research checked 20 October 2026. This is a troubleshooting record, not a verified workaround. No account settings, phone numbers, payment methods, permissions or website runtime were changed during this investigation.

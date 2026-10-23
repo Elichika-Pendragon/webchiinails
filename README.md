@@ -1,87 +1,55 @@
-# Chii Nails — Astro static website
+# Chii Nails
 
-**Current release status — 21 October:** booking revision `31e7ade` is live; exact artifacts/SEO, four public availability cases and mobile checks pass. Owner sign-in/session and TEST cancellation are verified. Live synthetic receipt API/idempotency and private owner-image checks pass; the native client file-chooser path and Calendar acceptance/insertion remain unverified; receipt cleanup is deployed with D1/daily cron; the first scheduled run is not yet observed. [Current report](docs/BOOKING-RELEASE-2026-10-21.md). Earlier numbered checkpoints and captured evidence are historical.
+Code documentation reviewed against the repository on **23 October 2026**. Production: https://chiinails.pages.dev/. Private repository: Elichika-Pendragon/webchiinails, branch `main`.
 
-Astro generates static HTML pages using the existing React presentation components **only at build time**, with an additional unlisted `/book` preview. A small native JavaScript controller handles navigation, chat, Instagram, and Maps. There is no browser React hydration. Desktop retains the long scrolling homepage; mobile gets a shorter homepage and dedicated Services, Custom Sets & Prices, Visit, and About pages.
+Astro builds static HTML; React is used at build time only. Small native JavaScript controllers handle the gallery, calculator, booking and owner tools. Cloudflare Pages Functions, D1 and private Workers provide the server features. No browser React hydration, VPS or payment gateway is required.
 
-## Run locally
+## Start here
 
-Use Node **22.22.0 or newer** on a supported even-numbered release. Local and successful Cloudflare production builds use Node 24.19.0 and pnpm 11.25.0; Cloudflare is already configured. The site is live at https://chiinails.pages.dev.
+- [Documentation index](docs/README.md): current guides versus historical evidence.
+- [Developer guide](docs/DEVELOPER-GUIDE.md): architecture, source map, APIs and configuration.
+- [Deployment and recovery](DEPLOYMENT.md): existing Pages/Worker setup and release order.
+- [Booking contract](docs/BOOKING.md): manual deposit, receipts, owner approval and recovery.
+- [Shared prices and calculator](docs/pricing.md): all-service combinations and owner editor.
+- [Instagram operation](INSTAGRAM-SETUP.md), [monthly photos](docs/monthly-photos.md), and [our Meta roadblocks](docs/META-ROADBLOCKS.md).
+- [SEO](SEO.md) and [maintenance](LOW-MAINTENANCE.md).
+- [Latest release checkpoint](docs/RELEASE-CHECKPOINT-2026-10-23.md): dated verification, evidence and limitations.
 
-```powershell
-pnpm.cmd install --frozen-lockfile
-pnpm.cmd test
-pnpm.cmd dev
+## Local development
+
+The package requires Node >=22.22.0; the current workflow uses Node 24 and pnpm 11.25.0. Use the committed lockfile.
+
+```sh
+pnpm install --frozen-lockfile
+pnpm dev
+pnpm test
+pnpm build
+pnpm preview
 ```
 
-Build and inspect a production-origin artifact:
+`pnpm dev` and `pnpm preview` serve the site, not the complete Cloudflare backend. Booking, private RPC, D1, Images and scheduled jobs need their bound runtime or isolated fixtures. Missing production credentials must not be worked around by disabling checks. `.env.example` lists placeholders, not real credentials. A build without `SITE_URL` deliberately stays noindex and omits the sitemap.
 
-```powershell
-$env:SITE_URL = 'https://chiinails.pages.dev'
-pnpm.cmd build
-pnpm.cmd check:assets
-pnpm.cmd preview
+Monthly-photo tests, using a separate Python environment:
+
+```sh
+python -m pip install -r scripts/monthly-photos-requirements.txt
+python -m unittest discover -s scripts -p 'test_monthly_photos.py'
 ```
 
-`dist/` is the static output. Without `SITE_URL`, or on a non-production Cloudflare branch, pages use `noindex` and the sitemap is omitted. Keep `public/googlefe4df279dce4c32d.html`: it retains Google Search Console ownership verification.
+Running `scripts/monthly_photos.py` itself fetches images and changes catalogs/assets; it is a refresh operation, not a read-only test.
 
-## Editing
+## Routes and current behavior
 
-- `src/App.jsx`, `src/PriceList.jsx`: build-time presentation; no `client:*` directives.
-- `src/styles.css`: shared responsive visual design.
-- `src/content.js`: contacts, hours, booking rules, services, and owner-supplied prices.
-- `src/pages/`, `src/layouts/Page.astro`: static routes and document metadata.
-- `src/scripts/client.js`: native browser interactions and five-minute public feed refresh.
-- `src/pages/book.astro`, `src/booking.css`, `src/scripts/booking-client.js`, `server/booking.js`: consultation-first preview; five required booking values, a defaulted DP/full-payment choice and read-only canonical upfront amount. Canonical validation ignores supplied payment amounts. The enabled workflow stores pending requests/owner links; no header/menu link or automated payment verification. The prepared message includes contacts, total, DP, requested date/time range and a pending-approval note; the remaining balance is shown on-page. Read [docs/BOOKING.md](docs/BOOKING.md) before activating automation.
-- `server/google-calendar.js`: trusted-server Calendar adapter behind authenticated owner decisions. Read-only access is verified; live owner session and TEST cancellation are verified; actual insertion remains unverified. New payment-policy fingerprints preserve legacy requests.
-- `scripts/seo.mjs`: unique metadata, canonical URLs, WebSite/NailSalon schema, robots and sitemap helpers.
-- `functions/api/instagram.js`, Instagram handlers in `server/`, `workers/`: server-side Instagram API and encrypted token renewal system.
+Public pages: `/`, `/services`, `/custom-sets`, `/about`, `/visit`. The unlisted `/book`, `/book/approve` and `/prices` routes have noindex directives and are excluded from the sitemap. Noindex is not access control; owner APIs independently verify the authorized Google identity.
 
-## Private booking and Calendar status
+Booking uses an editable DP of at least Rp20,000, bounded by the agreed total, or full payment. New requests use `manual-min20k-v3`, with no percentage calculation. A prepared receipt and fresh availability are required. Jessica checks the actual bank transaction and explicitly accepts or cancels. Existing requests retain their stored payment rules and amounts.
 
-Chii privately shares the same `/book` link after consultation; never add Book/Booking to the header or menu. The original five required values are name, WhatsApp, agreed total, date and time. The defaulted payment choice is DP or full payment; its upfront amount is read-only and derived by shared/server validation.
+The Instagram row shows three recent posts plus nine distinct random archive posts, with embeds deferred until needed. The hourly public-link collector is independent of the monthly photo refresh. Monthly imports use actual still photos, five recent plus five random older, in one rolling pool capped at 50 including the original six. The approved Meet Chii image remains fixed and its assets are retained separately.
 
-For new requests, `paymentMode=deposit` calculates `min(total, max(20000, ceil(total / 10)))`; `full` uses the total. Totals at/below Rp20.000 normalize to full payment. The summary's `deposit` field means the selected upfront amount, and remaining balance is total minus that amount. Example: new DP on Rp155.001 is Rp20.000, balance Rp135.001. Full payment leaves zero. Mode, policy and amounts are immutable; changing the form produces a separate request rather than cancelling its predecessor. New policy is `min20k-v2`. Existing records remain `legacy`/`legacy-10pct-v1` with their original stored 10% amount/fingerprint.
+The shared calculator combines the listed services, quantities, ranges and optional press-on kit/glue. Jessica edits the same persisted price catalog at `/prices` using the existing owner login.
 
-Transfer/QRIS receipt and quoted price are checked manually by Chii. Selecting full payment is not evidence of payment. The customer still taps Send in WhatsApp. An approval token is a lookup, not permission: private review requires the owner's Google identity; explicit CSRF-protected accept/cancel precedes a fresh capacity check and one idempotent Calendar event. No payment API or admin data re-entry is added. Regular Last book stays 14:00 weekdays/10:00 weekends. New designType/duration choices are plain 60, simple 60/120 and full-art 180/240/300 minutes. Full art caps at 12:00 and must finish by closing: new starts advance by the selected duration from 08:00; weekend 3h/4h starts are 08:00, 5h unavailable. See [duration-based starts](docs/BOOKING-DURATION-SLOTS-2026-10-21.md). The mini calendar refreshes service-specific closed dates and hides occupied time choices. Any all-day event closes its date regardless of Busy/Free; see [calendar availability](docs/BOOKING-CALENDAR-AVAILABILITY-2026-10-21.md). Online slot availability excludes Google/D1 busy or uncertain occupancy; pending requests are not holds. Final acceptance dynamically claims duration/30 cells and checks availability again.
+## Verification boundaries
 
-The preceding 10%-only code `bccc3a8` was deployed/enabled with D1, encrypted configuration and a single-Calendar grant. Historical 161-test/artifact checks and a synthetic pending request passed; that request's Rp15.501 amount must not be relabelled as a new-policy result. Owner Google device/account steps completed but returns showed 401 then 503; the later auth-only release verified the owner website session/reload and cancelled the TEST request; no Calendar event has been written. No more login requests are made as part of this revision. Owner-provided ShopeePay/blu transfer cards belong only in /book; technical docs do not repeat the account numbers, exact recipient names remain pending, and no QRIS artwork/API is invented.
+The latest functional release recorded 527 Node tests, 11 Python tests, successful production build/asset checks, bounded HTTP checks and desktop/mobile viewport checks. See the checkpoint for the exact commits and results. Simulated network/viewports are not physical-device evidence; screenshot validation is not bank-payment verification. These are dated observations, not a promise of unlimited traffic or permanent scraper availability.
 
-Payment metadata migration 0002 and additive design/duration migration 0003 are applied; 0003 succeeded as two additive ALTERs without rewriting existing rows. Receipt migration 0004 is applied as two successful CREATEs with no old-row rewrite; the combined revision still requires completed build/browser/deployment verification. The final manual-redirect auth fix is live: public-key rejection, real owner session/reload and TEST cancellation are separately verified. Acceptance/Calendar write remains unverified. Do not claim that a prior deployment or unchanged raw evidence verifies it. Private account/Calendar identifiers and credentials stay outside Git/docs; no billing, Meta or payment-provider activation is part of this change. Read [the current booking contract](docs/BOOKING.md), [approval report](docs/BOOKING-APPROVAL-2026-10-20.md) and [setup/recovery](docs/BOOKING-APPROVAL-SETUP.md).
-
-
-## Instagram and hosting
-
-Instagram authorization remains pending owner setup. Local curated posts and photographs work while `/api/instagram` returns its sanitized unavailable response. Astro never requests Instagram during the build. Once the official API is configured, the hero and gallery refresh in the browser immediately and every five minutes while the page is visible; unchanged embeds are retained.
-
-Deploy to **Cloudflare Pages**, with build command `pnpm build`, output `dist`, and the root `functions/` directory. This is static Astro with **no Cloudflare Astro adapter**. Keep the existing Pages Functions/KV bindings and separate scheduled renewal Worker. `pnpm build:worker` and `pnpm seed:instagram` remain available; never commit credentials or `.private/`.
-
-Read [MIGRATION-ASTRO.md](MIGRATION-ASTRO.md) for architecture and rollback, [REQUIREMENTS.md](REQUIREMENTS.md) for the consolidated decisions, and [PERFORMANCE.md](PERFORMANCE.md) for measured results. Mobile Home includes automatic Maps after core loading as the section approaches the viewport. EmDash was cancelled; no CMS or billing subscription was activated. All previous operational documents are preserved. [README-REACT.md](README-REACT.md) retains historical React instructions; its Vite/prerender commands are superseded here.
-
-Latest receipt and day-closure contract (pending combined release): New Book submissions must include a validated payment-proof image, stored privately with the immutable request in D1 (JPEG, at most 500 KiB). Creation must save request and receipt atomically. Only authenticated owner review may fetch the image, after an explicit **Lihat bukti** action; summaries expose at most `hasPaymentProof`, never an image/public URL. Pre-receipt legacy requests have no uploaded proof. A screenshot is customer-supplied evidence for Chii to check, not automatic payment verification. No R2, billing or automatic WhatsApp attachment is introduced. Receipt migration 0004 is applied as two successful CREATEs without rewriting old rows; combined feature artifacts/public API/mobile checks are verified and published; receipt API/idempotency/private owner-image checks pass live; native chooser, Calendar acceptance remains unverified; cleanup is deployed, with its first scheduled run unobserved. To close an entire day, Chii uses an ordinary all-day **Busy** event in the existing Nail Art Calendar. Removing it reopens the day subject to other busy events/claims. Availability is checked on the chosen date/design/duration, freshly again on Book, and again on owner acceptance; a cached free result never reserves the slot.
-
-**Owner sign-in fix verified live.** Commit `654c02809b84f4b3140dbf596a328b00e8bed337` deployed successfully as `20e97b8b-9e6b-4b24-8af9-04e339ccc112` at 16:52 UTC. At 16:53:20.945 UTC, the public synthetic invalid-signature probe returned the expected 401/AUTH_REQUIRED instead of 503. Actual permitted-owner Google login then succeeded, the protected TEST brief displayed, reload retained the owner session, and authenticated cancellation succeeded and remained cancelled after reload. **0 Calendar events were written; acceptance/Calendar insertion remains unverified.** At that auth-only checkpoint the combined features were unpublished; the booking feature revision has since been published at 31e7ade, and the separate receipt-cleanup Worker is now deployed with its daily 07:15 WIB trigger; first scheduled execution remains unobserved.
-
-Receipt-only retention decision — latest revision: Payment-proof access expires 30 days after the actual appointment end. A separate daily Free Worker deletes only expired receipt images, at most 500 per run. With a successful daily run and no backlog above that bound, physical deletion occurs within the following 24 hours; scheduler failure/backlog can delay deletion, while owner image GET refuses expired proof immediately and performs no deletion. Booking metadata, claims and Calendar events are preserved. Migration 0004 includes indexed expires_at; its production application is verified as two successful CREATEs with no old-row rewrite. Cleanup code, runtime BOOKING_DB D1 binding and the daily 07:15 WIB cron are deployed and verified. First scheduled execution and real expiry deletion are not yet observed. No R2 or billing is required.
-
-Current auth-only evidence and remaining boundaries: [Verified sign-in fix](docs/SIGN-IN-FIX-2026-10-20.md).
-
-Calendar deletion release (21 October prepared revision): availability uses exact-origin POST JSON `{date,designType,durationMinutes:string}`; GET returns 405 and cannot release claims. First require healthy free/busy for the same Calendar, then freshly verify writer/owner access before inspecting deterministic event IDs for at most 12 accepted requests overlapping the selected WIB date. Only definite 404/410 or a cancelled-event tombstone permits an atomic accepted→cancelled update and release of that request’s claims. Retain its Calendar event ID and deciding-owner audit. Missing permissions, timeout, malformed/partial response, storage error or uncertain approving/reconcile state never mean deleted and never authorize release. No Calendar event is created/deleted by availability synchronization.
-
-The visible, idle customer form refreshes the selected date every 45 seconds, with no overlapping request and no refresh while proof preparation or submission is running. Hidden/pagehide stops polling. Current time choice and keyboard focus are preserved where valid; a newly unavailable selection disables Book. Book and pending acceptance perform fresh full-interval checks again; a displayed free slot is not a hold. All-day Busy events block the chosen date; removing them reopens it subject to other occupancy.
-
-Latest combined verification and publication status: [21 October booking release](docs/BOOKING-RELEASE-2026-10-21.md).
-
-Accepted retry boundary: repeating accept for an already acknowledged accepted request remains an idempotent no-I/O read of the stored result. It does not inspect Google on that call. Calendar deletion is synchronized by availability POST, a new Book submission or a new pending acceptance. Until such a sync, owner review may still show accepted. After synchronization marks it cancelled, repeat accept is refused and never recreates the deleted event. Ordinary GET never mutates the ledger.
-
-Final local release-checkout checkpoint (21 October): `pnpm test` passed 260/260 and the exact production-SITE_URL build passed. No React runtime/hydration is emitted. All migrations 0001–0005 are now applied; the additive 0005 status/start index CREATE succeeded (809 ms action, 0.34 ms query), with no old-row rewrite. Combined GitHub/Cloudflare deployment is now successful at 31e7ade/ea7e5e0b. The starter cleanup Worker exists with its owner-approved source/build connection. Its Active build token is restricted to one-account D1 Read plus Workers Scripts Edit before builds are enabled; cleanup code/cron/runtime D1 deployment is verified; first scheduled execution/expiry deletion remains unobserved.
-
-WhatsApp syntax is normalized to `62`-prefixed Indonesian mobile digits using the Google libphonenumber Indonesia pattern: national `8[1-35-9]` followed by 7–10 digits. Local `08`, `62` and `+62` formats with ordinary spaces/parentheses/hyphens are accepted; service prefixes 080/084, wrong lengths, foreign/injected/control/Unicode-digit input reject. This checks syntax only; it neither sends an OTP nor proves WhatsApp/account ownership. [Google phone metadata](https://github.com/google/libphonenumber/blob/master/resources/PhoneNumberMetadata.xml).
-
-**Combined booking revision PUBLISHED.** GitHub commit `31e7ade018089ee24ef6f84a9c27da269cfab7f1` is live in successful Cloudflare deployment `ea7e5e0b-79d3-4612-8cf0-34e15a01e535`. The 17:30:25 UTC GET probe verifies seven routes, six exact JS assets, enabled booking, all five public SEO pages, sitemap/robots/ownership and private noindex boundaries. The 17:32:23 UTC API probe verifies four canonical date/design/duration availability responses and anonymous proof denial. Mobile 390px/320px checks observed no horizontal overflow, minimum-DP/full-payment behavior and invalid-phone feedback. The native receipt chooser could not be completed in the connected browser, so the native client chooser path remains UNVERIFIED. The receipt API/idempotency and authenticated owner-image path have since passed live with a synthetic fixture. Owner sign-in/reload and TEST cancellation are already verified; acceptance/Calendar insertion remains UNVERIFIED, with 0 recorded live writes. No new load-time, CPU or physical Safari result is claimed.
-
-Receipt cleanup setup checkpoint: the deployed Worker uses the existing repository/main branch. Source connection was created with builds disabled; the renamed Active token **Chii cleanup builds** was verified to contain only one-account **D1 Read** and **Workers Scripts Edit** before production builds were enabled. Empty build command; deploy `npx wrangler deploy --config workers/booking-cleanup.wrangler.jsonc`; root `/`; preview builds OFF. Worker-only `SKIP_DEPENDENCY_INSTALL=true` is saved for future builds; no Pages or runtime functionality change. Deployed code, runtime D1 binding and daily cron are verified; first scheduled execution/actual expiry deletion is still unobserved.
-
-Live synthetic receipt verification (21 October): one clearly labelled TEST-only production request with a 960×640 fixture JPEG returned 201/pending, agreed total Rp150.000 and upfront Rp20.000. An identical retry returned 201 for the same booking, leaving one persisted booking request. Existing authenticated owner review loaded the private image completely at natural 960×640. The TEST-only request was then cancelled and remained **Dibatalkan** after reload. No WhatsApp message or Calendar event was written. This verifies the receipt API/idempotency/private owner-image path; the browser client’s native file chooser/re-encoding/submission path remains unverified, and the fixture is not payment verification. [Sanitized receipt verification](docs/evidence/booking-approval/live-receipt-2026-10-21.json).
-
-Receipt cleanup deployment VERIFIED: Worker `chii-booking-cleanup` deployed source `a2ec169850f56294baab4e7b2cdb12c1cf9dbfa7` successfully in build `f67c5cd6-b7e2-4884-98a5-937e354dcb55`, version `eb650530-a417-40be-a6b7-b4e9e53b773c`. Cloudflare confirms deployed `BOOKING_DB` D1 binding and daily cron `15 0 * * *` (07:15 WIB). The original build completed successfully in 34 seconds at 00:40:18 WIB on 21 October; upload 5.33s, trigger deployment 1.82s, code 1.31 KiB / 0.67 KiB gzip, Wrangler 4.151.3. Build duration is not visitor load time. No failed build or retry occurred. The first scheduled run is not yet observed (next window 07:15 WIB); no expired real receipt has been deleted/tested in production verification.
+Keep secrets, receipt bytes, private account identifiers and authentication material out of source, screenshots and logs. Never commit `.env*` values, `.dev.vars`, `.private`, dependency folders or generated `dist` output. Do not overwrite concurrent work with a force push.

@@ -1,3 +1,5 @@
+> **Historical report.** This records its original revision and test scope; it is not the current setup guide. Start with the [documentation index](docs/README.md) and [23 October release checkpoint](docs/RELEASE-CHECKPOINT-2026-10-23.md). Earlier pending steps and measurements must not be treated as current production status.
+
 # Performance and browser checks — 20 October 2026
 
 The target is under one second per route on desktop and mobile. FCP is first contentful paint; LCP is largest contentful paint. Asset bytes, local response time, FCP, LCP and complete third-party media loading measure different things. There is no universal sub-second claim.
