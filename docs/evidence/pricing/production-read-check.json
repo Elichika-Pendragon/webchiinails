@@ -1,0 +1,41 @@
+{
+  "/prices": {
+    "status": 200,
+    "cacheControl": "no-store",
+    "robots": "noindex, nofollow",
+    "noindexMeta": true,
+    "editor": true
+  },
+  "/api/prices": {
+    "status": 200,
+    "cacheControl": "public, max-age=0, s-maxage=60",
+    "robots": "noindex, nofollow",
+    "revision": 0,
+    "base": 22000,
+    "glue": 13000,
+    "itemCount": 21,
+    "keys": [
+      "prices",
+      "revision",
+      "updatedAt"
+    ],
+    "bytes": 895
+  },
+  "/api/booking/prices": {
+    "status": 401,
+    "cacheControl": "no-store, max-age=0",
+    "robots": "noindex, nofollow",
+    "error": {
+      "error": {
+        "code": "AUTH_REQUIRED"
+      }
+    }
+  },
+  "/sitemap.xml": {
+    "status": 200,
+    "cacheControl": "public, max-age=0, must-revalidate",
+    "robots": null,
+    "editorExcluded": true,
+    "bookingExcluded": true
+  }
+}

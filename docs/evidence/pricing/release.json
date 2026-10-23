@@ -1,0 +1,26 @@
+{
+  "commit": "eaeb15c8a9ba063c7948c700517af5f46fc8f601",
+  "deployment": "https://b70ce3f2.chiinails.pages.dev",
+  "status": "success",
+  "buildSeconds": 44,
+  "ownerReadVerified": true,
+  "ownerSaveInProduction": "Not performed: prices left unchanged",
+  "calculator": {
+    "default": 62000,
+    "withGlue": 75000,
+    "ombreWithGlue": [
+      85000,
+      90000
+    ]
+  },
+  "mobile": {
+    "requestedWidth": 390,
+    "clientWidth": 375,
+    "scrollWidth": 375
+  },
+  "nodeTests": 524,
+  "newTests": 7,
+  "functionsCompiled": true,
+  "d1Migration": "Cloudflare dashboard confirmed success, 0.60ms query",
+  "syntheticSaveRecovery": "first save intentionally failed; entered 23000 retained; retry saved and public snapshot updated"
+}

@@ -1,0 +1,189 @@
+tion\",\"name\":\"Production\"}"
+  - button "Ask AI":
+    - generic: Ask AI
+  - link "Support":
+    - /url: /?to=/:account/support
+    - generic: Support
+  - button "User menu":
+- navigation:
+  - tablist:
+    - tab "Overview"
+    - tab "Metrics"
+    - tab "Deployments"
+    - tab "Observability" [selected]
+    - tab "Issues"
+    - tab "Domains"
+    - tab "Access"
+    - tab "Settings"
+  - button:
+  - button:
+  - button "Invite":
+    - button "Invite":
+      - generic: Invite
+  - link "Edit code":
+    - /url: /7d64fbacdea3648b74e69d4077704952/workers/services/edit/chii-instagram-links/production
+    - generic: Edit code
+- paragraph: Query Builder
+- button "Saved Queries":
+  - text: Saved Queries
+- heading "Visualizations Add" [level=3]:
+  - button "Visualizations" [expanded]:
+    - text: Visualizations
+  - button "Add":
+    - text: Add
+- region "Visualizations":
+  - button "Select calculation":
+    - paragraph: Count
+  - button "Toggle alias":
+  - button "Remove calculation":
+  - status
+- heading "Filters Add" [level=3]:
+  - button "Filters" [expanded]:
+    - text: Filters
+  - button "Add":
+    - text: Add
+- region "Filters":
+  - paragraph: Choose criteria to narrow down your results
+- heading "Group By Add" [level=3]:
+  - button "Group By" [expanded]:
+    - text: Group By
+  - button "Add":
+    - text: Add
+- region "Group By":
+  - paragraph: Use groups of fields to segment results
+  - status
+- heading "Order By" [level=3]:
+  - button "Order By" [expanded]:
+    - text: Order By
+- region "Order By":
+  - button "count":
+    - paragraph: count
+  - paragraph: in
+  - button "Descending":
+    - text: Descending
+  - paragraph: order
+  - paragraph: up to
+  - button "10":
+    - paragraph: "10"
+  - paragraph: results
+- button "Toggle query builder":
+- button "Events":
+  - text: Events
+- combobox "Search with query language..."
+- button "Query language help":
+- button "Live":
+  - text: Live
+- button "Last 1 hour":
+  - text: Last 1 hour
+- button "Actions menu":
+- text: You're on the free plan with 200K events per day. If you exceed your limit, your events will be sampled.
+- link "Upgrade your plan.":
+  - /url: /7d64fbacdea3648b74e69d4077704952/workers/plans
+- paragraph: Events
+- button "2 Success. Click to filter.":
+  - paragraph: 2 Success
+- button "0 Errors. Click to filter.":
+  - paragraph: 0 Errors
+- button "Collapse chart":
+- generic "timestamp":
+  - generic: Timestamp
+  - generic: GMT+7
+  - button "Fields":
+    - text: Fields
+- generic "-dollar-metadata-dot-level": Level
+- button:
+- button "Remove column":
+- generic "-dollar-metadata-dot-message": Message
+- button:
+- button "Remove column":
+- generic: 2026-10-23 06:17:30.521
+- generic: GMT+7
+- generic: info
+- generic: 17 * * * *
+- generic: 2026-10-23 06:17:30.521
+- generic: GMT+7
+- generic: info
+- generic: instagram_archive_refresh
+- textbox "Search properties..."
+- button "View invocation":
+  - generic: View invocation
+- link "View trace":
+  - /url: /7d64fbacdea3648b74e69d4077704952/workers/services/view/chii-instagram-links/production/observability/traces/21ec2463033a472135084e4d19b229d9?traceBackTo=events&traceFrom=1792709250521&traceTo=1792712850521
+  - generic: View trace
+- button "View options":
+  - generic: Share
+- 'button "Copy { \"level\": \"info\", \"messag"':
+- text: "{"
+- generic: "\"added\":"
+- generic: 0,
+- generic: "\"total\":"
+- generic: 279,
+- generic: "\"status\":"
+- generic: "\"fresh\","
+- generic: "\"message\":"
+- generic: "\"instagram_archive_refresh\","
+- generic: "\"level\":"
+- generic: "\"info\","
+- generic: "\"$workers\":"
+- generic: "{"
+- generic: "\"truncated\":"
+- generic: false,
+- generic: "\"scriptName\":"
+- generic: "\"chii-instagram-links\","
+- generic: "\"scriptVersion\":"
+- generic: "{"
+- generic: "\"id\":"
+- generic: "\"a0145e1a-3958-43b7-a18e-93db2a039c68\""
+- generic: "},"
+- generic: "\"eventType\":"
+- generic: "\"scheduled\","
+- generic: "\"executionModel\":"
+- generic: "\"stateless\","
+- generic: "\"event\":"
+- generic: "{"
+- generic: "\"cron\":"
+- generic: "\"17 * * * *\","
+- generic: "\"scheduledTime\":"
+- generic: 1792711044.278,
+- generic: "}"
+- generic: "},"
+- generic: "\"$metadata\":"
+- generic: "{"
+- generic: "\"id\":"
+- generic: "\"01M5JYFH8S000000000000000N\","
+- generic: "\"requestId\":"
+- generic: "\"3eb3432c49e03ec6f93790865f2e967c\","
+- generic: "\"traceId\":"
+- generic: "\"21ec2463033a472135084e4d19b229d9\","
+- generic: "\"spanId\":"
+- generic: "\"ba2c6d3abcaecf0b\","
+- generic: "\"trigger\":"
+- generic: "\"17 * * * *\","
+- generic: "\"timestampNs\":"
+- generic: "\"1792711050521000000\","
+- generic: "\"service\":"
+- generic: "\"chii-instagram-links\","
+- generic: "\"level\":"
+- generic: "\"info\","
+- generic: "\"message\":"
+- generic: "\"instagram_archive_refresh\","
+- generic: "\"account\":"
+- generic: "\"7d64fbacdea3648b74e69d4077704952\","
+- generic: "\"type\":"
+- generic: "\"cf-worker\","
+- generic: "\"origin\":"
+- generic: "\"scheduled\","
+- generic: "\"eventSize\":"
+- generic: 633,
+- generic: "}"
+- text: "}"
+- menu "instagram_archive_refresh" [active]:
+  - menuitem "workers-observability.table.actions.equals":
+    - generic: Filter
+  - menuitem "workers-observability.table.actions.notEquals":
+    - generic: Exclude
+  - menuitem "Copy":
+    - generic: Copy
+- status
+- region "Notifications"
+- generic: "0"
